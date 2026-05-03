@@ -1,0 +1,84 @@
+2026-05-03 09:51:36,777 [INFO] Projeto selecionado: mapbiomas-caatinga-cloud04
+2026-05-03 09:51:38,494 [INFO] Earth Engine inicializado com sucesso.
+2026-05-03 09:51:38,494 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 09:51:38,993 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 09:51:40,219 [INFO] 
+============================================================
+2026-05-03 09:51:40,219 [INFO] [1/88] Região: 00000000000000000000
+2026-05-03 09:51:41,345 [INFO]   Grade: 169 patches (stride 200px = 954m | patch 256px = 1221m)
+2026-05-03 09:51:41,345 [INFO] 
+  --- Ano 2016 ---
+2026-05-03 09:51:41,966 [INFO]   Já no disco: 0/169
+2026-05-03 09:51:43,085 [WARNING]     r0000_c0000 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 09:51:58,512 [WARNING]     r0000_c0000 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 09:52:29,679 [WARNING]     r0000_c0000 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 09:53:30,814 [WARNING]     r0000_c0000 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 09:55:31,977 [ERROR]   Falha definitiva em r0000_c0000: Expression does not evaluate to an image.
+2026-05-03 09:55:34,310 [WARNING]     r0000_c0001 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 09:55:49,871 [WARNING]     r0000_c0001 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 09:56:20,591 [WARNING]     r0000_c0001 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 09:57:21,111 [WARNING]     r0000_c0001 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 09:59:22,560 [ERROR]   Falha definitiva em r0000_c0001: Expression does not evaluate to an image.
+2026-05-03 09:59:25,120 [WARNING]     r0000_c0002 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 09:59:41,298 [WARNING]     r0000_c0002 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 10:00:11,712 [WARNING]     r0000_c0002 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 10:01:12,848 [WARNING]     r0000_c0002 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 10:03:14,196 [ERROR]   Falha definitiva em r0000_c0002: Expression does not evaluate to an image.
+2026-05-03 10:03:15,936 [WARNING]     r0000_c0003 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 10:03:31,403 [WARNING]     r0000_c0003 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 10:04:02,733 [WARNING]     r0000_c0003 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 10:05:03,189 [WARNING]     r0000_c0003 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 10:07:04,396 [ERROR]   Falha definitiva em r0000_c0003: Expression does not evaluate to an image.
+2026-05-03 10:07:06,034 [WARNING]     r0000_c0004 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 10:07:22,110 [WARNING]     r0000_c0004 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 10:07:52,627 [WARNING]     r0000_c0004 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 10:08:53,864 [WARNING]     r0000_c0004 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 10:10:54,393 [ERROR]   Falha definitiva em r0000_c0004: Expression does not evaluate to an image.
+2026-05-03 10:10:56,135 [WARNING]     r0000_c0005 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 10:11:11,592 [WARNING]     r0000_c0005 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 10:11:42,000 [WARNING]     r0000_c0005 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 10:12:42,529 [WARNING]     r0000_c0005 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 10:14:43,772 [ERROR]   Falha definitiva em r0000_c0005: Expression does not evaluate to an image.
+2026-05-03 10:14:46,129 [WARNING]     r0000_c0006 tentativa 1/5: Expression does not evaluate to an image. — aguardando 15s
+2026-05-03 10:15:01,792 [WARNING]     r0000_c0006 tentativa 2/5: Expression does not evaluate to an image. — aguardando 30s
+2026-05-03 10:15:32,923 [WARNING]     r0000_c0006 tentativa 3/5: Expression does not evaluate to an image. — aguardando 60s
+2026-05-03 10:16:34,159 [WARNING]     r0000_c0006 tentativa 4/5: Expression does not evaluate to an image. — aguardando 120s
+2026-05-03 10:26:35,945 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:26:36,416 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:26:36,416 [INFO] primeira região 00000000000000000000
+2026-05-03 10:27:10,544 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:27:10,931 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:27:10,931 [INFO] primeira região 00000000000000000000
+2026-05-03 10:28:33,405 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:28:34,555 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:28:34,556 [INFO] primeira região 00000000000000000000
+2026-05-03 10:28:34,556 [INFO]  ---- processing   0/88  >> 00000000000000000000
+2026-05-03 10:28:35,062 [INFO]   Grade: 169 patches (stride 200px = 954m | patch 256px = 1221m)
+2026-05-03 10:30:07,286 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:30:08,351 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:30:08,351 [INFO] primeira região 00000000000000000000
+2026-05-03 10:30:08,351 [INFO]  ---- processing   0/88  >> id << 00000000000000000000
+2026-05-03 10:30:09,476 [INFO]   Grade: 121 patches (stride 230px = 1097m | patch 256px = 1221m)
+2026-05-03 10:34:55,409 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:34:56,712 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:34:56,712 [INFO] primeira região 00000000000000000000
+2026-05-03 10:34:56,712 [INFO] 
+  --- Processing year 2016 ---
+2026-05-03 10:34:57,838 [INFO]  ---- processing   0/88  >> id << 00000000000000000000
+2026-05-03 10:34:58,964 [INFO]   Grade: 121 patches (stride 230px = 1097m | patch 256px = 1221m)
+2026-05-03 10:39:24,883 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:39:25,221 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:39:25,221 [INFO] primeira região 00000000000000000000
+2026-05-03 10:39:25,222 [INFO] 
+  --- Processing year 2016 ---
+2026-05-03 10:39:26,132 [INFO]  ---- processing   0/88  >> id << 00000000000000000000
+2026-05-03 10:39:26,644 [INFO]   Grade: 121 patches (stride 230px = 1097m | patch 256px = 1221m)
+2026-05-03 10:53:53,780 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 10:53:54,291 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 10:53:54,292 [INFO] 
+============================================================
+2026-05-03 10:53:54,292 [INFO] --- Ano 2016 ---
+2026-05-03 10:53:54,804 [INFO] 
+[1/88] Região: 00000000000000000000
+2026-05-03 10:53:58,285 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 10:53:58,289 [INFO]   Já no disco: 0/121

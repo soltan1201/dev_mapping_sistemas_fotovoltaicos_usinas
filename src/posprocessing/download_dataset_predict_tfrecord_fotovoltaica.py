@@ -87,9 +87,16 @@ OUTPUT_DIR    = Path('/dados/dataset_fotovoltaica_npy')   # ← padrão; sobresc
 
 YEARS         = list(range(2016, 2026))
 PATCH_SIZE    = 256      # pixels
-SCALE         = 4.77     # metros/pixel — resolução nativa NICFI Planet
-STRIDE_PIXELS = 200      # espaçamento entre patches em pixels
-CRS           = 'EPSG:3857'  # projeção métrica; garante pixels quadrados e uniformes
+SCALE_M       = 4.77     # metros/pixel — resolução nativa NICFI Planet
+STRIDE_PIXELS = 230      # espaçamento entre patches em pixels
+CRS           = 'EPSG:4326'  # geográfico; coordenadas em graus
+
+# Escala em graus obtida via projeção GEE (executado após ee.Initialize)
+_proj4326  = ee.Projection('EPSG:4326').atScale(SCALE_M).getInfo()
+SCALE_DEG  = _proj4326['transform'][0]   # graus/pixel (positivo, eixo x)
+
+STRIDE_DEG     = STRIDE_PIXELS * SCALE_DEG   # graus entre origens de patch
+PATCH_SIZE_DEG = PATCH_SIZE    * SCALE_DEG   # extensão angular de um patch
 
 # Controle de fluxo
 MAX_RETRIES    = 5     # tentativas por patch antes de desistir
@@ -112,16 +119,16 @@ NICFI_BANDS_SRC = ['B', 'G', 'R', 'N']
 NICFI_BANDS_DST = ['blue', 'green', 'red', 'nir']
 FEATURE_BANDS   = ['blue', 'green', 'red', 'nir', 'pvi', 'iia', 'ri', 'evi']
 
-STRIDE_M     = STRIDE_PIXELS * SCALE    # metros entre origens de patch
-PATCH_SIZE_M = PATCH_SIZE * SCALE       # extensão métrica de um patch
-
 # ==============================================================================
 # 3. FUNÇÕES — IMAGEM
 # ==============================================================================
 
 def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
     """
-    Mosaico mediana jul–dez do NICFI com bandas normalizadas e índices.
+    Mosaico mediana jun–dez do NICFI com bandas normalizadas e índices.
+
+    Filtro jun–dez (não jul) para capturar o mosaico bi-anual Jun–Nov de 2016–2019,
+    cujo system:time_start é {year}-06-01 e seria excluído por um filtro a partir de julho.
 
     Bandas de saída (todas Int16 em [0, 10000]):
       blue, green, red, nir  — normalizadas por percentil
@@ -131,7 +138,7 @@ def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
       evi  = 2.4*(nir-red)/(1+nir+red)       ∈ [-2.4,2.4] → (EVI+2.4)/4.8 * 10000
     """
     mosaic = (ee.ImageCollection(ASSET_NICFI)
-              .filterDate(f'{year}-07-01', f'{year + 1}-01-01')
+              .filterDate(f'{year}-06-01', f'{year + 1}-01-01')
               .filterBounds(geometry)
               .select(NICFI_BANDS_SRC, NICFI_BANDS_DST)
               .median()
@@ -187,8 +194,8 @@ def build_full_stack(year: int, geometry) -> ee.Image:
 # 4. FUNÇÕES — GRADE DE PATCHES
 # ==============================================================================
 
-def get_bbox_3857(geometry) -> tuple:
-    """Bounding box da geometria em EPSG:3857 (metros)."""
+def get_bbox_4326(geometry) -> tuple:
+    """Bounding box da geometria em EPSG:4326 (graus)."""
     bounds = geometry.bounds(1, ee.Projection(CRS)).getInfo()
     coords = bounds['coordinates'][0]
     xs = [c[0] for c in coords]
@@ -204,22 +211,22 @@ def generate_patch_origins(minx: float, miny: float,
     origin_x = borda oeste do patch (translateX na transformação afim)
     origin_y = borda norte do patch (translateY na transformação afim)
 
-    Alinhamento à grade global de pixels do GEE (EPSG:3857 @ SCALE):
+    Alinhamento à grade global de pixels do GEE (EPSG:4326 @ SCALE_DEG):
       x alinhado com floor — garante cobertura a partir da borda esquerda
       y alinhado com ceil  — garante cobertura a partir da borda superior
     """
-    start_x = math.floor(minx / SCALE) * SCALE
-    start_y = math.ceil(maxy  / SCALE) * SCALE
+    start_x = math.floor(minx / SCALE_DEG) * SCALE_DEG
+    start_y = math.ceil(maxy  / SCALE_DEG) * SCALE_DEG
 
     origins, row = [], 0
     y = start_y
-    while y > miny:          # patch [y-PATCH_SIZE_M, y] ainda intersecta a região
+    while y > miny:          # patch [y-PATCH_SIZE_DEG, y] ainda intersecta a região
         col, x = 0, start_x
-        while x < maxx:      # patch [x, x+PATCH_SIZE_M] ainda intersecta a região
+        while x < maxx:      # patch [x, x+PATCH_SIZE_DEG] ainda intersecta a região
             origins.append((row, col, x, y))
-            x   += STRIDE_M
+            x   += STRIDE_DEG
             col += 1
-        y   -= STRIDE_M
+        y   -= STRIDE_DEG
         row += 1
     return origins
 
@@ -227,23 +234,24 @@ def generate_patch_origins(minx: float, miny: float,
 # 5. FUNÇÕES — DOWNLOAD E SALVAMENTO
 # ==============================================================================
 
-def _request_patch(image_serialized: dict,
-                   ox: float, oy: float) -> np.ndarray:
+def _request_patch(image: ee.Image, ox: float, oy: float) -> np.ndarray:
     """
     Baixa um patch 256×256 via computePixels().
+    Passa o ee.Image diretamente — o cliente EE serializa internamente.
     Retorna numpy structured array com um campo por banda.
     """
     request = {
-        'expression': image_serialized,
+        'expression': image,
         'fileFormat': 'NPY',
+        'bandIds': FEATURE_BANDS,
         'grid': {
             'dimensions': {'width': PATCH_SIZE, 'height': PATCH_SIZE},
             'affineTransform': {
-                'scaleX':     SCALE,
+                'scaleX':     SCALE_DEG,
                 'shearX':     0,
                 'translateX': ox,
                 'shearY':     0,
-                'scaleY':    -SCALE,   # negativo: y decresce para sul
+                'scaleY':    -SCALE_DEG,   # negativo: y decresce para sul
                 'translateY': oy,
             },
             'crsCode': CRS,
@@ -253,12 +261,12 @@ def _request_patch(image_serialized: dict,
     return np.load(io.BytesIO(raw))
 
 
-def download_patch_with_retry(image_serialized, ox: float, oy: float,
+def download_patch_with_retry(image: ee.Image, ox: float, oy: float,
                                label: str) -> np.ndarray:
     """Download com backoff exponencial. Levanta exceção após MAX_RETRIES."""
     for attempt in range(MAX_RETRIES):
         try:
-            return _request_patch(image_serialized, ox, oy)
+            return _request_patch(image, ox, oy)
         except Exception as exc:
             if attempt < MAX_RETRIES - 1:
                 wait = RETRY_WAIT_S * (2 ** attempt)
@@ -299,12 +307,12 @@ def save_patch(arr_hwc: np.ndarray,
         'row':       row,
         'col':       col,
         # convenção GDAL: (scale_x, shear_x, origin_x, shear_y, -scale_y, origin_y)
-        'transform': [SCALE, 0.0, ox, 0.0, -SCALE, oy],
+        'transform': [SCALE_DEG, 0.0, ox, 0.0, -SCALE_DEG, oy],
         'crs':       CRS,
-        'scale_x':   SCALE,   # resolução x em metros/pixel
-        'scale_y':   SCALE,   # resolução y em metros/pixel
-        'origin_x':  ox,      # borda OESTE do patch (metros, EPSG:3857)
-        'origin_y':  oy,      # borda NORTE do patch (metros, EPSG:3857)
+        'scale_x':   SCALE_DEG,   # resolução x em graus/pixel
+        'scale_y':   SCALE_DEG,   # resolução y em graus/pixel
+        'origin_x':  ox,          # borda OESTE do patch (graus, EPSG:4326)
+        'origin_y':  oy,          # borda NORTE do patch (graus, EPSG:4326)
         'width':     PATCH_SIZE,
         'height':    PATCH_SIZE,
         'bands':     FEATURE_BANDS,
@@ -326,68 +334,67 @@ def main():
     args = parser.parse_args()
     output_dir = args.output_dir
 
-    projAccount = get_current_account()
-    log.info(f"Projeto selecionado: {projAccount}")
-
-    try:
-        ee.Initialize(project=projAccount)
-        log.info('Earth Engine inicializado com sucesso.')
-    except Exception as e:
-        log.error(f"Erro de inicialização: {e}")
-        raise
-
     log.info("Carregando feature collection de regiões fotovoltaicas...")
-    regions_fc    = ee.FeatureCollection(ASSET_REGIONS)
-    region_list   = regions_fc.toList(regions_fc.size())
-    total_regions = regions_fc.size().getInfo()
+    regions_fc  = ee.FeatureCollection(ASSET_REGIONS)
+    region_list = (regions_fc
+                   .reduceColumns(ee.Reducer.toList(), ['system:index'])
+                   .get('list').getInfo())
+    total_regions = len(region_list)
     log.info(f"Total de regiões: {total_regions} | Processando [{REGION_INIC}:{REGION_END}]")
 
     for year in YEARS:
+        log.info(f"\n{'='*60}")
+        log.info(f"--- Ano {year} ---")
 
-        for cc in range(min(REGION_END - REGION_INIC, total_regions - REGION_INIC)):
+        # Verificação rápida de disponibilidade NICFI para o ano
+        num_nicfi = (ee.ImageCollection(ASSET_NICFI)
+                     .filterDate(f'{year}-06-01', f'{year + 1}-01-01')
+                     .size().getInfo())
+        if num_nicfi == 0:
+            log.warning(f"  Sem imagens NICFI para {year}. "
+                        f"Verifique o acesso ao asset {ASSET_NICFI}. Pulando ano.")
+            continue
+
+        for cc, id_feat in enumerate(region_list[REGION_INIC: REGION_END]):
             global_idx = REGION_INIC + cc
-            feature    = ee.Feature(region_list.get(global_idx))
-            geom       = feature.geometry()
+            id_safe    = str(id_feat).replace('/', '_').replace(':', '_')
 
-            feat_id      = feature.get('system:index').getInfo() or f'{global_idx:04d}'
-            feat_id_safe = str(feat_id).replace('/', '_').replace(':', '_')
+            log.info(f"\n[{global_idx + 1}/{total_regions}] Região: {id_safe}")
 
-            log.info(f"\n{'='*60}")
-            log.info(f"[{global_idx + 1}/{total_regions}] Região: {feat_id_safe}")
+            feature = ee.Feature(
+                regions_fc.filter(ee.Filter.eq('system:index', id_feat)).first())
+            geom = feature.geometry()
 
             try:
-                minx, miny, maxx, maxy = get_bbox_3857(geom)
+                minx, miny, maxx, maxy = get_bbox_4326(geom)
             except Exception as exc:
                 log.error(f"  Erro ao obter bbox: {exc} — pulando.")
                 continue
 
             origins = generate_patch_origins(minx, miny, maxx, maxy)
             log.info(f"  Grade: {len(origins)} patches "
-                    f"(stride {STRIDE_PIXELS}px = {STRIDE_M:.0f}m | "
-                    f"patch {PATCH_SIZE}px = {PATCH_SIZE_M:.0f}m)")
+                     f"(stride {STRIDE_PIXELS}px = {STRIDE_DEG:.6f}° | "
+                     f"patch {PATCH_SIZE}px = {PATCH_SIZE_DEG:.6f}°)")
 
             if not origins:
                 log.warning("  Nenhum patch gerado. Pulando.")
                 continue
 
-            log.info(f"\n  --- Ano {year} ---")
-
-            out_dir = output_dir / feat_id_safe / str(year)
+            out_dir = output_dir / id_safe / str(year)
             out_dir.mkdir(parents=True, exist_ok=True)
 
-            # Monta imagem e serializa UMA VEZ por (região, ano)
-            image            = build_full_stack(year, geom)
-            image_serialized = ee.serializer.encode(image, for_cloud_api=True)
+            # Monta imagem UMA VEZ por (região, ano) — passada diretamente ao computePixels
+            image = build_full_stack(year, geom)
 
             n_existing = len(list(out_dir.glob('patch_*.npy')))
             log.info(f"  Já no disco: {n_existing}/{len(origins)}")
 
-            patch_iter = tqdm(origins, desc=f"{feat_id_safe}/{year}",
-                            unit="patch", disable=not HAS_TQDM)
+            patch_iter = tqdm(origins, desc=f"{id_safe}/{year}",
+                              unit="patch", disable=not HAS_TQDM)
             downloaded = skipped = failed = 0
 
             for row, col, ox, oy in patch_iter:
-                npy_path = out_dir / f"patch_r{row:04d}_c{col:04d}_{year}.npy"
+                npy_path = out_dir / f"patch_r{row:04d}_c{col:04d}.npy"
 
                 # resume — pula patches já baixados
                 if npy_path.exists():
@@ -396,10 +403,9 @@ def main():
 
                 patch_label = f"r{row:04d}_c{col:04d}"
                 try:
-                    structured = download_patch_with_retry(
-                        image_serialized, ox, oy, patch_label)
+                    structured = download_patch_with_retry(image, ox, oy, patch_label)
                     arr = structured_to_hwc(structured)
-                    save_patch(arr, ox, oy, year, feat_id_safe, row, col, out_dir)
+                    save_patch(arr, ox, oy, year, id_safe, row, col, out_dir)
                     downloaded += 1
                 except Exception as exc:
                     log.error(f"  Falha definitiva em {patch_label}: {exc}")
@@ -408,8 +414,8 @@ def main():
                     time.sleep(RATE_LIMIT_S)
 
             log.info(f"  Baixados: {downloaded} | "
-                    f"Pulados (já existiam): {skipped} | "
-                    f"Falhas: {failed}")
+                     f"Pulados (já existiam): {skipped} | "
+                     f"Falhas: {failed}")
 
     log.info(f"\nExportação concluída. Log salvo em: {LOG_FILE.resolve()}")
 
