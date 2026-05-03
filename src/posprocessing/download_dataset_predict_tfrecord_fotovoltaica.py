@@ -85,7 +85,7 @@ ASSET_NICFI   = 'projects/planet-nicfi/assets/basemaps/americas'
 
 OUTPUT_DIR    = Path('/dados/dataset_fotovoltaica_npy')   # ← padrão; sobrescrito por --output-dir
 
-YEARS         = list(range(2016, 2026))
+YEARS         = list(range(2023, 2026))
 PATCH_SIZE    = 256      # pixels
 SCALE_M       = 4.77     # metros/pixel — resolução nativa NICFI Planet
 STRIDE_PIXELS = 230      # espaçamento entre patches em pixels
