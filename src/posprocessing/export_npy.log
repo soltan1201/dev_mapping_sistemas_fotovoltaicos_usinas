@@ -109,3 +109,5 @@
 [1/88] Região: 00000000000000000000
 2026-05-03 12:15:49,151 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
 2026-05-03 12:15:49,154 [INFO]   Já no disco: 0/121
+2026-05-03 18:30:56,447 [WARNING] Encountered 403 Forbidden with reason "PERMISSION_DENIED"
+2026-05-03 18:33:37,064 [WARNING] Encountered 403 Forbidden with reason "PERMISSION_DENIED"
