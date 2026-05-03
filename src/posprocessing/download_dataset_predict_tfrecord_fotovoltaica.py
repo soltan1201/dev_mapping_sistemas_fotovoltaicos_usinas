@@ -294,8 +294,9 @@ def save_patch(arr_hwc: np.ndarray,
       (scale_x, shear_x, origin_x, shear_y, -scale_y, origin_y)
     Permite reconstrução direta com:
       rasterio.transform.from_gdal(*meta['transform'])
+      f"patch_{id_feat}_r{row:04d}_c{col:04d}_{year}.npy"
     """
-    fname     = f"patch_r{row:04d}_c{col:04d}"
+    fname     = f"patch_{region_id}_r{row:04d}_c{col:04d}_{year}"
     npy_path  = out_dir / f"{fname}.npy"
     json_path = out_dir / f"{fname}.json"
 
@@ -394,14 +395,14 @@ def main():
             downloaded = skipped = failed = 0
 
             for row, col, ox, oy in patch_iter:
-                npy_path = out_dir / f"patch_r{row:04d}_c{col:04d}.npy"
+                npy_path = out_dir / f"patch_{id_feat}_r{row:04d}_c{col:04d}_{year}.npy"
 
                 # resume — pula patches já baixados
                 if npy_path.exists():
                     skipped += 1
                     continue
 
-                patch_label = f"r{row:04d}_c{col:04d}"
+                patch_label =f"patch_{id_feat}_r{row:04d}_c{col:04d}_{year}.npy"
                 try:
                     structured = download_patch_with_retry(image, ox, oy, patch_label)
                     arr = structured_to_hwc(structured)
