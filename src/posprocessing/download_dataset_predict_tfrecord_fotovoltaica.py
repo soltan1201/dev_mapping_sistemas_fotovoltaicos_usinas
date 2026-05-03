@@ -377,7 +377,7 @@ def main():
 
             # Monta imagem e serializa UMA VEZ por (região, ano)
             image            = build_full_stack(year, geom)
-            image_serialized = ee.serializer.encode(image)
+            image_serialized = ee.serializer.encode(image, for_cloud_api=True)
 
             n_existing = len(list(out_dir.glob('patch_*.npy')))
             log.info(f"  Já no disco: {n_existing}/{len(origins)}")

@@ -143,6 +143,8 @@ Baixa patches **256×256×8** (sem label) diretamente para disco local via `ee.d
 cd src/posprocessing
 python download_dataset_predict_fotovoltaica.py \
     --output-dir /dados/dataset_fotovoltaica_npy
+
+python download_dataset_predict_tfrecord_fotovoltaica.py --output-dir ~/db_images/dataset_fotovoltaica_npy
 ```
 
 Parâmetros a ajustar no cabeçalho do script:
