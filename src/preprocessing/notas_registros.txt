@@ -55,3 +55,8 @@ https://code.earthengine.google.com/7cbfdd44d3e11eda14b3bf81eca8d012
 
 asset_região to map 
 'projects/mapbiomas-arida/update_02_05_2026_buffer_fotovoltaic_5km'
+
+
+
+
+python download_dataset_predict_tfrecord_fotovoltaica.py --output dir ~/db_images/dataset_fotovoltaica_npy

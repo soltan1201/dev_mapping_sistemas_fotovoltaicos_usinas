@@ -38,9 +38,28 @@ except ImportError:
     def tqdm(it, **kw):
         return it
 
-pathparent = str(Path(os.getcwd()).parents[1])
+# pathparent = str(Path(os.getcwd()).parents[1])
+# sys.path.append(pathparent)
+# from configure_account_projects_ee import get_current_account
+import collections
+collections.Callable = collections.abc.Callable
+
+pathparent = str(Path(os.getcwd()).parents[0])
 sys.path.append(pathparent)
-from configure_account_projects_ee import get_current_account
+print("parents ", pathparent)
+from configure_account_projects_ee import get_current_account, get_project_from_account
+from gee_tools import *
+projAccount = get_current_account()
+print(f"projetos selecionado >>> {projAccount} <<<")
+
+try:
+    ee.Initialize(project= projAccount)
+    print('The Earth Engine package initialized successfully!')
+except ee.EEException as e:
+    print('The Earth Engine package failed to initialize!')
+except:
+    print("Unexpected error:", sys.exc_info()[0])
+    raise
 
 # ==============================================================================
 # 1. LOGGING
