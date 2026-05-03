@@ -2,3 +2,4 @@ src/dados/*
 src/models/*
 src/prompts/*
 !src/models/.gitkeep
+*.keras
