@@ -1,0 +1,62 @@
+Script criado em posprocessing/download_dataset_npy_fotovoltaica.py. Estrutura do que foi feito:
+
+Saída em disco por patch:
+
+
+OUTPUT_DIR/
+  <region_id>/
+    <year>/
+      patch_r0000_c0000.npy   →  (256, 256, 9) int16
+      patch_r0000_c0000.json  →  transform + metadados
+JSON de metadado — tudo que o predict precisa para georreferência:
+
+
+{
+  "transform": [4.77, 0.0, -4328901.3, 0.0, -4.77, -832144.6],
+  "crs": "EPSG:3857",
+  "scale_x": 4.77,
+  "scale_y": 4.77,
+  "origin_x": -4328901.3,   ← borda OESTE do patch
+  "origin_y": -832144.6,    ← borda NORTE do patch
+  "bands": ["blue","green","red","nir","pvi","iia","ri","evi","label"]
+}
+No predict, reconstrução com rasterio é direta:
+
+
+import rasterio.transform
+transform = rasterio.transform.from_gdal(*meta['transform'])
+Destaques do script:
+
+ee.serializer.encode(image) chamado uma vez por (região, ano) — não por patch
+Resume automático — pula .npy que já existem no disco
+Retry com backoff exponencial — 5 tentativas, wait inicial 15s dobrado a cada falha
+RATE_LIMIT_S = 1.2s entre requests — evita throttle do GEE
+Grade alinhada à grade global de pixels do GEE (floor em x, ceil em y) — consistência com computePixels
+
+
+
+
+# Heavyweight Focus U-Net + EfficientNetB3 + HFL — configuração recomendada
+factory = SegmentationModelFactory(
+    segmentation_head='unet',
+    backbone_name='efficientnetb3',
+    input_shape=(256, 256, 9),
+    use_attention=True,
+    focal_gamma=1.25          # aumentar para 2.0 se o fundo dominar demais
+)
+model = factory.build()
+factory.compile_model(loss='hybrid_focal')   # HFL obrigatória com use_attention=True
+
+
+Correções aplicadas em download_dataset_tfrecord_fotovoltaica.py:
+
+sys.exit() comentado (linha 253) — estava impedindo o loop de rodar além da 1ª região.
+Removido .clip(geom) + adicionado .unmask(0) — o mosaico NICFI não é mais clipado antes de neighborhoodToArray, e pixels sem dado (nodata de nuvem, borda) são preenchidos com 0 em vez de mascarados. Todos os pontos da grade entram no TFRecord, independente de ter ou não painel.
+Notebook criado em visualize_tfrecord_patches_colab.ipynb:
+
+Seção 5: estatísticas de balanceamento (% positivos/negativos, pixels de painel por patch)
+Seção 6: histogramas de distribuição
+Seção 7: patches aleatórios (qualquer classe)
+Seção 8: somente patches com painel
+Seção 9: somente patches sem painel — com aviso de diagnóstico se não encontrar nenhum
+Seção 10: visualização de todas as bandas de um patch individual
