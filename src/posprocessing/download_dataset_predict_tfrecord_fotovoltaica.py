@@ -368,7 +368,7 @@ def main():
             downloaded = skipped = failed = 0
 
             for row, col, ox, oy in patch_iter:
-                npy_path = out_dir / f"patch_r{row:04d}_c{col:04d}.npy"
+                npy_path = out_dir / f"patch_r{row:04d}_c{col:04d}_{year}.npy"
 
                 # resume — pula patches já baixados
                 if npy_path.exists():
