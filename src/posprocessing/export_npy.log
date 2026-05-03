@@ -111,3 +111,13 @@
 2026-05-03 12:15:49,154 [INFO]   Já no disco: 0/121
 2026-05-03 18:30:56,447 [WARNING] Encountered 403 Forbidden with reason "PERMISSION_DENIED"
 2026-05-03 18:33:37,064 [WARNING] Encountered 403 Forbidden with reason "PERMISSION_DENIED"
+2026-05-03 18:35:51,762 [WARNING] Encountered 403 Forbidden with reason "PERMISSION_DENIED"
+2026-05-03 18:37:30,468 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 18:37:30,882 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 18:37:30,883 [INFO] 
+============================================================
+2026-05-03 18:37:30,883 [INFO] --- Ano 2016 ---
+2026-05-03 18:37:31,199 [INFO] 
+[1/88] Região: 00000000000000000000
+2026-05-03 18:37:32,278 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 18:37:32,286 [INFO]   Já no disco: 0/121
