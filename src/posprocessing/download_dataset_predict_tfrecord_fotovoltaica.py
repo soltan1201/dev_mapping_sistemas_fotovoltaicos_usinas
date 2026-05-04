@@ -389,11 +389,14 @@ def main():
             out_dir = output_dir / id_safe / str(year)
             out_dir.mkdir(parents=True, exist_ok=True)
 
-            # Monta imagem UMA VEZ por (região, ano) — passada diretamente ao computePixels
-            image = build_full_stack(year, geom)
-
             n_existing = len(list(out_dir.glob('patch_*.npy')))
             log.info(f"  Já no disco: {n_existing}/{len(origins)}")
+            if n_existing >= len(origins):
+                log.info("  Todos os patches já existem. Pulando.")
+                continue
+
+            # Monta imagem UMA VEZ por (região, ano) — passada diretamente ao computePixels
+            image = build_full_stack(year, geom)
 
             patch_iter = tqdm(origins, desc=f"{id_safe}/{year}",
                               unit="patch", disable=not HAS_TQDM)
