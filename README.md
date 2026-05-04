@@ -144,7 +144,7 @@ cd src/posprocessing
 python download_dataset_predict_fotovoltaica.py \
     --output-dir /dados/dataset_fotovoltaica_npy
 
-python download_dataset_predict_tfrecord_fotovoltaica.py --output-dir ~/db_images/dataset_fotovoltaica_npy
+python download_dataset_predict_tfrecord_fotovoltaica.py --output-dir ~/db_images/dataset_fotovoltaica_npy --year_inic 2016 --year_end 2022
 ```
 
 Parâmetros a ajustar no cabeçalho do script:

@@ -105,7 +105,7 @@ RATE_LIMIT_S   = 1.2   # pausa entre requests — respeita cota GEE (~1 req/s)
 
 # Intervalo de regiões a processar
 REGION_INIC = 0
-REGION_END  = 50
+REGION_END  = 90
 
 # Normalização por percentil das bandas brutas do mosaico
 dict_percentil = {
@@ -332,8 +332,13 @@ def main():
     parser = argparse.ArgumentParser(description='Download patches NICFI → NPY local')
     parser.add_argument('--output-dir', type=Path, default=OUTPUT_DIR,
                         help=f'Diretório de saída dos patches (padrão: {OUTPUT_DIR})')
+    parser.add_argument('--year_inic', type=int, default=YEARS[0],
+                        help=f'Ano inicial do intervalo (padrão: {YEARS[0]})')
+    parser.add_argument('--year_end', type=int, default=YEARS[-1],
+                        help=f'Ano final do intervalo, inclusivo (padrão: {YEARS[-1]})')
     args = parser.parse_args()
     output_dir = args.output_dir
+    years = list(range(args.year_inic, args.year_end + 1))
 
     log.info("Carregando feature collection de regiões fotovoltaicas...")
     regions_fc  = ee.FeatureCollection(ASSET_REGIONS)
@@ -343,7 +348,7 @@ def main():
     total_regions = len(region_list)
     log.info(f"Total de regiões: {total_regions} | Processando [{REGION_INIC}:{REGION_END}]")
 
-    for year in YEARS:
+    for year in years:
         log.info(f"\n{'='*60}")
         log.info(f"--- Ano {year} ---")
 
