@@ -121,3 +121,626 @@
 [1/88] Região: 00000000000000000000
 2026-05-03 18:37:32,278 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
 2026-05-03 18:37:32,286 [INFO]   Já no disco: 0/121
+2026-05-03 18:39:30,948 [INFO] Carregando feature collection de regiões fotovoltaicas...
+2026-05-03 18:39:31,371 [INFO] Total de regiões: 88 | Processando [0:50]
+2026-05-03 18:39:31,371 [INFO] 
+============================================================
+2026-05-03 18:39:31,372 [INFO] --- Ano 2023 ---
+2026-05-03 18:39:31,735 [INFO] 
+[1/88] Região: 00000000000000000000
+2026-05-03 18:39:32,029 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 18:39:32,044 [INFO]   Já no disco: 0/121
+2026-05-03 18:46:08,656 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 18:46:08,657 [INFO] 
+[2/88] Região: 00000000000000000001
+2026-05-03 18:46:08,983 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 18:46:08,997 [INFO]   Já no disco: 0/120
+2026-05-03 18:52:32,870 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 18:52:32,870 [INFO] 
+[3/88] Região: 00000000000000000002
+2026-05-03 18:52:33,179 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 18:52:33,193 [INFO]   Já no disco: 0/132
+2026-05-03 18:59:32,753 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 18:59:32,754 [INFO] 
+[4/88] Região: 00000000000000000003
+2026-05-03 18:59:33,096 [INFO]   Grade: 63 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 18:59:33,101 [INFO]   Já no disco: 0/63
+2026-05-03 19:02:51,805 [INFO]   Baixados: 63 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:02:51,806 [INFO] 
+[5/88] Região: 00000000000000000004
+2026-05-03 19:02:52,143 [INFO]   Grade: 9 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:02:52,157 [INFO]   Já no disco: 0/9
+2026-05-03 19:03:20,583 [INFO]   Baixados: 9 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:03:20,583 [INFO] 
+[6/88] Região: 00000000000000000005
+2026-05-03 19:03:20,937 [INFO]   Grade: 90 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:03:20,943 [INFO]   Já no disco: 0/90
+2026-05-03 19:08:12,186 [INFO]   Baixados: 90 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:08:12,187 [INFO] 
+[7/88] Região: 00000000000000000006
+2026-05-03 19:08:12,579 [INFO]   Grade: 238 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:08:12,584 [INFO]   Já no disco: 0/238
+2026-05-03 19:20:49,112 [INFO]   Baixados: 238 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:20:49,112 [INFO] 
+[8/88] Região: 00000000000000000007
+2026-05-03 19:20:49,478 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:20:49,483 [INFO]   Já no disco: 0/110
+2026-05-03 19:26:46,502 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:26:46,502 [INFO] 
+[9/88] Região: 00000000000000000008
+2026-05-03 19:26:46,841 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:26:46,855 [INFO]   Já no disco: 0/132
+2026-05-03 19:33:43,220 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:33:43,221 [INFO] 
+[10/88] Região: 00000000000000000009
+2026-05-03 19:33:43,598 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:33:43,604 [INFO]   Já no disco: 0/121
+2026-05-03 19:40:10,779 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:40:10,780 [INFO] 
+[11/88] Região: 0000000000000000000a
+2026-05-03 19:40:11,122 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:40:11,127 [INFO]   Já no disco: 0/156
+2026-05-03 19:48:45,954 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 19:48:45,955 [INFO] 
+[12/88] Região: 0000000000000000000b
+2026-05-03 19:48:46,284 [INFO]   Grade: 240 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 19:48:46,298 [INFO]   Já no disco: 0/240
+2026-05-03 20:01:39,297 [INFO]   Baixados: 240 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:01:39,297 [INFO] 
+[13/88] Região: 0000000000000000000c
+2026-05-03 20:01:39,677 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:01:39,683 [INFO]   Já no disco: 0/120
+2026-05-03 20:07:57,966 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:07:57,967 [INFO] 
+[14/88] Região: 0000000000000000000d
+2026-05-03 20:07:58,326 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:07:58,332 [INFO]   Já no disco: 0/156
+2026-05-03 20:16:19,591 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:16:19,592 [INFO] 
+[15/88] Região: 0000000000000000000e
+2026-05-03 20:16:20,003 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:16:20,009 [INFO]   Já no disco: 0/121
+2026-05-03 20:22:45,902 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:22:45,902 [INFO] 
+[16/88] Região: 0000000000000000000f
+2026-05-03 20:22:46,206 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:22:46,221 [INFO]   Já no disco: 0/121
+2026-05-03 20:32:34,669 [WARNING] Sleeping 1.37 seconds before retry 1 of 5 for request: POST https://earthengine.googleapis.com/v1/projects/mapbiomas-caatinga-cloud04/image:computePixels?, after 502
+2026-05-03 20:33:18,581 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:33:18,582 [INFO] 
+[17/88] Região: 00000000000000000010
+2026-05-03 20:33:18,930 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:33:18,936 [INFO]   Já no disco: 0/120
+2026-05-03 20:40:07,741 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:40:07,741 [INFO] 
+[18/88] Região: 00000000000000000011
+2026-05-03 20:40:08,777 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:40:08,782 [INFO]   Já no disco: 0/110
+2026-05-03 20:46:04,298 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:46:04,299 [INFO] 
+[19/88] Região: 00000000000000000012
+2026-05-03 20:46:04,628 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:46:04,642 [INFO]   Já no disco: 0/110
+2026-05-03 20:51:58,529 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 20:51:58,529 [INFO] 
+[20/88] Região: 00000000000000000013
+2026-05-03 20:51:58,915 [INFO]   Grade: 576 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 20:51:58,920 [INFO]   Já no disco: 0/576
+2026-05-03 21:24:14,718 [INFO]   Baixados: 576 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 21:24:14,719 [INFO] 
+[21/88] Região: 00000000000000000014
+2026-05-03 21:24:15,076 [INFO]   Grade: 130 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 21:24:15,091 [INFO]   Já no disco: 0/130
+2026-05-03 21:31:05,913 [INFO]   Baixados: 130 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 21:31:05,913 [INFO] 
+[22/88] Região: 00000000000000000015
+2026-05-03 21:31:06,307 [INFO]   Grade: 357 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 21:31:06,313 [INFO]   Já no disco: 0/357
+2026-05-03 21:50:27,083 [INFO]   Baixados: 357 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 21:50:27,083 [INFO] 
+[23/88] Região: 00000000000000000016
+2026-05-03 21:50:27,422 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 21:50:27,428 [INFO]   Já no disco: 0/182
+2026-05-03 22:00:57,917 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 22:00:57,917 [INFO] 
+[24/88] Região: 00000000000000000017
+2026-05-03 22:00:59,034 [INFO]   Grade: 140 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 22:00:59,040 [INFO]   Já no disco: 0/140
+2026-05-03 22:08:51,575 [INFO]   Baixados: 140 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 22:08:51,576 [INFO] 
+[25/88] Região: 00000000000000000018
+2026-05-03 22:08:51,941 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 22:08:51,947 [INFO]   Já no disco: 0/156
+2026-05-03 22:17:27,714 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 22:17:27,714 [INFO] 
+[26/88] Região: 00000000000000000019
+2026-05-03 22:17:28,080 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 22:17:28,088 [INFO]   Já no disco: 0/100
+2026-05-03 22:23:03,201 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 22:23:03,201 [INFO] 
+[27/88] Região: 0000000000000000001a
+2026-05-03 22:23:04,394 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 22:23:04,400 [INFO]   Já no disco: 0/110
+2026-05-03 22:29:08,650 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 22:29:08,650 [INFO] 
+[28/88] Região: 0000000000000000001b
+2026-05-03 22:29:09,696 [INFO]   Grade: 594 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 22:29:09,702 [INFO]   Já no disco: 0/594
+2026-05-03 23:01:33,465 [INFO]   Baixados: 594 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:01:33,466 [INFO] 
+[29/88] Região: 0000000000000000001c
+2026-05-03 23:01:33,860 [INFO]   Grade: 255 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:01:33,866 [INFO]   Já no disco: 0/255
+2026-05-03 23:15:13,692 [INFO]   Baixados: 255 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:15:13,692 [INFO] 
+[30/88] Região: 0000000000000000001d
+2026-05-03 23:15:14,064 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:15:14,072 [INFO]   Já no disco: 0/100
+2026-05-03 23:20:30,190 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:20:30,190 [INFO] 
+[31/88] Região: 0000000000000000001e
+2026-05-03 23:20:30,498 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:20:30,512 [INFO]   Já no disco: 0/100
+2026-05-03 23:25:56,302 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:25:56,302 [INFO] 
+[32/88] Região: 0000000000000000001f
+2026-05-03 23:25:56,640 [INFO]   Grade: 238 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:25:56,654 [INFO]   Já no disco: 0/238
+2026-05-03 23:38:43,251 [INFO]   Baixados: 238 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:38:43,251 [INFO] 
+[33/88] Região: 00000000000000000020
+2026-05-03 23:38:43,592 [INFO]   Grade: 225 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:38:43,598 [INFO]   Já no disco: 0/225
+2026-05-03 23:51:00,063 [INFO]   Baixados: 225 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:51:00,063 [INFO] 
+[34/88] Região: 00000000000000000021
+2026-05-03 23:51:00,420 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:51:00,426 [INFO]   Já no disco: 0/100
+2026-05-03 23:56:16,989 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-03 23:56:16,989 [INFO] 
+[35/88] Região: 00000000000000000022
+2026-05-03 23:56:17,318 [INFO]   Grade: 221 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-03 23:56:17,332 [INFO]   Já no disco: 0/221
+2026-05-04 00:08:11,290 [INFO]   Baixados: 221 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:08:11,291 [INFO] 
+[36/88] Região: 00000000000000000023
+2026-05-04 00:08:11,620 [INFO]   Grade: 195 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:08:11,634 [INFO]   Já no disco: 0/195
+2026-05-04 00:18:57,382 [INFO]   Baixados: 195 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:18:57,383 [INFO] 
+[37/88] Região: 00000000000000000024
+2026-05-04 00:18:57,684 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:18:57,698 [INFO]   Já no disco: 0/100
+2026-05-04 00:24:13,349 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:24:13,349 [INFO] 
+[38/88] Região: 00000000000000000025
+2026-05-04 00:24:13,731 [INFO]   Grade: 143 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:24:13,736 [INFO]   Já no disco: 0/143
+2026-05-04 00:31:54,123 [INFO]   Baixados: 143 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:31:54,124 [INFO] 
+[39/88] Região: 00000000000000000026
+2026-05-04 00:31:54,430 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:31:54,444 [INFO]   Já no disco: 0/156
+2026-05-04 00:42:40,163 [WARNING] Sleeping 1.36 seconds before retry 1 of 5 for request: POST https://earthengine.googleapis.com/v1/projects/mapbiomas-caatinga-cloud04/image:computePixels?, after 502
+2026-05-04 00:43:53,291 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:43:53,291 [INFO] 
+[40/88] Região: 00000000000000000027
+2026-05-04 00:43:54,504 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:43:54,510 [INFO]   Já no disco: 0/100
+2026-05-04 00:49:40,472 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:49:40,472 [INFO] 
+[41/88] Região: 00000000000000000028
+2026-05-04 00:49:40,829 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:49:40,834 [INFO]   Já no disco: 0/100
+2026-05-04 00:55:20,903 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 00:55:20,903 [INFO] 
+[42/88] Região: 00000000000000000029
+2026-05-04 00:55:21,229 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 00:55:21,242 [INFO]   Já no disco: 0/121
+2026-05-04 01:02:08,288 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:02:08,288 [INFO] 
+[43/88] Região: 0000000000000000002a
+2026-05-04 01:02:09,376 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:02:09,382 [INFO]   Já no disco: 0/100
+2026-05-04 01:07:47,175 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:07:47,175 [INFO] 
+[44/88] Região: 0000000000000000002b
+2026-05-04 01:07:47,493 [INFO]   Grade: 144 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:07:47,507 [INFO]   Já no disco: 0/144
+2026-05-04 01:16:00,825 [INFO]   Baixados: 144 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:16:00,825 [INFO] 
+[45/88] Região: 0000000000000000002c
+2026-05-04 01:16:01,153 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:16:01,167 [INFO]   Já no disco: 0/100
+2026-05-04 01:21:27,260 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:21:27,261 [INFO] 
+[46/88] Região: 0000000000000000002d
+2026-05-04 01:21:27,588 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:21:27,603 [INFO]   Já no disco: 0/182
+2026-05-04 01:31:29,802 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:31:29,802 [INFO] 
+[47/88] Região: 0000000000000000002e
+2026-05-04 01:31:30,189 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:31:30,195 [INFO]   Já no disco: 0/182
+2026-05-04 01:41:31,780 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:41:31,780 [INFO] 
+[48/88] Região: 0000000000000000002f
+2026-05-04 01:41:32,995 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:41:33,001 [INFO]   Já no disco: 0/100
+2026-05-04 01:47:19,962 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:47:19,963 [INFO] 
+[49/88] Região: 00000000000000000030
+2026-05-04 01:47:20,325 [INFO]   Grade: 144 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:47:20,331 [INFO]   Já no disco: 0/144
+2026-05-04 01:55:18,642 [INFO]   Baixados: 144 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 01:55:18,643 [INFO] 
+[50/88] Região: 00000000000000000031
+2026-05-04 01:55:19,751 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 01:55:19,757 [INFO]   Já no disco: 0/100
+2026-05-04 02:00:40,686 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:00:40,686 [INFO] 
+============================================================
+2026-05-04 02:00:40,687 [INFO] --- Ano 2024 ---
+2026-05-04 02:00:41,102 [INFO] 
+[1/88] Região: 00000000000000000000
+2026-05-04 02:00:41,469 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:00:41,475 [INFO]   Já no disco: 0/121
+2026-05-04 02:07:22,637 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:07:22,637 [INFO] 
+[2/88] Região: 00000000000000000001
+2026-05-04 02:07:22,985 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:07:22,991 [INFO]   Já no disco: 0/120
+2026-05-04 02:13:59,078 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:13:59,079 [INFO] 
+[3/88] Região: 00000000000000000002
+2026-05-04 02:13:59,432 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:13:59,437 [INFO]   Já no disco: 0/132
+2026-05-04 02:21:10,923 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:21:10,923 [INFO] 
+[4/88] Região: 00000000000000000003
+2026-05-04 02:21:11,291 [INFO]   Grade: 63 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:21:11,306 [INFO]   Já no disco: 0/63
+2026-05-04 02:24:39,808 [INFO]   Baixados: 63 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:24:39,809 [INFO] 
+[5/88] Região: 00000000000000000004
+2026-05-04 02:24:40,174 [INFO]   Grade: 9 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:24:40,180 [INFO]   Já no disco: 0/9
+2026-05-04 02:25:09,158 [INFO]   Baixados: 9 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:25:09,158 [INFO] 
+[6/88] Região: 00000000000000000005
+2026-05-04 02:25:09,508 [INFO]   Grade: 90 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:25:09,514 [INFO]   Já no disco: 0/90
+2026-05-04 02:29:52,769 [INFO]   Baixados: 90 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:29:52,769 [INFO] 
+[7/88] Região: 00000000000000000006
+2026-05-04 02:29:53,082 [INFO]   Grade: 238 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:29:53,096 [INFO]   Já no disco: 0/238
+2026-05-04 02:42:50,081 [INFO]   Baixados: 238 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:42:50,081 [INFO] 
+[8/88] Região: 00000000000000000007
+2026-05-04 02:42:51,171 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:42:51,177 [INFO]   Já no disco: 0/110
+2026-05-04 02:49:06,790 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:49:06,791 [INFO] 
+[9/88] Região: 00000000000000000008
+2026-05-04 02:49:08,063 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:49:08,068 [INFO]   Já no disco: 0/132
+2026-05-04 02:56:31,238 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 02:56:31,238 [INFO] 
+[10/88] Região: 00000000000000000009
+2026-05-04 02:56:32,446 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 02:56:32,452 [INFO]   Já no disco: 0/121
+2026-05-04 03:03:02,523 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:03:02,523 [INFO] 
+[11/88] Região: 0000000000000000000a
+2026-05-04 03:03:03,540 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:03:03,546 [INFO]   Já no disco: 0/156
+2026-05-04 03:11:40,422 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:11:40,422 [INFO] 
+[12/88] Região: 0000000000000000000b
+2026-05-04 03:11:40,818 [INFO]   Grade: 240 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:11:40,823 [INFO]   Já no disco: 0/240
+2026-05-04 03:25:02,642 [INFO]   Baixados: 240 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:25:02,642 [INFO] 
+[13/88] Região: 0000000000000000000c
+2026-05-04 03:25:03,008 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:25:03,023 [INFO]   Já no disco: 0/120
+2026-05-04 03:31:41,206 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:31:41,207 [INFO] 
+[14/88] Região: 0000000000000000000d
+2026-05-04 03:31:42,258 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:31:42,264 [INFO]   Já no disco: 0/156
+2026-05-04 03:40:15,696 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:40:15,696 [INFO] 
+[15/88] Região: 0000000000000000000e
+2026-05-04 03:40:16,722 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:40:16,728 [INFO]   Já no disco: 0/121
+2026-05-04 03:47:16,232 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:47:16,232 [INFO] 
+[16/88] Região: 0000000000000000000f
+2026-05-04 03:47:16,650 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:47:16,656 [INFO]   Já no disco: 0/121
+2026-05-04 03:54:09,407 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 03:54:09,408 [INFO] 
+[17/88] Região: 00000000000000000010
+2026-05-04 03:54:09,757 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 03:54:09,762 [INFO]   Já no disco: 0/120
+2026-05-04 04:01:00,332 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 04:01:00,332 [INFO] 
+[18/88] Região: 00000000000000000011
+2026-05-04 04:01:01,379 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 04:01:01,385 [INFO]   Já no disco: 0/110
+2026-05-04 04:07:36,379 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 04:07:36,379 [INFO] 
+[19/88] Região: 00000000000000000012
+2026-05-04 04:07:37,432 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 04:07:37,438 [INFO]   Já no disco: 0/110
+2026-05-04 04:13:49,211 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 04:13:49,211 [INFO] 
+[20/88] Região: 00000000000000000013
+2026-05-04 04:13:49,588 [INFO]   Grade: 576 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 04:13:49,594 [INFO]   Já no disco: 0/576
+2026-05-04 04:45:31,479 [INFO]   Baixados: 576 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 04:45:31,480 [INFO] 
+[21/88] Região: 00000000000000000014
+2026-05-04 04:45:32,521 [INFO]   Grade: 130 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 04:45:32,528 [INFO]   Já no disco: 0/130
+2026-05-04 04:52:57,651 [INFO]   Baixados: 130 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 04:52:57,652 [INFO] 
+[22/88] Região: 00000000000000000015
+2026-05-04 04:52:58,033 [INFO]   Grade: 357 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 04:52:58,039 [INFO]   Já no disco: 0/357
+2026-05-04 05:12:56,786 [INFO]   Baixados: 357 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:12:56,786 [INFO] 
+[23/88] Região: 00000000000000000016
+2026-05-04 05:12:57,121 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:12:57,126 [INFO]   Já no disco: 0/182
+2026-05-04 05:23:27,637 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:23:27,637 [INFO] 
+[24/88] Região: 00000000000000000017
+2026-05-04 05:23:27,988 [INFO]   Grade: 140 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:23:27,994 [INFO]   Já no disco: 0/140
+2026-05-04 05:31:36,149 [INFO]   Baixados: 140 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:31:36,149 [INFO] 
+[25/88] Região: 00000000000000000018
+2026-05-04 05:31:36,775 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:31:36,781 [INFO]   Já no disco: 0/156
+2026-05-04 05:40:18,497 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:40:18,497 [INFO] 
+[26/88] Região: 00000000000000000019
+2026-05-04 05:40:18,784 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:40:18,798 [INFO]   Já no disco: 0/100
+2026-05-04 05:46:02,944 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:46:02,944 [INFO] 
+[27/88] Região: 0000000000000000001a
+2026-05-04 05:46:03,316 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:46:03,323 [INFO]   Já no disco: 0/110
+2026-05-04 05:52:14,680 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 05:52:14,680 [INFO] 
+[28/88] Região: 0000000000000000001b
+2026-05-04 05:52:15,012 [INFO]   Grade: 594 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 05:52:15,026 [INFO]   Já no disco: 0/594
+2026-05-04 06:25:24,814 [INFO]   Baixados: 594 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 06:25:24,815 [INFO] 
+[29/88] Região: 0000000000000000001c
+2026-05-04 06:25:25,919 [INFO]   Grade: 255 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 06:25:25,924 [INFO]   Já no disco: 0/255
+2026-05-04 06:39:27,863 [INFO]   Baixados: 255 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 06:39:27,863 [INFO] 
+[30/88] Região: 0000000000000000001d
+2026-05-04 06:39:28,167 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 06:39:28,180 [INFO]   Já no disco: 0/100
+2026-05-04 06:45:16,553 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 06:45:16,554 [INFO] 
+[31/88] Região: 0000000000000000001e
+2026-05-04 06:45:16,882 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 06:45:16,890 [INFO]   Já no disco: 0/100
+2026-05-04 06:50:56,249 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 06:50:56,250 [INFO] 
+[32/88] Região: 0000000000000000001f
+2026-05-04 06:50:57,417 [INFO]   Grade: 238 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 06:50:57,423 [INFO]   Já no disco: 0/238
+2026-05-04 07:04:32,841 [INFO]   Baixados: 238 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:04:32,842 [INFO] 
+[33/88] Região: 00000000000000000020
+2026-05-04 07:04:33,152 [INFO]   Grade: 225 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:04:33,165 [INFO]   Já no disco: 0/225
+2026-05-04 07:17:20,587 [INFO]   Baixados: 225 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:17:20,588 [INFO] 
+[34/88] Região: 00000000000000000021
+2026-05-04 07:17:20,981 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:17:20,987 [INFO]   Já no disco: 0/100
+2026-05-04 07:22:57,525 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:22:57,525 [INFO] 
+[35/88] Região: 00000000000000000022
+2026-05-04 07:22:57,931 [INFO]   Grade: 221 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:22:57,937 [INFO]   Já no disco: 0/221
+2026-05-04 07:35:18,073 [INFO]   Baixados: 221 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:35:18,074 [INFO] 
+[36/88] Região: 00000000000000000023
+2026-05-04 07:35:18,452 [INFO]   Grade: 195 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:35:18,457 [INFO]   Já no disco: 0/195
+2026-05-04 07:46:20,446 [INFO]   Baixados: 195 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:46:20,446 [INFO] 
+[37/88] Região: 00000000000000000024
+2026-05-04 07:46:21,671 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:46:21,680 [INFO]   Já no disco: 0/100
+2026-05-04 07:52:09,400 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:52:09,401 [INFO] 
+[38/88] Região: 00000000000000000025
+2026-05-04 07:52:10,412 [INFO]   Grade: 143 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:52:10,418 [INFO]   Já no disco: 0/143
+2026-05-04 07:59:58,854 [INFO]   Baixados: 143 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 07:59:58,855 [INFO] 
+[39/88] Região: 00000000000000000026
+2026-05-04 07:59:59,196 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 07:59:59,210 [INFO]   Já no disco: 0/156
+2026-05-04 08:08:24,398 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:08:24,398 [INFO] 
+[40/88] Região: 00000000000000000027
+2026-05-04 08:08:24,787 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:08:24,793 [INFO]   Já no disco: 0/100
+2026-05-04 08:13:48,536 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:13:48,536 [INFO] 
+[41/88] Região: 00000000000000000028
+2026-05-04 08:13:48,878 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:13:48,893 [INFO]   Já no disco: 0/100
+2026-05-04 08:19:10,421 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:19:10,421 [INFO] 
+[42/88] Região: 00000000000000000029
+2026-05-04 08:19:10,764 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:19:10,770 [INFO]   Já no disco: 0/121
+2026-05-04 08:25:36,823 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:25:36,823 [INFO] 
+[43/88] Região: 0000000000000000002a
+2026-05-04 08:25:37,235 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:25:37,241 [INFO]   Já no disco: 0/100
+2026-05-04 08:31:00,444 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:31:00,444 [INFO] 
+[44/88] Região: 0000000000000000002b
+2026-05-04 08:31:00,816 [INFO]   Grade: 144 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:31:00,821 [INFO]   Já no disco: 0/144
+2026-05-04 08:38:51,919 [INFO]   Baixados: 144 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:38:51,920 [INFO] 
+[45/88] Região: 0000000000000000002c
+2026-05-04 08:38:52,992 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:38:52,997 [INFO]   Já no disco: 0/100
+2026-05-04 08:44:19,025 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:44:19,025 [INFO] 
+[46/88] Região: 0000000000000000002d
+2026-05-04 08:44:19,364 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:44:19,378 [INFO]   Já no disco: 0/182
+2026-05-04 08:54:10,752 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 08:54:10,752 [INFO] 
+[47/88] Região: 0000000000000000002e
+2026-05-04 08:54:11,118 [INFO]   Grade: 182 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 08:54:11,124 [INFO]   Já no disco: 0/182
+2026-05-04 09:03:48,976 [INFO]   Baixados: 182 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:03:48,977 [INFO] 
+[48/88] Região: 0000000000000000002f
+2026-05-04 09:03:50,021 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:03:50,027 [INFO]   Já no disco: 0/100
+2026-05-04 09:09:15,670 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:09:15,670 [INFO] 
+[49/88] Região: 00000000000000000030
+2026-05-04 09:09:16,026 [INFO]   Grade: 144 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:09:16,032 [INFO]   Já no disco: 0/144
+2026-05-04 09:17:04,450 [INFO]   Baixados: 144 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:17:04,451 [INFO] 
+[50/88] Região: 00000000000000000031
+2026-05-04 09:17:04,777 [INFO]   Grade: 100 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:17:04,790 [INFO]   Já no disco: 0/100
+2026-05-04 09:22:32,461 [INFO]   Baixados: 100 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:22:32,461 [INFO] 
+============================================================
+2026-05-04 09:22:32,461 [INFO] --- Ano 2025 ---
+2026-05-04 09:22:32,822 [INFO] 
+[1/88] Região: 00000000000000000000
+2026-05-04 09:22:33,188 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:22:33,194 [INFO]   Já no disco: 0/121
+2026-05-04 09:29:00,763 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:29:00,763 [INFO] 
+[2/88] Região: 00000000000000000001
+2026-05-04 09:29:02,019 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:29:02,025 [INFO]   Já no disco: 0/120
+2026-05-04 09:35:26,733 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:35:26,733 [INFO] 
+[3/88] Região: 00000000000000000002
+2026-05-04 09:35:27,913 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:35:27,919 [INFO]   Já no disco: 0/132
+2026-05-04 09:42:31,656 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:42:31,656 [INFO] 
+[4/88] Região: 00000000000000000003
+2026-05-04 09:42:33,335 [INFO]   Grade: 63 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:42:33,341 [INFO]   Já no disco: 0/63
+2026-05-04 09:46:00,912 [INFO]   Baixados: 63 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:46:00,912 [INFO] 
+[5/88] Região: 00000000000000000004
+2026-05-04 09:46:01,276 [INFO]   Grade: 9 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:46:01,281 [INFO]   Já no disco: 0/9
+2026-05-04 09:46:30,485 [INFO]   Baixados: 9 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:46:30,486 [INFO] 
+[6/88] Região: 00000000000000000005
+2026-05-04 09:46:30,828 [INFO]   Grade: 90 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:46:30,834 [INFO]   Já no disco: 0/90
+2026-05-04 09:51:26,079 [INFO]   Baixados: 90 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 09:51:26,079 [INFO] 
+[7/88] Região: 00000000000000000006
+2026-05-04 09:51:26,403 [INFO]   Grade: 238 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 09:51:26,416 [INFO]   Já no disco: 0/238
+2026-05-04 10:04:11,740 [INFO]   Baixados: 238 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:04:11,740 [INFO] 
+[8/88] Região: 00000000000000000007
+2026-05-04 10:04:12,853 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:04:12,858 [INFO]   Já no disco: 0/110
+2026-05-04 10:10:17,900 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:10:17,901 [INFO] 
+[9/88] Região: 00000000000000000008
+2026-05-04 10:10:18,312 [INFO]   Grade: 132 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:10:18,320 [INFO]   Já no disco: 0/132
+2026-05-04 10:17:13,457 [INFO]   Baixados: 132 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:17:13,458 [INFO] 
+[10/88] Região: 00000000000000000009
+2026-05-04 10:17:14,016 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:17:14,022 [INFO]   Já no disco: 0/121
+2026-05-04 10:23:40,119 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:23:40,120 [INFO] 
+[11/88] Região: 0000000000000000000a
+2026-05-04 10:23:40,459 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:23:40,464 [INFO]   Já no disco: 0/156
+2026-05-04 10:31:59,215 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:31:59,215 [INFO] 
+[12/88] Região: 0000000000000000000b
+2026-05-04 10:31:59,566 [INFO]   Grade: 240 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:31:59,572 [INFO]   Já no disco: 0/240
+2026-05-04 10:44:43,843 [INFO]   Baixados: 240 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:44:43,844 [INFO] 
+[13/88] Região: 0000000000000000000c
+2026-05-04 10:44:44,191 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:44:44,197 [INFO]   Já no disco: 0/120
+2026-05-04 10:51:07,098 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:51:07,098 [INFO] 
+[14/88] Região: 0000000000000000000d
+2026-05-04 10:51:07,448 [INFO]   Grade: 156 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:51:07,453 [INFO]   Já no disco: 0/156
+2026-05-04 10:59:32,805 [INFO]   Baixados: 156 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 10:59:32,806 [INFO] 
+[15/88] Região: 0000000000000000000e
+2026-05-04 10:59:33,277 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 10:59:33,283 [INFO]   Já no disco: 0/121
+2026-05-04 11:06:00,164 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 11:06:00,165 [INFO] 
+[16/88] Região: 0000000000000000000f
+2026-05-04 11:06:00,594 [INFO]   Grade: 121 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 11:06:00,600 [INFO]   Já no disco: 0/121
+2026-05-04 11:12:28,796 [INFO]   Baixados: 121 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 11:12:28,797 [INFO] 
+[17/88] Região: 00000000000000000010
+2026-05-04 11:12:29,183 [INFO]   Grade: 120 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 11:12:29,189 [INFO]   Já no disco: 0/120
+2026-05-04 11:18:51,699 [INFO]   Baixados: 120 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 11:18:51,700 [INFO] 
+[18/88] Região: 00000000000000000011
+2026-05-04 11:18:52,012 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 11:18:52,025 [INFO]   Já no disco: 0/110
+2026-05-04 11:24:50,317 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 11:24:50,318 [INFO] 
+[19/88] Região: 00000000000000000012
+2026-05-04 11:24:50,640 [INFO]   Grade: 110 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 11:24:50,653 [INFO]   Já no disco: 0/110
+2026-05-04 11:30:37,926 [INFO]   Baixados: 110 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 11:30:37,926 [INFO] 
+[20/88] Região: 00000000000000000013
+2026-05-04 11:30:38,257 [INFO]   Grade: 576 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 11:30:38,270 [INFO]   Já no disco: 0/576
+2026-05-04 11:49:41,434 [WARNING] Sleeping 1.76 seconds before retry 1 of 5 for request: POST https://earthengine.googleapis.com/v1/projects/mapbiomas-caatinga-cloud04/image:computePixels?, after 503
+2026-05-04 12:01:26,751 [INFO]   Baixados: 576 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 12:01:26,752 [INFO] 
+[21/88] Região: 00000000000000000014
+2026-05-04 12:01:27,201 [INFO]   Grade: 130 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 12:01:27,209 [INFO]   Já no disco: 0/130
+2026-05-04 12:08:25,384 [INFO]   Baixados: 130 | Pulados (já existiam): 0 | Falhas: 0
+2026-05-04 12:08:25,384 [INFO] 
+[22/88] Região: 00000000000000000015
+2026-05-04 12:08:25,725 [INFO]   Grade: 357 patches (stride 230px = 0.009855° | patch 256px = 0.010970°)
+2026-05-04 12:08:25,730 [INFO]   Já no disco: 0/357
