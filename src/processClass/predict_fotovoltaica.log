@@ -1,0 +1,121 @@
+2026-05-07 22:51:51,595 [INFO] ============================================================
+2026-05-07 22:51:51,595 [INFO] Modelo      : /models/best_unet_resnet101_20260502.keras
+2026-05-07 22:51:51,595 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 22:51:51,595 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 22:51:51,595 [INFO] Threshold   : 0.5
+2026-05-07 22:51:51,595 [INFO] Batch size  : 16
+2026-05-07 22:51:51,595 [INFO] Anos        : todos
+2026-05-07 22:51:51,595 [INFO] Regiões     : todas
+2026-05-07 22:51:51,596 [INFO] ============================================================
+2026-05-07 22:51:52,478 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 22:51:52,478 [INFO] Carregando modelo: /models/best_unet_resnet101_20260502.keras
+2026-05-07 22:51:52,479 [ERROR] Falha ao carregar modelo: File not found: filepath=/models/best_unet_resnet101_20260502.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-07 22:53:27,470 [INFO] ============================================================
+2026-05-07 22:53:27,471 [INFO] Modelo      : src/models/best_unet_resnet101_20260502.keras
+2026-05-07 22:53:27,471 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 22:53:27,471 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 22:53:27,471 [INFO] Threshold   : 0.5
+2026-05-07 22:53:27,471 [INFO] Batch size  : 16
+2026-05-07 22:53:27,471 [INFO] Anos        : todos
+2026-05-07 22:53:27,471 [INFO] Regiões     : todas
+2026-05-07 22:53:27,471 [INFO] ============================================================
+2026-05-07 22:53:27,628 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 22:53:27,628 [INFO] Carregando modelo: src/models/best_unet_resnet101_20260502.keras
+2026-05-07 22:53:27,628 [ERROR] Falha ao carregar modelo: File not found: filepath=src/models/best_unet_resnet101_20260502.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-07 22:56:23,734 [INFO] ============================================================
+2026-05-07 22:56:23,734 [INFO] Modelo      : models/best_unet_resnet101_20260502.keras
+2026-05-07 22:56:23,734 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 22:56:23,734 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 22:56:23,735 [INFO] Threshold   : 0.5
+2026-05-07 22:56:23,735 [INFO] Batch size  : 16
+2026-05-07 22:56:23,735 [INFO] Anos        : todos
+2026-05-07 22:56:23,735 [INFO] Regiões     : todas
+2026-05-07 22:56:23,735 [INFO] ============================================================
+2026-05-07 22:56:23,894 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 22:56:23,894 [INFO] Carregando modelo: models/best_unet_resnet101_20260502.keras
+2026-05-07 22:56:23,894 [ERROR] Falha ao carregar modelo: File not found: filepath=models/best_unet_resnet101_20260502.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-07 23:01:34,182 [INFO] ============================================================
+2026-05-07 23:01:34,182 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:01:34,182 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 23:01:34,182 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:01:34,182 [INFO] Threshold   : 0.5
+2026-05-07 23:01:34,182 [INFO] Batch size  : 16
+2026-05-07 23:01:34,182 [INFO] Anos        : todos
+2026-05-07 23:01:34,182 [INFO] Regiões     : todas
+2026-05-07 23:01:34,182 [INFO] ============================================================
+2026-05-07 23:01:34,334 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:01:34,334 [INFO] Carregando modelo: models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:01:34,334 [ERROR] Falha ao carregar modelo: File not found: filepath=models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-07 23:06:51,667 [INFO] ============================================================
+2026-05-07 23:06:51,667 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:06:51,667 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 23:06:51,667 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:06:51,667 [INFO] Threshold   : 0.5
+2026-05-07 23:06:51,668 [INFO] Batch size  : 16
+2026-05-07 23:06:51,668 [INFO] Anos        : todos
+2026-05-07 23:06:51,668 [INFO] Regiões     : todas
+2026-05-07 23:06:51,668 [INFO] ============================================================
+2026-05-07 23:06:52,605 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:06:52,605 [INFO] Carregando modelo: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:06:55,930 [INFO] Modelo carregado  |  input=(None, 256, 256, 8)  output=(None, 256, 256, 1)
+2026-05-07 23:06:55,938 [INFO] [TFRecord] Fonte: /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS
+2026-05-07 23:06:55,956 [INFO] [TFRecord] Predições salvas: 0
+2026-05-07 23:06:55,957 [INFO] Concluído. Log: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/processClass/predict_fotovoltaica.log
+2026-05-07 23:16:13,304 [INFO] ============================================================
+2026-05-07 23:16:13,305 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:16:13,305 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 23:16:13,305 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:16:13,305 [INFO] Threshold   : 0.5
+2026-05-07 23:16:13,305 [INFO] Batch size  : 16
+2026-05-07 23:16:13,305 [INFO] Anos        : todos
+2026-05-07 23:16:13,305 [INFO] Regiões     : todas
+2026-05-07 23:16:13,305 [INFO] ============================================================
+2026-05-07 23:16:14,135 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:16:14,136 [INFO] Carregando modelo: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:16:17,362 [INFO] Modelo carregado  |  input=(None, 256, 256, 8)  output=(None, 256, 256, 1)
+2026-05-07 23:16:17,377 [INFO] [TFRecord] Fonte: /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS
+2026-05-07 23:16:17,394 [INFO] [TFRecord] Predições salvas: 0
+2026-05-07 23:16:17,394 [INFO] Concluído. Log: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/processClass/predict_fotovoltaica.log
+2026-05-07 23:16:39,683 [INFO] ============================================================
+2026-05-07 23:16:39,683 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:16:39,683 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 23:16:39,683 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:16:39,683 [INFO] Threshold   : 0.5
+2026-05-07 23:16:39,683 [INFO] Batch size  : 2
+2026-05-07 23:16:39,683 [INFO] Anos        : todos
+2026-05-07 23:16:39,683 [INFO] Regiões     : todas
+2026-05-07 23:16:39,683 [INFO] ============================================================
+2026-05-07 23:16:39,840 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:16:39,840 [INFO] Carregando modelo: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:16:42,737 [INFO] Modelo carregado  |  input=(None, 256, 256, 8)  output=(None, 256, 256, 1)
+2026-05-07 23:16:42,737 [INFO] [TFRecord] Fonte: /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS
+2026-05-07 23:16:42,743 [INFO] [TFRecord] Predições salvas: 0
+2026-05-07 23:16:42,743 [INFO] Concluído. Log: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/processClass/predict_fotovoltaica.log
+2026-05-07 23:18:37,359 [INFO] ============================================================
+2026-05-07 23:18:37,359 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:18:37,359 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [tfrecord]
+2026-05-07 23:18:37,359 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:18:37,359 [INFO] Threshold   : 0.5
+2026-05-07 23:18:37,360 [INFO] Batch size  : 2
+2026-05-07 23:18:37,360 [INFO] Anos        : todos
+2026-05-07 23:18:37,360 [INFO] Regiões     : todas
+2026-05-07 23:18:37,360 [INFO] ============================================================
+2026-05-07 23:18:37,663 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:18:37,663 [INFO] Carregando modelo: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:18:40,771 [INFO] Modelo carregado  |  input=(None, 256, 256, 8)  output=(None, 256, 256, 1)
+2026-05-07 23:18:40,785 [INFO] [TFRecord] Fonte: /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS
+2026-05-07 23:18:40,823 [WARNING] Nenhum arquivo .tfrecord encontrado em /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS (encontrados 2876 arquivos .npy — use --input-format npy)
+2026-05-07 23:18:40,823 [INFO] Concluído. Log: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/processClass/predict_fotovoltaica.log
+2026-05-07 23:20:12,668 [INFO] ============================================================
+2026-05-07 23:20:12,668 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:20:12,669 [INFO] Entrada     : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS  [npy]
+2026-05-07 23:20:12,669 [INFO] Saída       : /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS/predict_fotovoltaica
+2026-05-07 23:20:12,669 [INFO] Threshold   : 0.5
+2026-05-07 23:20:12,669 [INFO] Batch size  : 2
+2026-05-07 23:20:12,669 [INFO] Anos        : todos
+2026-05-07 23:20:12,669 [INFO] Regiões     : todas
+2026-05-07 23:20:12,669 [INFO] ============================================================
+2026-05-07 23:20:12,951 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-07 23:20:12,951 [INFO] Carregando modelo: /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-07 23:20:15,999 [INFO] Modelo carregado  |  input=(None, 256, 256, 8)  output=(None, 256, 256, 1)
+2026-05-07 23:20:16,000 [INFO] [NPY] Fonte: /run/media/superuser/Almacen/imgDB/DS_FV_NICFI_TFRECORDS
