@@ -1,0 +1,72 @@
+2026-05-09 00:34:08,675 [INFO] ============================================================
+2026-05-09 00:34:08,675 [INFO] Modelo      : /models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:34:08,675 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:34:08,675 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:34:08,675 [INFO] Threshold   : 0.5
+2026-05-09 00:34:08,675 [INFO] Batch size  : 8
+2026-05-09 00:34:08,675 [INFO] Anos        : todos
+2026-05-09 00:34:08,675 [INFO] Regiões     : todas
+2026-05-09 00:34:08,675 [INFO] ============================================================
+2026-05-09 00:34:09,652 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:34:09,652 [INFO] Carregando modelo: /models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:34:09,653 [ERROR] Falha ao carregar modelo: File not found: filepath=/models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-09 00:35:04,856 [INFO] ============================================================
+2026-05-09 00:35:04,856 [INFO] Modelo      : models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:35:04,856 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:35:04,856 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:35:04,856 [INFO] Threshold   : 0.5
+2026-05-09 00:35:04,856 [INFO] Batch size  : 8
+2026-05-09 00:35:04,856 [INFO] Anos        : todos
+2026-05-09 00:35:04,856 [INFO] Regiões     : todas
+2026-05-09 00:35:04,856 [INFO] ============================================================
+2026-05-09 00:35:05,006 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:35:05,006 [INFO] Carregando modelo: models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:35:05,006 [ERROR] Falha ao carregar modelo: File not found: filepath=models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-09 00:38:21,091 [INFO] ============================================================
+2026-05-09 00:38:21,091 [INFO] Modelo      : /home/superusuario/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:38:21,091 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:38:21,091 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:38:21,091 [INFO] Threshold   : 0.5
+2026-05-09 00:38:21,091 [INFO] Batch size  : 8
+2026-05-09 00:38:21,091 [INFO] Anos        : todos
+2026-05-09 00:38:21,091 [INFO] Regiões     : todas
+2026-05-09 00:38:21,091 [INFO] ============================================================
+2026-05-09 00:38:21,229 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:38:21,229 [INFO] Carregando modelo: /home/superusuario/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:38:21,229 [ERROR] Falha ao carregar modelo: File not found: filepath=/home/superusuario/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-09 00:38:57,832 [INFO] ============================================================
+2026-05-09 00:38:57,832 [INFO] Modelo      : /home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:38:57,832 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:38:57,832 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:38:57,832 [INFO] Threshold   : 0.5
+2026-05-09 00:38:57,832 [INFO] Batch size  : 8
+2026-05-09 00:38:57,832 [INFO] Anos        : todos
+2026-05-09 00:38:57,832 [INFO] Regiões     : todas
+2026-05-09 00:38:57,832 [INFO] ============================================================
+2026-05-09 00:38:57,970 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:38:57,970 [INFO] Carregando modelo: /home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:38:57,970 [ERROR] Falha ao carregar modelo: File not found: filepath=/home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-09 00:44:30,446 [INFO] ============================================================
+2026-05-09 00:44:30,446 [INFO] Modelo      : /home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:44:30,446 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:44:30,446 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:44:30,446 [INFO] Threshold   : 0.5
+2026-05-09 00:44:30,446 [INFO] Batch size  : 8
+2026-05-09 00:44:30,446 [INFO] Anos        : todos
+2026-05-09 00:44:30,446 [INFO] Regiões     : todas
+2026-05-09 00:44:30,447 [INFO] ============================================================
+2026-05-09 00:44:30,584 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:44:30,584 [INFO] Carregando modelo: /home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:44:30,584 [ERROR] Falha ao carregar modelo: File not found: filepath=/home/superusuario/Dados/proj/dev_mapping_sistemas_fotovoltaicos_usinas/src/models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
+2026-05-09 00:48:55,868 [INFO] ============================================================
+2026-05-09 00:48:55,868 [INFO] Modelo      : /home/superusuario/Projetos/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:48:55,868 [INFO] Entrada     : /home/superusuario/db_images/dataset_fotovoltaica_npy  [npy]
+2026-05-09 00:48:55,868 [INFO] Saída       : /home/superusuario/db_images/predict_fotovoltaica
+2026-05-09 00:48:55,868 [INFO] Threshold   : 0.5
+2026-05-09 00:48:55,868 [INFO] Batch size  : 8
+2026-05-09 00:48:55,868 [INFO] Anos        : todos
+2026-05-09 00:48:55,868 [INFO] Regiões     : todas
+2026-05-09 00:48:55,868 [INFO] ============================================================
+2026-05-09 00:48:56,017 [INFO] GPU(s) disponível(is): ['/physical_device:GPU:0']
+2026-05-09 00:48:56,018 [INFO] Carregando modelo: /home/superusuario/Projetos/models/best_unet_resnet50_20260430_0257.keras
+2026-05-09 00:48:56,018 [ERROR] Falha ao carregar modelo: File not found: filepath=/home/superusuario/Projetos/models/best_unet_resnet50_20260430_0257.keras. Please ensure the file is an accessible `.keras` zip file.
