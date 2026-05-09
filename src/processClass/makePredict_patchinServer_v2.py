@@ -301,7 +301,7 @@ def predict_npy(model, input_dir: Path, output_dir: Path,
                     for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
                         save_prediction(pred, m, odir, threshold, model_path)
                         total_saved += 1
-                    log.info(f'  salvos: {total_saved}')
+                    log.info(f'  region: {region_dir.name}  <>  year: {year_dir.name}  <>  salvos: {total_saved}')
                     batch_arrays, batch_metas, batch_outdirs = [], [], []
 
             # flush patches residuais do year_dir (pasta com menos de batch_size imagens)
@@ -310,7 +310,7 @@ def predict_npy(model, input_dir: Path, output_dir: Path,
                 for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
                     save_prediction(pred, m, odir, threshold, model_path)
                     total_saved += 1
-                log.info(f'  salvos (residual {year_dir.name}): {total_saved}')
+                log.info(f'  region: {region_dir.name}  <>  year: {year_dir.name}  <>  salvos (residual): {total_saved}')
                 batch_arrays, batch_metas, batch_outdirs = [], [], []
 
     log.info(f'[NPY] Predições salvas: {total_saved}')
