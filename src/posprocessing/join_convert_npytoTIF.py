@@ -147,10 +147,15 @@ def main():
     parser.add_argument('--output-dir',  type=Path, required=True,
                         help='Pasta de saída dos GeoTIFF (estrutura plana)')
     parser.add_argument('--years',   type=int, nargs='+', default=None,
-                        help='Anos a processar (padrão: todos)')
+                        help='Anos a processar: dois valores = intervalo inclusivo '
+                             '(ex: --years 2022 2025 → 2022..2025); '
+                             'um ou mais de dois = lista explícita')
     parser.add_argument('--regions', type=str, nargs='+', default=None,
                         help='IDs de região a processar (padrão: todos)')
     args = parser.parse_args()
+
+    if args.years and len(args.years) == 2:
+        args.years = list(range(args.years[0], args.years[1] + 1))
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -160,7 +165,7 @@ def main():
         if args.regions and region_dir.name not in args.regions:
             continue
 
-        region_base = region_dir.name[:-5]  # remove sufixo (ex: "_2023")
+        region_base = region_dir.name
 
         for year_dir in sorted(region_dir.iterdir()):
             if not year_dir.is_dir() or not year_dir.name.isdigit():
