@@ -73,8 +73,85 @@ log = logging.getLogger(__name__)
 # ==============================================================================
 # 2. CUSTOM OBJECTS
 # ==============================================================================
+## célula no. 24
+@keras.utils.register_keras_serializable(package='Custom')
+def dice_coef(y_true, y_pred, smooth=1e-6):
+    y_true_f = kops.reshape(kops.cast(y_true, 'float32'), [-1])
+    y_pred_f = kops.reshape(kops.cast(y_pred, 'float32'), [-1])
+    intersection = kops.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (kops.sum(y_true_f) + kops.sum(y_pred_f) + smooth)
 
-CUSTOM_OBJECTS = build_custom_objects()
+@keras.utils.register_keras_serializable(package='Custom')
+def dice_loss(y_true, y_pred):
+    return 1.0 - dice_coef(y_true, y_pred)
+
+@keras.utils.register_keras_serializable(package='RemoteSensing')
+def focal_tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, gamma=1.25, smooth=1e-6):
+    """
+    Focal Tversky Loss — alpha=0.3, beta=0.7 foca em Recall (reduz FN).
+    Captura estruturas finas/esparsas que Dice/BCE ignoram.
+    """
+    y_true = kops.cast(y_true, 'float32')
+    y_pred = kops.cast(y_pred, 'float32')
+    y_true_f = kops.reshape(y_true, [-1])
+    y_pred_f = kops.reshape(y_pred, [-1])
+    tp = kops.sum(y_true_f * y_pred_f)
+    fp = kops.sum((1 - y_true_f) * y_pred_f)
+    fn = kops.sum(y_true_f * (1 - y_pred_f))
+    tversky_index = (tp + smooth) / (tp + alpha * fp + beta * fn + smooth)
+    return kops.power((1 - tversky_index), gamma)
+
+
+@keras.utils.register_keras_serializable(package='RemoteSensing')
+def boundary_loss(y_true, y_pred, smooth=1e-6):
+    """
+    BCE concentrado nos pixels de borda do GT.
+    Borda = dilatação morfológica − erosão (kernel 3×3).
+    Força o modelo a ser preciso nos contornos — reduz bordas arredondadas.
+    """
+    y_true = kops.cast(y_true, 'float32')
+    y_pred = kops.cast(y_pred, 'float32')
+
+    # Morfologia diferenciável via max-pool 3×3
+    dilated  =  tf.nn.max_pool2d( y_true, ksize=3, strides=1, padding='SAME')
+    eroded   = -tf.nn.max_pool2d(-y_true, ksize=3, strides=1, padding='SAME')
+    boundary = dilated - eroded   # (B, H, W, 1) — pixels exatamente na borda do GT
+
+    # BCE pixel a pixel estável numericamente
+    p   = kops.clip(y_pred, 1e-7, 1.0 - 1e-7)
+    bce = -(y_true * kops.log(p) + (1 - y_true) * kops.log(1 - p))
+
+    # Gradiente concentrado nos pixels de borda
+    return kops.sum(bce * boundary) / (kops.sum(boundary) + smooth)
+
+
+@keras.utils.register_keras_serializable(package='RemoteSensing')
+def focal_tversky_boundary_loss(y_true, y_pred,
+                                 alpha=0.3, beta=0.7, gamma=1.25,
+                                 boundary_weight=0.85, smooth=1e-6):
+    """
+    Focal Tversky  +  Boundary Loss.
+      Tversky  (peso 1.0) → captura estruturas finas, penaliza FN
+      Boundary (peso 0.5) → nitidez nas bordas, penaliza erros no contorno
+    Total ≈ 67 % Tversky + 33 % Boundary.
+    """
+    tversky  = focal_tversky_loss(y_true, y_pred, alpha=alpha, beta=beta,
+                                   gamma=gamma, smooth=smooth)
+    boundary = boundary_loss(y_true, y_pred, smooth=smooth)
+    return tversky + boundary_weight * boundary
+
+
+print('Losses e métricas definidas:')
+print('  focal_tversky_loss          (alpha=0.3  beta=0.7  gamma=1.25)')
+print('  boundary_loss               (kernel 3×3  morfologia diferenciável)')
+print('  focal_tversky_boundary_loss (tversky + 0.5 × boundary)')
+# CUSTOM_OBJECTS = build_custom_objects()
+CUSTOM_OBJECTS = {
+    'dice_coef': dice_coef, # métrica
+    'focal_tversky_boundary_loss': focal_tversky_boundary_loss, # loss
+    'ResizeLike': ResizeLike # Adiciona a camada customizada
+}
+
 
 # ==============================================================================
 # 3. CONFIGURAÇÕES
