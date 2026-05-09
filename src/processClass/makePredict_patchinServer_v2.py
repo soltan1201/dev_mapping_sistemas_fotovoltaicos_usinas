@@ -9,7 +9,7 @@ Roda predição sobre patches 256×256×8 gerados por:
 
 Uso:
   python makePredict_patchinServer_v2.py \\
-      --model-path  /modelos/best_unet_resnet101.keras \\
+      --model-path  /modelos/best_unet_resnet50_20260430_0257.keras \\
       --input-dir   /dados/dataset_fotovoltaica_npy \\
       --input-format npy \\
       --output-dir  /dados/predict_fotovoltaica \\
@@ -43,17 +43,18 @@ except ImportError:
     def tqdm(it, **kw):
         return it
 
-# Adiciona o diretório deste script ao path para importar a factory
+# Registra todos os custom objects com os packages corretos (igual ao Colab)
 _HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(_HERE))
-from segmentation_model_factory import (
-    ResizeLike,
-    dice_coef,
-    dice_loss,
-    bce_dice_loss,
-    hybrid_focal_loss,
+pathparent = str(Path(os.getcwd()).parents[0])
+print(pathparent)
+from custom_losses import (
+    build_custom_objects,
+    dice_coef, dice_loss,
+    focal_tversky_loss, boundary_loss, focal_tversky_boundary_loss,
 )
-
+from segmentation_model_factory import ResizeLike, bce_dice_loss, hybrid_focal_loss
+# sys.exit()
 # ==============================================================================
 # 1. LOGGING
 # ==============================================================================
@@ -70,34 +71,57 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ==============================================================================
-# 2. CUSTOM OBJECTS — definidos no colab (cell 23) mas não na factory
-#    Precisam ser registrados ANTES de tf.keras.models.load_model()
+# 2. CUSTOM OBJECTS
 # ==============================================================================
+## célula no. 24
+@keras.utils.register_keras_serializable(package='Custom')
+def dice_coef(y_true, y_pred, smooth=1e-6):
+    y_true_f = kops.reshape(kops.cast(y_true, 'float32'), [-1])
+    y_pred_f = kops.reshape(kops.cast(y_pred, 'float32'), [-1])
+    intersection = kops.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (kops.sum(y_true_f) + kops.sum(y_pred_f) + smooth)
+
+@keras.utils.register_keras_serializable(package='Custom')
+def dice_loss(y_true, y_pred):
+    return 1.0 - dice_coef(y_true, y_pred)
 
 @keras.utils.register_keras_serializable(package='RemoteSensing')
 def focal_tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, gamma=1.25, smooth=1e-6):
-    """Focal Tversky Loss — alpha=0.3, beta=0.7 foca em Recall (reduz FN)."""
-    y_true   = kops.cast(y_true, 'float32')
-    y_pred   = kops.cast(y_pred, 'float32')
+    """
+    Focal Tversky Loss — alpha=0.3, beta=0.7 foca em Recall (reduz FN).
+    Captura estruturas finas/esparsas que Dice/BCE ignoram.
+    """
+    y_true = kops.cast(y_true, 'float32')
+    y_pred = kops.cast(y_pred, 'float32')
     y_true_f = kops.reshape(y_true, [-1])
     y_pred_f = kops.reshape(y_pred, [-1])
     tp = kops.sum(y_true_f * y_pred_f)
     fp = kops.sum((1 - y_true_f) * y_pred_f)
     fn = kops.sum(y_true_f * (1 - y_pred_f))
-    tversky = (tp + smooth) / (tp + alpha * fp + beta * fn + smooth)
-    return kops.power((1 - tversky), gamma)
+    tversky_index = (tp + smooth) / (tp + alpha * fp + beta * fn + smooth)
+    return kops.power((1 - tversky_index), gamma)
 
 
 @keras.utils.register_keras_serializable(package='RemoteSensing')
 def boundary_loss(y_true, y_pred, smooth=1e-6):
-    """BCE concentrado nos pixels de borda do GT (morfologia 3×3 diferenciável)."""
+    """
+    BCE concentrado nos pixels de borda do GT.
+    Borda = dilatação morfológica − erosão (kernel 3×3).
+    Força o modelo a ser preciso nos contornos — reduz bordas arredondadas.
+    """
     y_true = kops.cast(y_true, 'float32')
     y_pred = kops.cast(y_pred, 'float32')
+
+    # Morfologia diferenciável via max-pool 3×3
     dilated  =  tf.nn.max_pool2d( y_true, ksize=3, strides=1, padding='SAME')
     eroded   = -tf.nn.max_pool2d(-y_true, ksize=3, strides=1, padding='SAME')
-    boundary = dilated - eroded
+    boundary = dilated - eroded   # (B, H, W, 1) — pixels exatamente na borda do GT
+
+    # BCE pixel a pixel estável numericamente
     p   = kops.clip(y_pred, 1e-7, 1.0 - 1e-7)
     bce = -(y_true * kops.log(p) + (1 - y_true) * kops.log(1 - p))
+
+    # Gradiente concentrado nos pixels de borda
     return kops.sum(bce * boundary) / (kops.sum(boundary) + smooth)
 
 
@@ -105,40 +129,37 @@ def boundary_loss(y_true, y_pred, smooth=1e-6):
 def focal_tversky_boundary_loss(y_true, y_pred,
                                  alpha=0.3, beta=0.7, gamma=1.25,
                                  boundary_weight=0.85, smooth=1e-6):
-    """Focal Tversky + Boundary Loss (loss principal usada no treinamento)."""
-    tversky  = focal_tversky_loss(y_true, y_pred,
-                                   alpha=alpha, beta=beta, gamma=gamma, smooth=smooth)
+    """
+    Focal Tversky  +  Boundary Loss.
+      Tversky  (peso 1.0) → captura estruturas finas, penaliza FN
+      Boundary (peso 0.5) → nitidez nas bordas, penaliza erros no contorno
+    Total ≈ 67 % Tversky + 33 % Boundary.
+    """
+    tversky  = focal_tversky_loss(y_true, y_pred, alpha=alpha, beta=beta,
+                                   gamma=gamma, smooth=smooth)
     boundary = boundary_loss(y_true, y_pred, smooth=smooth)
     return tversky + boundary_weight * boundary
 
 
-# Mapa completo de custom objects para load_model
+print('Losses e métricas definidas:')
+print('  focal_tversky_loss          (alpha=0.3  beta=0.7  gamma=1.25)')
+print('  boundary_loss               (kernel 3×3  morfologia diferenciável)')
+print('  focal_tversky_boundary_loss (tversky + 0.5 × boundary)')
+# CUSTOM_OBJECTS = build_custom_objects()
 CUSTOM_OBJECTS = {
-    # Da factory
-    'ResizeLike':                  ResizeLike,
-    'dice_coef':                   dice_coef,
-    'dice_loss':                   dice_loss,
-    'bce_dice_loss':               bce_dice_loss,
-    'hybrid_focal_loss':           hybrid_focal_loss,
-    # Do colab (cell 23)
-    'focal_tversky_loss':          focal_tversky_loss,
-    'boundary_loss':               boundary_loss,
-    'focal_tversky_boundary_loss': focal_tversky_boundary_loss,
-    # Compatibilidade com modelos mais antigos (v1)
-    'jaccard_index': lambda y_true, y_pred: (
-        lambda pred: tf.reduce_sum(y_true * pred) /
-                     (tf.reduce_sum(y_true) + tf.reduce_sum(pred)
-                      - tf.reduce_sum(y_true * pred) + tf.keras.backend.epsilon())
-    )(tf.cast(y_pred > 0.5, tf.float32)),
+    'dice_coef': dice_coef, # métrica
+    'focal_tversky_boundary_loss': focal_tversky_boundary_loss, # loss
+    'ResizeLike': ResizeLike # Adiciona a camada customizada
 }
+
 
 # ==============================================================================
 # 3. CONFIGURAÇÕES
 # ==============================================================================
 
-NORM_FACTOR  = 10_000.0
-PATCH_SIZE   = 256
-N_BANDS      = 8
+NORM_FACTOR   = 10_000.0
+PATCH_SIZE    = 256
+N_BANDS       = 8
 FEATURE_BANDS = ['blue', 'green', 'red', 'nir', 'pvi', 'iia', 'ri', 'evi']
 
 # Feature spec para TFRecords gerados por convert_npy_to_tfrecord_fotovoltaica.py
@@ -153,14 +174,43 @@ TFRECORD_FEATURE_SPEC = {
     'meta/crs':       tf.io.FixedLenFeature([], tf.string),
 }
 
+# Feature spec para TFRecords gerados por download_predict_as_tfrecord_fv.py
+# (Export.table.toDrive + neighborhoodToArray — rect(128) → 257×257 por banda)
+_GEE_PATCH_FLAT = 257 * 257   # 66 049 valores por banda
+GEE_TFRECORD_FEATURE_SPEC = {
+    **{b: tf.io.FixedLenFeature([_GEE_PATCH_FLAT], tf.int64) for b in FEATURE_BANDS},
+    'region_id': tf.io.FixedLenFeature([], tf.string),
+    'year':      tf.io.FixedLenFeature([], tf.int64),
+    'latitude':  tf.io.FixedLenFeature([], tf.float32),
+    'longitude': tf.io.FixedLenFeature([], tf.float32),
+}
+
 # ==============================================================================
 # 4. FUNÇÕES — MODELO
 # ==============================================================================
 
+def resolve_model_path(model_path: Path) -> Path:
+    """Resolve o caminho do modelo: tenta CWD, depois src/models/ ao lado do script."""
+    if model_path.exists():
+        return model_path.resolve()
+    alt = _HERE.parent / model_path          # src/<caminho passado>
+    if alt.exists():
+        return alt.resolve()
+    alt2 = _HERE.parent / 'models' / model_path.name   # src/models/<nome>
+    if alt2.exists():
+        return alt2.resolve()
+    available = '\n  '.join(str(p) for p in sorted((_HERE.parent / 'models').glob('*.keras')))
+    raise FileNotFoundError(
+        f"Modelo não encontrado: {model_path}\n"
+        f"Modelos disponíveis em {_HERE.parent / 'models'}:\n  {available or '(nenhum)'}"
+    )
+
+
 def load_model(model_path: str):
-    log.info(f'Carregando modelo: {model_path}')
+    resolved = resolve_model_path(Path(model_path))
+    log.info(f'Carregando modelo: {resolved}')
     try:
-        model = tf.keras.models.load_model(model_path, custom_objects=CUSTOM_OBJECTS)
+        model = tf.keras.models.load_model(str(resolved), custom_objects=CUSTOM_OBJECTS)
         log.info(f'Modelo carregado  |  input={model.input_shape}  output={model.output_shape}')
         return model
     except Exception as exc:
@@ -203,19 +253,24 @@ def save_prediction(pred_hw: np.ndarray, meta: dict, out_dir: Path,
 # 6. MODO NPY
 # ==============================================================================
 
-def iter_npy_batches(input_dir: Path, output_dir: Path,
-                     batch_size: int, filter_years, filter_regions):
-    """Gera batches (arrays_f32, metas, out_dirs) varrendo a estrutura de pastas."""
+def predict_npy(model, input_dir: Path, output_dir: Path,
+                batch_size: int, threshold: float,
+                filter_years, filter_regions, model_path: str):
+    log.info(f'[NPY] Fonte: {input_dir}')
+
+    total_saved = 0
     batch_arrays, batch_metas, batch_outdirs = [], [], []
 
-    for region_dir in sorted(input_dir.iterdir()):
+    for region_dir in input_dir.iterdir():
         if not region_dir.is_dir():
             continue
         if filter_regions and region_dir.name not in filter_regions:
             continue
 
-        for year_dir in sorted(region_dir.iterdir()):
+        for year_dir in region_dir.iterdir():
             if not year_dir.is_dir():
+                continue
+            if not year_dir.name.isdigit():
                 continue
             if filter_years and int(year_dir.name) not in filter_years:
                 continue
@@ -223,7 +278,7 @@ def iter_npy_batches(input_dir: Path, output_dir: Path,
             out_dir = output_dir / region_dir.name / year_dir.name
             out_dir.mkdir(parents=True, exist_ok=True)
 
-            for npy_path in sorted(year_dir.glob('patch_*.npy')):
+            for npy_path in year_dir.glob('patch_*.npy'):
                 json_path = npy_path.with_suffix('.json')
                 pred_path = out_dir / (npy_path.stem + '_pred.npy')
                 if pred_path.exists():
@@ -232,6 +287,7 @@ def iter_npy_batches(input_dir: Path, output_dir: Path,
                 try:
                     arr  = np.load(npy_path).astype(np.float32) / NORM_FACTOR
                     meta = json.loads(json_path.read_text(encoding='utf-8'))
+                    meta.setdefault('region_id', region_dir.name)
                 except Exception as exc:
                     log.error(f'Erro ao ler {npy_path.name}: {exc}')
                     continue
@@ -241,30 +297,21 @@ def iter_npy_batches(input_dir: Path, output_dir: Path,
                 batch_outdirs.append(out_dir)
 
                 if len(batch_arrays) == batch_size:
-                    yield np.stack(batch_arrays), batch_metas, batch_outdirs
+                    preds = model.predict(np.stack(batch_arrays), verbose=0)
+                    for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
+                        save_prediction(pred, m, odir, threshold, model_path)
+                        total_saved += 1
+                    log.info(f'  salvos: {total_saved}')
                     batch_arrays, batch_metas, batch_outdirs = [], [], []
 
-    if batch_arrays:
-        yield np.stack(batch_arrays), batch_metas, batch_outdirs
-
-
-def predict_npy(model, input_dir: Path, output_dir: Path,
-                batch_size: int, threshold: float,
-                filter_years, filter_regions, model_path: str):
-    log.info(f'[NPY] Fonte: {input_dir}')
-
-    batches   = list(iter_npy_batches(input_dir, output_dir,
-                                      batch_size, filter_years, filter_regions))
-    n_patches = sum(len(m) for _, m, _ in batches)
-    log.info(f'Patches a processar: {n_patches}  |  batches: {len(batches)}')
-
-    total_saved = 0
-    for batch_arr, batch_metas, batch_outdirs in tqdm(batches, unit='batch',
-                                                       disable=not HAS_TQDM):
-        preds = model.predict(batch_arr, verbose=0)   # (B, 256, 256, 1)
-        for pred, meta, out_dir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
-            save_prediction(pred, meta, out_dir, threshold, model_path)
-            total_saved += 1
+            # flush patches residuais do year_dir (pasta com menos de batch_size imagens)
+            if batch_arrays:
+                preds = model.predict(np.stack(batch_arrays), verbose=0)
+                for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
+                    save_prediction(pred, m, odir, threshold, model_path)
+                    total_saved += 1
+                log.info(f'  salvos (residual {year_dir.name}): {total_saved}')
+                batch_arrays, batch_metas, batch_outdirs = [], [], []
 
     log.info(f'[NPY] Predições salvas: {total_saved}')
 
@@ -284,6 +331,14 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
                      batch_size: int, threshold: float,
                      filter_years, filter_regions, model_path: str):
     log.info(f'[TFRecord] Fonte: {input_dir}')
+
+    # Verificação antecipada: avisa se não há nenhum .tfrecord no input_dir
+    all_tfrecords = list(input_dir.rglob('*.tfrecord'))
+    if not all_tfrecords:
+        npy_count = sum(1 for _ in input_dir.rglob('patch_*.npy'))
+        hint = f' (encontrados {npy_count} arquivos .npy — use --input-format npy)' if npy_count else ''
+        log.warning(f'Nenhum arquivo .tfrecord encontrado em {input_dir}{hint}')
+        return
 
     total_saved = 0
 
@@ -341,6 +396,94 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
     log.info(f'[TFRecord] Predições salvas: {total_saved}')
 
 # ==============================================================================
+# 7b. MODO GEE-TFRECORD (download_predict_as_tfrecord_fv.py)
+# ==============================================================================
+
+def save_prediction_gee(pred_hw: np.ndarray, meta: dict, out_dir: Path,
+                        threshold: float, model_path: str):
+    """Salva predição com nome baseado em lat/lon (sem row/col disponíveis)."""
+    lat = meta.get('latitude', 0.0)
+    lon = meta.get('longitude', 0.0)
+    fname     = f"patch_lat{lat:.5f}_lon{lon:.5f}_pred"
+    npy_path  = out_dir / f'{fname}.npy'
+    json_path = out_dir / f'{fname}.json'
+
+    np.save(npy_path, pred_hw.astype(np.float32))
+    json_path.write_text(json.dumps({
+        **meta,
+        'threshold':  threshold,
+        'model_path': str(model_path),
+        'bands':      FEATURE_BANDS,
+        'dtype':      'float32',
+        'shape':      list(pred_hw.shape),
+    }, indent=2, ensure_ascii=False))
+
+
+def _decode_gee_tfrecord(proto):
+    """Decodifica Example do formato GEE export → (patch_f32 [256,256,8], meta_dict)."""
+    parsed = tf.io.parse_single_example(proto, GEE_TFRECORD_FEATURE_SPEC)
+
+    # Empilha bandas (257×257) e center-crop para 256×256
+    bands = [tf.cast(tf.reshape(parsed[b], [257, 257]), tf.float32) for b in FEATURE_BANDS]
+    patch = tf.stack(bands, axis=-1)[:256, :256, :]   # (256, 256, 8)
+    patch = patch / NORM_FACTOR
+
+    return patch, parsed
+
+
+def predict_gee_tfrecord(model, input_dir: Path, output_dir: Path,
+                          batch_size: int, threshold: float,
+                          filter_years, filter_regions, model_path: str):
+    """Inferência sobre TFRecords no formato do download_predict_as_tfrecord_fv.py."""
+    log.info(f'[GEE-TFRecord] Fonte: {input_dir}')
+
+    # Aceita estrutura plana ou <region>/<year>/ idêntica ao modo npy
+    tfrecord_files = sorted(str(p) for p in input_dir.rglob('*.tfrecord'))
+    if not tfrecord_files:
+        log.warning('Nenhum arquivo .tfrecord encontrado.')
+        return
+
+    log.info(f'Arquivos encontrados: {len(tfrecord_files)}')
+
+    ds = (tf.data.TFRecordDataset(tfrecord_files,
+                                   num_parallel_reads=tf.data.AUTOTUNE)
+          .map(_decode_gee_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
+          .batch(batch_size)
+          .prefetch(tf.data.AUTOTUNE))
+
+    total_saved = 0
+    for batch_patches, batch_meta in ds:
+        # Filtra por ano e região se solicitado
+        preds = model.predict(batch_patches, verbose=0)   # (B, 256, 256, 1)
+        b     = preds.shape[0]
+
+        for i in range(b):
+            region_id = batch_meta['region_id'][i].numpy().decode()
+            year      = int(batch_meta['year'][i].numpy())
+            lat       = float(batch_meta['latitude'][i].numpy())
+            lon       = float(batch_meta['longitude'][i].numpy())
+
+            if filter_regions and region_id not in filter_regions:
+                continue
+            if filter_years and year not in filter_years:
+                continue
+
+            out_dir = output_dir / region_id / str(year)
+            out_dir.mkdir(parents=True, exist_ok=True)
+
+            pred_path = out_dir / f'patch_lat{lat:.5f}_lon{lon:.5f}_pred.npy'
+            if pred_path.exists():
+                continue  # resume
+
+            meta = {'region_id': region_id, 'year': year,
+                    'latitude': lat, 'longitude': lon}
+            save_prediction_gee(preds[i, :, :, 0], meta, out_dir,
+                                threshold, model_path)
+            total_saved += 1
+
+    log.info(f'[GEE-TFRecord] Predições salvas: {total_saved}')
+
+# ==============================================================================
 # 8. PIPELINE PRINCIPAL
 # ==============================================================================
 
@@ -351,8 +494,9 @@ def main():
                         help='Caminho para o arquivo .keras do modelo treinado')
     parser.add_argument('--input-dir',    type=Path, required=True,
                         help='Diretório raiz dos patches (NPY ou TFRecord)')
-    parser.add_argument('--input-format', choices=['npy', 'tfrecord'], default='npy',
-                        help='Formato dos patches de entrada (padrão: npy)')
+    parser.add_argument('--input-format',
+                        choices=['npy', 'tfrecord', 'gee-tfrecord'], default='npy',
+                        help='Formato dos patches: npy | tfrecord | gee-tfrecord (padrão: npy)')
     parser.add_argument('--output-dir',   type=Path, required=True,
                         help='Diretório de saída das predições')
     parser.add_argument('--threshold',    type=float, default=0.5,
@@ -376,32 +520,27 @@ def main():
     log.info('=' * 60)
 
     setup_device()
-
-    model = load_model(str(args.model_path))
+    path_model = os.path.join(pathparent, str(args.model_path))
+    model = load_model(path_model)
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
+    common = dict(
+        model          = model,
+        input_dir      = args.input_dir,
+        output_dir     = args.output_dir,
+        batch_size     = args.batch_size,
+        threshold      = args.threshold,
+        filter_years   = args.years,
+        filter_regions = args.regions,
+        model_path     = path_model, # str(args.model_path)
+    )
+
     if args.input_format == 'npy':
-        predict_npy(
-            model        = model,
-            input_dir    = args.input_dir,
-            output_dir   = args.output_dir,
-            batch_size   = args.batch_size,
-            threshold    = args.threshold,
-            filter_years = args.years,
-            filter_regions = args.regions,
-            model_path   = str(args.model_path),
-        )
+        predict_npy(**common)
+    elif args.input_format == 'tfrecord':
+        predict_tfrecord(**common)
     else:
-        predict_tfrecord(
-            model        = model,
-            input_dir    = args.input_dir,
-            output_dir   = args.output_dir,
-            batch_size   = args.batch_size,
-            threshold    = args.threshold,
-            filter_years = args.years,
-            filter_regions = args.regions,
-            model_path   = str(args.model_path),
-        )
+        predict_gee_tfrecord(**common)
 
     log.info(f'Concluído. Log: {LOG_FILE.resolve()}')
 

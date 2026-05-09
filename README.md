@@ -144,7 +144,7 @@ cd src/posprocessing
 python download_dataset_predict_fotovoltaica.py \
     --output-dir /dados/dataset_fotovoltaica_npy
 
-python download_dataset_predict_tfrecord_fotovoltaica.py --output-dir ~/db_images/dataset_fotovoltaica_npy --year_inic 2016 --year_end 2020
+python download_dataset_predict_tfrecord_fotovoltaica.py --output-dir ~/db_images/dataset_fotovoltaica_npy --year_inic 2021 --year_end 2026
 ```
 
 Parâmetros a ajustar no cabeçalho do script:
@@ -229,6 +229,12 @@ Saída por patch:
 O script retoma predições já existentes (resume).
 
 ---
+
+### FASE 5A — revissão dos npy: NPY → GeoTIFF
+Criado em viewer_patches_npy.py. Para executar:
+
+cd /home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/show_colect_data
+streamlit run viewer_patches_npy.py
 
 ### FASE 6 — Pós-processamento: NPY → GeoTIFF
 
