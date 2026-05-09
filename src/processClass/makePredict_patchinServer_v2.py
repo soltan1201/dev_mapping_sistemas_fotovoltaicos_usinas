@@ -253,18 +253,21 @@ def save_prediction(pred_hw: np.ndarray, meta: dict, out_dir: Path,
 # 6. MODO NPY
 # ==============================================================================
 
-def iter_npy_batches(input_dir: Path, output_dir: Path,
-                     batch_size: int, filter_years, filter_regions):
-    """Gera batches (arrays_f32, metas, out_dirs) varrendo a estrutura de pastas."""
+def predict_npy(model, input_dir: Path, output_dir: Path,
+                batch_size: int, threshold: float,
+                filter_years, filter_regions, model_path: str):
+    log.info(f'[NPY] Fonte: {input_dir}')
+
+    total_saved = 0
     batch_arrays, batch_metas, batch_outdirs = [], [], []
 
-    for region_dir in sorted(input_dir.iterdir()):
+    for region_dir in input_dir.iterdir():
         if not region_dir.is_dir():
             continue
         if filter_regions and region_dir.name not in filter_regions:
             continue
 
-        for year_dir in sorted(region_dir.iterdir()):
+        for year_dir in region_dir.iterdir():
             if not year_dir.is_dir():
                 continue
             if not year_dir.name.isdigit():
@@ -272,11 +275,10 @@ def iter_npy_batches(input_dir: Path, output_dir: Path,
             if filter_years and int(year_dir.name) not in filter_years:
                 continue
 
-            # saída espelha estrutura de entrada: output_dir/<region>/<year>/
             out_dir = output_dir / region_dir.name / year_dir.name
             out_dir.mkdir(parents=True, exist_ok=True)
 
-            for npy_path in sorted(year_dir.glob('patch_*.npy')):
+            for npy_path in year_dir.glob('patch_*.npy'):
                 json_path = npy_path.with_suffix('.json')
                 pred_path = out_dir / (npy_path.stem + '_pred.npy')
                 if pred_path.exists():
@@ -295,30 +297,21 @@ def iter_npy_batches(input_dir: Path, output_dir: Path,
                 batch_outdirs.append(out_dir)
 
                 if len(batch_arrays) == batch_size:
-                    yield np.stack(batch_arrays), batch_metas, batch_outdirs
+                    preds = model.predict(np.stack(batch_arrays), verbose=0)
+                    for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
+                        save_prediction(pred, m, odir, threshold, model_path)
+                        total_saved += 1
+                    log.info(f'  salvos: {total_saved}')
                     batch_arrays, batch_metas, batch_outdirs = [], [], []
 
-    if batch_arrays:
-        yield np.stack(batch_arrays), batch_metas, batch_outdirs
-
-
-def predict_npy(model, input_dir: Path, output_dir: Path,
-                batch_size: int, threshold: float,
-                filter_years, filter_regions, model_path: str):
-    log.info(f'[NPY] Fonte: {input_dir}')
-
-    batches   = list(iter_npy_batches(input_dir, output_dir,
-                                      batch_size, filter_years, filter_regions))
-    n_patches = sum(len(m) for _, m, _ in batches)
-    log.info(f'Patches a processar: {n_patches}  |  batches: {len(batches)}')
-
-    total_saved = 0
-    for batch_arr, batch_metas, batch_outdirs in tqdm(batches, unit='batch',
-                                                       disable=not HAS_TQDM):
-        preds = model.predict(batch_arr, verbose=0)   # (B, 256, 256, 1)
-        for pred, meta, out_dir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
-            save_prediction(pred, meta, out_dir, threshold, model_path)
-            total_saved += 1
+            # flush patches residuais do year_dir (pasta com menos de batch_size imagens)
+            if batch_arrays:
+                preds = model.predict(np.stack(batch_arrays), verbose=0)
+                for pred, m, odir in zip(preds[:, :, :, 0], batch_metas, batch_outdirs):
+                    save_prediction(pred, m, odir, threshold, model_path)
+                    total_saved += 1
+                log.info(f'  salvos (residual {year_dir.name}): {total_saved}')
+                batch_arrays, batch_metas, batch_outdirs = [], [], []
 
     log.info(f'[NPY] Predições salvas: {total_saved}')
 
