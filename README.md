@@ -292,13 +292,11 @@ Saída (pasta plana, uma imagem por região×ano):
 
 ```
 tif_fotovoltaica/
-  pred_000000000000000_2022.tif
-  pred_000000000000000_2023.tif
-  pred_000000000000001_2022.tif
+  pred_<region_id>_2022.tif
+  pred_<region_id>_2023.tif
+  pred_<region_id>_2024.tif
   ...
 ```
-
-> O nome do arquivo usa `region_id[:-5]` — os últimos 5 caracteres do ID de região são removidos para compor o nome base.
 
 ---
 
