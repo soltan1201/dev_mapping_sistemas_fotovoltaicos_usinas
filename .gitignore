@@ -3,3 +3,8 @@ src/models/*
 src/prompts/*
 !src/models/.gitkeep
 *.keras
+**/__pycache__/
+*.pyc
+*.log
+*.npy
+*.tfrecord
