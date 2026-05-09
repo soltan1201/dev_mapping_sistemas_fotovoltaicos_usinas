@@ -240,11 +240,65 @@ streamlit run viewer_patches_npy.py
 
 **Script:** `src/posprocessing/join_convert_npytoTIF.py`
 
-Converte os mapas de probabilidade (`_pred.npy`) para GeoTIFF georreferenciado usando o transform GDAL salvo no JSON.
+Junta todos os patches `_pred.npy` de uma região×ano em um único GeoTIFF georreferenciado. O stride real é inferido automaticamente dos transforms salvos nos JSON — funciona com qualquer valor de `STRIDE_PIXELS` usado no download.
+
+Regiões sobrepostas (overlap = `PATCH_SIZE − STRIDE_PIXELS`) recebem média ponderada (blending).
+
+**Processar todas as regiões e todos os anos:**
 
 ```bash
-python src/posprocessing/join_convert_npytoTIF.py
+cd src/posprocessing
+python join_convert_npytoTIF.py \
+    --predict-dir ~/db_images/predict_fotovoltaica \
+    --output-dir  ~/db_images/tif_fotovoltaica
 ```
+
+**Filtrar por ano:**
+
+```bash
+python join_convert_npytoTIF.py \
+    --predict-dir ~/db_images/predict_fotovoltaica \
+    --output-dir  ~/db_images/tif_fotovoltaica \
+    --years 2022 2023 2024 2025
+```
+
+**Filtrar por região:**
+
+```bash
+python join_convert_npytoTIF.py \
+    --predict-dir ~/db_images/predict_fotovoltaica \
+    --output-dir  ~/db_images/tif_fotovoltaica \
+    --regions 000000000000000 000000000000001
+```
+
+**Parâmetros disponíveis:**
+
+| Argumento | Obrigatório | Descrição |
+|---|---|---|
+| `--predict-dir` | sim | Raiz das predições (`<region>/<year>/patch_*_pred.npy`) |
+| `--output-dir` | sim | Pasta de saída dos GeoTIFF (estrutura plana) |
+| `--years` | não | Anos a processar (ex.: `--years 2022 2023`) |
+| `--regions` | não | IDs de região (ex.: `--regions 000000000000000`) |
+
+Entrada esperada:
+
+```
+predict_fotovoltaica/
+  <region_id>/<year>/patch_r0000_c0000_pred.npy
+  <region_id>/<year>/patch_r0000_c0000_pred.json
+```
+
+Saída (pasta plana, uma imagem por região×ano):
+
+```
+tif_fotovoltaica/
+  pred_000000000000000_2022.tif
+  pred_000000000000000_2023.tif
+  pred_000000000000001_2022.tif
+  ...
+```
+
+> O nome do arquivo usa `region_id[:-5]` — os últimos 5 caracteres do ID de região são removidos para compor o nome base.
 
 ---
 
