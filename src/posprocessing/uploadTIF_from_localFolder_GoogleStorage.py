@@ -1,69 +1,147 @@
-from google.cloud import storage
-from io import BytesIO
-# import pandas as pdw
-import glob
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+uploadTIF_from_localFolder_GoogleStorage.py
+============================================
+Faz upload dos GeoTIFFs gerados por join_convert_npytoTIF.py para um bucket
+do Google Cloud Storage, convertendo para COG (Cloud Optimized GeoTIFF) via
+gdal_translate antes do envio.
+
+Estrutura esperada de entrada (pasta plana):
+  <tif-dir>/pred_<region_id>_<year>.tif
+
+Destino no bucket:
+  <gcs-prefix>/<group>/pred_<region_id>_<year>.tif
+
+  <group> = valor de --group, ou o nome da pasta --tif-dir se omitido.
+  Exemplo: --tif-dir db_images/tif_fotovoltaicav1  →  group = tif_fotovoltaicav1
+           --group grupo_v1                         →  group = grupo_v1
+
+Uso:
+  python uploadTIF_from_localFolder_GoogleStorage.py \\
+      --tif-dir    ~/db_images/tif_fotovoltaicav1 \\
+      --bucket     mapbiomas-energia \\
+      --gcs-prefix fotovoltaicas_tif \\
+      --group      grupo_v1 \\
+      --key-json   ~/keys/mapbiomas-agua-36521f541610.json \\
+      --years      2022 2025
+"""
+
+import argparse
+import logging
 import os
+import re
+import tempfile
+from pathlib import Path
 
-def upload_to_gcs(bucket_name, source_file_name, destination_blob_name):
-    """
-    Uploads a file to Google Cloud Storage using a service account key.
-    
-    Args:
-        json_key_path (str): Path to the JSON key file.
-        project_name (str): Google Cloud project name.
-        bucket_name (str): Name of the GCS bucket.
-        source_file_name (str): Path to the local file to upload.
-        destination_blob_name (str): Name of the object in the bucket.
-    """
-    _json_key_path = '/home/superuser/Dados/mapbiomas/mykeys/mapbiomas-agua-36521f541610.json'
-    _project_name = 'mapbiomas-agua'
+from google.cloud import storage
 
-    # Initialize a storage client using the service account
-    storage_client = storage.Client.from_service_account_json(_json_key_path, project=_project_name)
+LOG_FILE = Path('upload_tif_gcs.log')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(LOG_FILE, encoding='utf-8'),
+    ],
+)
+log = logging.getLogger(__name__)
 
-    # Get the bucket
-    bucket = storage_client.bucket(bucket_name)
+# Padrão do nome gerado por join_convert_npytoTIF: pred_<region_id>_<year>.tif
+_FNAME_RE = re.compile(r'^pred_(.+)_(\d{4})\.tif$')
 
-    # Create a blob object (path in the bucket)
-    blob = bucket.blob(destination_blob_name)
 
-    # Upload the file
-    blob.upload_from_filename(source_file_name)
+def to_cog(src: Path, dst: Path):
+    """Converte para Cloud Optimized GeoTIFF usando gdal_translate."""
+    cmd = (
+        f'gdal_translate {src} {dst} '
+        f'-co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW'
+    )
+    ret = os.system(cmd)
+    if ret != 0:
+        raise RuntimeError(f'gdal_translate falhou (código {ret}): {src}')
 
-    print(f"File {source_file_name} \n >>>>>>>>> uploaded to {destination_blob_name}")
 
-# Example usage
-bucket_name = "mapbiomas-energia"
-# path_base = '/run/media/superuser/Almacen/mapbiomas/dadosCol9/fotoVol/imgRegions_FotoV/predTIF_FotoVv2'
-# path_base = '/run/media/superuser/Almacen/mapbiomas/dadosCol9/fotoVol/patches_pred_FotoV/'
-path_base = '/home/superuser/Dados/mapbiomas/mapping_areas_eolicas_fotovoltaicas/src/dados/array_pred_tif_g2C'
-# path_baseChange = '/run/media/superuser/Almacen/mapbiomas/dadosCol9/fotoVol/imgRegions_FotoV/gdal_predTIF_FotoVv2/'
-path_baseChange = '/home/superuser/Dados/mapbiomas/mapping_areas_eolicas_fotovoltaicas/src/dados/gdal_array_pred_tif_g2C_corr'
-source_file_name = "./myfile.txt"
-destination_blob_name = "fotovoltaicas_tif"
+def upload_file(src: Path, bucket_name: str, blob_name: str,
+                key_json: str, project: str):
+    client = storage.Client.from_service_account_json(key_json, project=project)
+    bucket = client.bucket(bucket_name)
+    blob   = bucket.blob(blob_name)
+    blob.upload_from_filename(str(src))
+    log.info(f'  upload OK → gs://{bucket_name}/{blob_name}')
 
-for nyear in range(2015, 2025):
-    print("=============================================================")
-    lstpathTIF = glob.glob(os.path.join(path_base, str(nyear)) + '/*.tif')
-    print(" loading tif in >>>>> \n >> ", os.path.join(path_base, str(nyear)))
-    print("=============================================================")
-    # Cria o diretório de destino se ele não existir
-    pathDest = os.path.join(path_baseChange, str(nyear))
-    if not os.path.exists(pathDest):
-        os.makedirs(pathDest)
 
-    for cc, namepath in enumerate(lstpathTIF[:]):
-        if  cc  > -1:
-            source_file_name = namepath
-            nameFileTIF = source_file_name.replace(os.path.join(path_base, str(nyear)) + '/', "")
-            # change configuration TIF compressao The required TIFF tag 'TileWidth' is not present in the IFD at index 0
-            # https://github.com/cogeotiff/cog-spec/blob/master/spec.md
-            source_tif_name = os.path.join(pathDest, nameFileTIF)
-            comandoOS = f"gdal_translate {source_file_name} {source_tif_name} -co TILED=YES -co COPY_SRC_OVERVIEWS=YES -co COMPRESS=LZW"
-            os.system(comandoOS)
-            ################################################################
-            print(f" # {cc}   > ...{source_file_name.replace(path_base, "")} ") 
-            destination_blob_name = f"fotovoltaicas_tif/{nameFileTIF.replace('.tif', '_g2d.tif')}"
-            print(" destination >>> ", destination_blob_name)
-            print("  ")
-            upload_to_gcs(bucket_name, source_tif_name, destination_blob_name)
+def main():
+    parser = argparse.ArgumentParser(
+        description='Upload de GeoTIFFs (saída do join_convert_npytoTIF) para GCS')
+    parser.add_argument('--tif-dir',    type=Path, required=True,
+                        help='Pasta plana com os pred_*.tif')
+    parser.add_argument('--bucket',     type=str,
+                        default='mapbiomas-energia',
+                        help='Nome do bucket GCS (padrão: mapbiomas-energia)')
+    parser.add_argument('--gcs-prefix', type=str,
+                        default='fotovoltaicas_tif',
+                        help='Prefixo (pasta) dentro do bucket (padrão: fotovoltaicas_tif)')
+    parser.add_argument('--key-json',   type=str,
+                        default='/home/superuser/Dados/mapbiomas/mykeys/mapbiomas-agua-36521f541610.json',
+                        help='Caminho para o JSON da service account GCP')
+    parser.add_argument('--project',    type=str,
+                        default='mapbiomas-agua',
+                        help='Projeto GCP (padrão: mapbiomas-agua)')
+    parser.add_argument('--years',      type=int, nargs='+', default=None,
+                        help='Anos a enviar: 2 valores = intervalo inclusivo; '
+                             '1 ou 3+ = lista explícita')
+    parser.add_argument('--regions',    type=str, nargs='+', default=None,
+                        help='IDs de região a enviar (padrão: todos)')
+    parser.add_argument('--group',      type=str, default=None,
+                        help='Subpasta dentro do gcs-prefix (padrão: nome da --tif-dir)')
+    args = parser.parse_args()
+
+    if args.years and len(args.years) == 2:
+        args.years = list(range(args.years[0], args.years[1] + 1))
+
+    group = args.group or args.tif_dir.name
+
+    tif_files = sorted(args.tif_dir.glob('pred_*.tif'))
+    if not tif_files:
+        log.warning(f'Nenhum arquivo pred_*.tif encontrado em {args.tif_dir}')
+        return
+
+    log.info('=' * 60)
+    log.info(f'Fonte        : {args.tif_dir}  ({len(tif_files)} arquivos)')
+    log.info(f'Bucket       : gs://{args.bucket}/{args.gcs_prefix}/{group}')
+    log.info(f'Anos         : {args.years or "todos"}')
+    log.info(f'Regiões      : {args.regions or "todas"}')
+    log.info('=' * 60)
+
+    total = 0
+    with tempfile.TemporaryDirectory(prefix='cog_tmp_') as tmpdir:
+        for tif_path in tif_files:
+            m = _FNAME_RE.match(tif_path.name)
+            if not m:
+                log.warning(f'  nome fora do padrão, pulando: {tif_path.name}')
+                continue
+
+            region_id, year = m.group(1), int(m.group(2))
+
+            if args.years   and year      not in args.years:
+                continue
+            if args.regions and region_id not in args.regions:
+                continue
+
+            blob_name = f'{args.gcs_prefix}/{group}/{tif_path.name}'
+            cog_path  = Path(tmpdir) / tif_path.name
+
+            log.info(f'Processando  {tif_path.name}  (region={region_id}  year={year})')
+            try:
+                to_cog(tif_path, cog_path)
+                upload_file(cog_path, args.bucket, blob_name, args.key_json, args.project)
+                total += 1
+            except Exception as exc:
+                log.error(f'  Erro em {tif_path.name}: {exc}')
+
+    log.info(f'Concluído. Arquivos enviados: {total}  |  Log: {LOG_FILE.resolve()}')
+
+
+if __name__ == '__main__':
+    main()

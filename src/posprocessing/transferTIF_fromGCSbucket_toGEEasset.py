@@ -43,14 +43,22 @@ def processoExportar(mapaRF,  nomeDesc, pathIC):
     task.start() 
     print("salvando ... " + nomeDesc + "..!")
 
+dict_models_ver = {
+    "tif_fotovoltaicav1": "unet_resnet50",
+    "tif_fotovoltaicav2": "unet_resnet101",
+    "tif_fotovoltaicav3": "unet_resnet152",
+    "tif_fotovoltaicav4": "unet_mobilenet",
+    "tif_fotovoltaicav5": "unet_resnext50",
+    "tif_fotovoltaicav6": "unet_xception",
+}
 
 
 createFolder = False
 createIC = False
-version = 4
-mes = 10
-# pathIC = "projects/geo-data-s/assets/fotovoltaica/version_3"
-pathsIC = f"projects/geo-data-s/assets/fotovoltaica/version_{version}"
+version = 1
+backbone = 'resnet50'
+model = 'unet'
+pathsIC = "pprojects/geo-data-s/assets/fotovoltaica/usinas_br"
 # ******************** Command Line Instructions ******************************#
 # Here we create a folder in GEE using earthengine tool
 # references https://cloud.google.com/sdk/gcloud/reference/storage
@@ -70,7 +78,10 @@ if createIC:
 # ******************** Bash script ********************************************#
 
 gcBucket= "mapbiomas-energia"
-folderDirGS = 'fotovoltaicas_tif/'
+folderDirGS = 'fotovoltaicas_tif/tif_fotovoltaicav1'   # entrada como argumento
+
+model = dict_models_ver[folderDirGS.split("/")[-1].split("_")[0]]
+backbone = dict_models_ver[folderDirGS.split("/")[-1].split("_")[0]]
 
 comando = f"gcloud storage ls gs://{gcBucket}/{folderDirGS}*"
 # lstdirsFileGS = os.system(comando)  # os.system
@@ -80,37 +91,40 @@ processo = subprocess.check_output(comando, shell=True)
 # print(processo)
 # print(type(processo))
 lstdirsFileGS = str(processo.decode('utf-8')).split("\n")
-for nyear in range(2015, 2026):
-    for mes in [6, 7, 9, 10, 11]:
-        data_inic = ee.Date.fromYMD(nyear,mes, 1)
-        dictProp = {        
-            'year': nyear,
-            'month': mes,
-            'version': str(version), 
-            'data_inic':  data_inic, 
-            'data_end':  data_inic.advance(1,'month'), 
-            'system:time_start': data_inic
-        }
-        vdate = data_inic
-        # Get file names to extract date and call ingestion command for each file to be added into an asset as image collection
-        for cc, pathdir in enumerate(lstdirsFileGS[:]):
-            namefile = pathdir.split("/")[-1]
-            if "_g2d.tif" in pathdir and f"_{mes}_" in pathdir and str(nyear) in pathdir:  # 
-                print(f" #{cc} >> {pathdir}")            
-                idAsset = os.path.join(pathsIC, namefile)
-                print("idAsset >> ", idAsset)
-                
-                # https://developers.google.com/earth-engine/guides/command_line
-                # earthengine upload image --asset_id=users/myuser/asset --pyramiding_policy=sample --nodata_value=255 gs://bucket/image.tif
-                newComand = f"earthengine upload image --asset_id={idAsset} --time_start={vdate} --pyramiding_policy=sample  --nodata_value=-9999 {pathdir}"
-                #  --property={dictProp}
-                # os.system(newComand)
-                print(" processing ... ")
-                imgTIF = ee.Image.loadGeoTIFF(pathdir)
-                imgTIF = ee.Image(imgTIF).set(
-                        'year', nyear, 'month', mes,
-                        'version', str(version), 'data_inic',  data_inic, 
-                        'data_end',  data_inic.advance(1,'month'),         
-                        'system:time_start', data_inic)
-                if cc > -1:
-                    processoExportar(imgTIF, namefile.replace('.tif', ''), pathsIC)
+data_inic = ee.Date.fromYMD(2016,12, 31)
+dictProp = {        
+    'year': 2016,
+    'version': str(version), 
+    'semestre':  2, 
+    'backbone': backbone,
+    'modelo': model,
+    'system:time_start': data_inic
+}
+
+# Get file names to extract date and call ingestion command for each file to be added into an asset as image collection
+for cc, pathdir in enumerate(lstdirsFileGS[:]):
+    name_tif = pathdir.split("/")[-1]
+    nyear = name_tif.split("_")[-1][:4]
+    data_inic = ee.Date.fromYMD(nyear,12, 31)
+    namefile = f"{name_tif.replace('pred', 'reg')}_{model}_{backbone}"
+
+    print(f" #{cc} >> {pathdir}")            
+    idAsset = os.path.join(pathsIC, namefile)
+    print("idAsset >> ", idAsset)
+    
+    # https://developers.google.com/earth-engine/guides/command_line
+    # earthengine upload image --asset_id=users/myuser/asset --pyramiding_policy=sample --nodata_value=255 gs://bucket/image.tif
+    newComand = f"earthengine upload image --asset_id={idAsset} --time_start={data_inic} --pyramiding_policy=sample  --nodata_value=-9999 {pathdir}"
+    #  --property={dictProp}
+    # os.system(newComand)
+    print(" processing ... ")
+    imgTIF = ee.Image.loadGeoTIFF(pathdir)
+    imgTIF = ee.Image(imgTIF).set(
+            'year', nyear, 
+            'version', str(version), 
+            'backbone', backbone,
+            'modelo', model,
+            'semestre',  2,         
+            'system:time_start', data_inic)
+    if cc > -1:
+        processoExportar(imgTIF, namefile.replace('.tif', ''), pathsIC)
