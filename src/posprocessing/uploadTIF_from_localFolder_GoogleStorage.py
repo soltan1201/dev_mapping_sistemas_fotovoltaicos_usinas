@@ -83,7 +83,7 @@ def main():
                         default='fotovoltaicas_tif',
                         help='Prefixo (pasta) dentro do bucket (padrão: fotovoltaicas_tif)')
     parser.add_argument('--key-json',   type=str,
-                        default='/home/superuser/Dados/mapbiomas/mykeys/mapbiomas-agua-36521f541610.json',
+                        default='~/Dados/projetos/mykeys/mapbiomas-agua-36521f541610.json',
                         help='Caminho para o JSON da service account GCP')
     parser.add_argument('--project',    type=str,
                         default='mapbiomas-agua',
