@@ -93,7 +93,7 @@ def gerenciador(cont):
     return cont
 
 if param['unicaconta']:    
-    cont = 9
+    cont = 6
     print(f"changing to  especifique account # {cont} <> {param['conta'][str(cont)]}")
     cont = gerenciador(cont)
     if param['cancelar']:
