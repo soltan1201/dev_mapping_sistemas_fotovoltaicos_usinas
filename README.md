@@ -173,13 +173,18 @@ O script retoma automaticamente patches já baixados (resume).
 Duas opções de pipeline, escolha conforme o volume de dados:
 
 #### Opção A — Direto sobre NPY (recomendada para volumes moderados)
-
+best_unet_resnet50_20260430_0257.keras  >>> predict_fotovoltaica
+best_unet_resnet101_20260502_1659.keras >>> predict_fotovoltaicaV2
+best_unet_resnet152_20260506_1118.keras >>> predict_fotovoltaicaV3
+best_unet_mobilenet_20260507_1445.keras >>> predict_fotovoltaicaV4
+best_unet_resnext50_20260506_1341.keras >>> predict_fotovoltaicaV5
+best_unet_xception_20260507_1824.keras >>> predict_fotovoltaicaV6
 ```bash
-python src/processClass/makePredict_patchinServer_v2.py \
-    --model-path   /modelos/best_unet_resnet101_20260502.keras \
-    --input-dir    /dados/dataset_fotovoltaica_npy \
+python makePredict_patchinServer_v2.py \
+    --model-path   /models/best_unet_resnet101_20260502_1659.keras \
+    --input-dir    /db_images/dataset_fotovoltaica_npy \
     --input-format npy \
-    --output-dir   /dados/predict_fotovoltaica \
+    --output-dir   /db_images/predict_fotovoltaicV2 \
     --threshold    0.5 \
     --batch-size   8
 ```
@@ -198,10 +203,10 @@ Ajuste `NPY_DIR` e `TFRECORD_DIR` no cabeçalho do script. Saída: shards de 64 
 
 ```bash
 python src/processClass/makePredict_patchinServer_v2.py \
-    --model-path   /modelos/best_unet_resnet101_20260502.keras \
-    --input-dir    /dados/dataset_fotovoltaica_tfrecord \
+    --model-path   /models/best_unet_resnet101_20260502_1659.keras \
+    --input-dir    /db_images/dataset_fotovoltaica_tfrecord \
     --input-format tfrecord \
-    --output-dir   /dados/predict_fotovoltaica \
+    --output-dir   /db_images/predict_fotovoltaica \
     --batch-size   16
 ```
 
@@ -253,13 +258,22 @@ python join_convert_npytoTIF.py \
     --output-dir  ~/db_images/tif_fotovoltaica
 ```
 
-**Filtrar por ano:**
+**Filtrar por intervalo de anos (dois valores = intervalo inclusivo):**
 
 ```bash
 python join_convert_npytoTIF.py \
     --predict-dir ~/db_images/predict_fotovoltaica \
     --output-dir  ~/db_images/tif_fotovoltaica \
-    --years 2022 2023 2024 2025
+    --years 2022 2025   # processa 2022, 2023, 2024 e 2025
+```
+
+**Filtrar anos específicos (mais de dois valores = lista explícita):**
+
+```bash
+python join_convert_npytoTIF.py \
+    --predict-dir ~/db_images/predict_fotovoltaica \
+    --output-dir  ~/db_images/tif_fotovoltaica \
+    --years 2022 2023 2025   # processa apenas 2022, 2023 e 2025
 ```
 
 **Filtrar por região:**
@@ -277,7 +291,7 @@ python join_convert_npytoTIF.py \
 |---|---|---|
 | `--predict-dir` | sim | Raiz das predições (`<region>/<year>/patch_*_pred.npy`) |
 | `--output-dir` | sim | Pasta de saída dos GeoTIFF (estrutura plana) |
-| `--years` | não | Anos a processar (ex.: `--years 2022 2023`) |
+| `--years` | não | Anos a processar: 2 valores = intervalo inclusivo (`--years 2022 2025` → 2022..2025); 1 ou 3+ valores = lista explícita |
 | `--regions` | não | IDs de região (ex.: `--regions 000000000000000`) |
 
 Entrada esperada:
@@ -300,13 +314,53 @@ tif_fotovoltaica/
 
 ---
 
-### FASE 7 — Upload para Google Cloud Storage e GEE
+### FASE 7 — Upload para Google Cloud Storage
+
+**Script:** `src/posprocessing/uploadTIF_from_localFolder_GoogleStorage.py`
+
+Lê os GeoTIFFs da pasta plana gerada na Fase 6, converte para COG (Cloud Optimized GeoTIFF) via `gdal_translate` e faz upload para o bucket GCS.
+
+**Enviar todos os anos e regiões:**
 
 ```bash
-# 1. Sobe os TIFs para um bucket GCS
-python src/posprocessing/uploadTIF_from_localFolder_GoogleStorage.py
+cd src/posprocessing
+python uploadTIF_from_localFolder_GoogleStorage.py \
+    --tif-dir  ~/db_images/tif_fotovoltaica \
+    --bucket   mapbiomas-energia \
+    --key-json ~/keys/mapbiomas-agua-36521f541610.json
+```
 
-# 2. Importa do GCS para asset no GEE
+**Filtrar por intervalo de anos:**
+
+```bash
+python uploadTIF_from_localFolder_GoogleStorage.py \
+    --tif-dir  ~/db_images/tif_fotovoltaica \
+    --bucket   mapbiomas-energia \
+    --key-json ~/keys/mapbiomas-agua-36521f541610.json \
+    --years 2022 2025   # envia 2022, 2023, 2024 e 2025
+```
+
+**Parâmetros disponíveis:**
+
+| Argumento | Obrigatório | Padrão | Descrição |
+|---|---|---|---|
+| `--tif-dir` | sim | — | Pasta plana com os `pred_*.tif` |
+| `--bucket` | não | `mapbiomas-energia` | Nome do bucket GCS |
+| `--gcs-prefix` | não | `fotovoltaicas_tif` | Prefixo (pasta) dentro do bucket |
+| `--key-json` | não | caminho padrão | JSON da service account GCP |
+| `--project` | não | `mapbiomas-agua` | Projeto GCP |
+| `--years` | não | todos | 2 valores = intervalo inclusivo; 1 ou 3+ = lista explícita |
+| `--regions` | não | todas | IDs de região a enviar |
+
+Destino no bucket:
+
+```
+gs://mapbiomas-energia/fotovoltaicas_tif/pred_<region_id>_<year>.tif
+```
+
+### FASE 8 — Importar GCS → GEE Asset
+
+```bash
 python src/posprocessing/transferTIF_fromGCSbucket_toGEEasset.py
 ```
 
