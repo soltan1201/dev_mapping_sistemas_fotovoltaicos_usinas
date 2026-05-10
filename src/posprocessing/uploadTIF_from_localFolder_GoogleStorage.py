@@ -21,8 +21,7 @@ Uso:
   python uploadTIF_from_localFolder_GoogleStorage.py \\
       --tif-dir    ~/db_images/tif_fotovoltaicav1 \\
       --bucket     mapbiomas-energia \\
-      --gcs-prefix fotovoltaicas_tif \\
-      --group      grupo_v1 \\
+      --gcs-prefix fotovoltaicas_tif/tif_fotovoltaicav1 \\
       --key-json   ~/keys/mapbiomas-agua-36521f541610.json \\
       --years      2022 2025
 """
