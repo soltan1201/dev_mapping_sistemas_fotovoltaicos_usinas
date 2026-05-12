@@ -450,6 +450,9 @@ def main():
     parser.add_argument('--lacunas-gee-json', type=Path, default=None,
                         help='Salvar lacunas do GEE no formato {backbone:{region:[anos]}} '
                              '(compatível com --lacunas-json do transferTIF)')
+    parser.add_argument('--all-models', action='store_true',
+                        help='Audita todos os modelos de MODELS de uma vez e salva '
+                             'lacunas_gee_v1..v6.json (requer --lacunas-gee-json como prefixo)')
     args = parser.parse_args()
 
     # ── Configuração ──────────────────────────────────────────────────────────
@@ -529,6 +532,31 @@ def main():
     # set_pending = construir_set_tasks_pendentes()
     # |  Tasks pendentes: {len(set_pending)}
     log.info(f'  Assets no GEE: {len(set_gee)}  ')
+
+    # ── Auditoria todos os modelos de uma vez ─────────────────────────────────
+    if args.all_models:
+        pares        = [(r, y) for r in regioes for y in years]
+        lacunas_todos: dict[str, dict[str, list[int]]] = {}
+
+        for folder_key, model_full_am in MODELS.items():
+            m_am, b_am = (model_full_am.split('_', 1) + [''])[:2]
+            faltando: dict[str, list[int]] = {}
+
+            for region, year in tqdm(pares, desc=f'Auditando {model_full_am}', unit='par'):
+                asset_short = f'reg_{region}_{year}_{m_am}_{b_am}'
+                if asset_short not in set_gee:
+                    faltando.setdefault(region, []).append(year)
+
+            lacunas_todos[model_full_am] = faltando
+            total_p = sum(len(v) for v in faltando.values())
+            log.info(f'[{model_full_am}] regiões com lacuna: {len(faltando)}  '
+                     f'pares faltando: {total_p}')
+
+        if args.lacunas_gee_json:
+            with open(args.lacunas_gee_json, 'w', encoding='utf-8') as fj:
+                json.dump(lacunas_todos, fj, indent=2, ensure_ascii=False)
+            log.info(f'JSON todos os modelos salvo: {args.lacunas_gee_json.resolve()}')
+        return
 
     # ── Auditoria ─────────────────────────────────────────────────────────────
     pares = [(r, y) for r in regioes for y in years]   # 880 pares conhecidos
