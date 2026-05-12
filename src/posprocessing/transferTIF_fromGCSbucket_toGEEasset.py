@@ -25,6 +25,7 @@ Uso:
 """
 
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -55,24 +56,26 @@ def init_ee(project: str):
 
 
 def export_to_asset(image: ee.Image, name: str, asset_path: str,
-                    year: int, version: str, model: str, backbone: str):
+                    year: int, version: str, model: str, backbone: str, id_region: str):
     asset_id = os.path.join(asset_path, name)
     data_inic = ee.Date.fromYMD(year, 12, 31)
-    image = image.set(
+    image = ee.Image(image).set(
         'year',               year,
         'version',            version,
         'backbone',           backbone,
         'modelo',             model,
+        'region',             id_region, 
         'semestre',           2,
         'system:time_start',  data_inic,
-    )
+    ).selfMask()
     task = ee.batch.Export.image.toAsset(
         image=image,
         description=name,
         assetId=asset_id,
-        scale=4,
+        scale=5,
         crs='EPSG:3857',
-        maxPixels=1e9,
+        region=image.geometry(),
+        maxPixels=1e13,
         pyramidingPolicy={'.default': 'mode'},
     )
     task.start()
@@ -99,6 +102,9 @@ def main():
                              '1 ou 3+ = lista explícita')
     parser.add_argument('--regions',    type=str, nargs='+', default=None,
                         help='Filtrar regiões (padrão: todas)')
+    parser.add_argument('--lacunas-json', type=str, default=None,
+                        help='JSON gerado pelo auditoria_pipeline --lacunas-gee-json; '
+                             'processa apenas os pares (região × ano) listados')
     parser.add_argument('--create-folder',     action='store_true',
                         help='Cria a pasta raiz no GEE antes de processar')
     parser.add_argument('--create-collection', action='store_true',
@@ -116,7 +122,7 @@ def main():
     parts    = model_full.split('_', 1)
     model    = parts[0]                            # ex: unet
     backbone = parts[1] if len(parts) > 1 else ''  # ex: resnet50
-
+    threhold = 0.5
     # Criar pasta / coleção no GEE se solicitado
     if args.create_folder:
         folder = '/'.join(args.asset_path.split('/')[:-1])
@@ -143,15 +149,34 @@ def main():
     print(f'Encontrados {len(tif_paths)} arquivo(s). Iniciando ingestão...')
     print('=' * 60)
 
+    # Carrega pares (região, ano) faltando do JSON da auditoria
+    missing_pairs: set[tuple[str, int]] | None = None
+    if args.lacunas_json:
+        with open(args.lacunas_json, 'r', encoding='utf-8') as fj:
+            lacunas = json.load(fj)
+        backbone_data = lacunas.get(model_full, {})
+        missing_pairs = {
+            (region_id, ano)
+            for region_id, anos in backbone_data.items()
+            for ano in anos
+        }
+        print(f'Lacunas carregadas: {len(missing_pairs)} pares (região × ano) a processar')
+
     total = 0
     for cc, gcs_path in enumerate(tif_paths):
-        name_tif = gcs_path.split('/')[-1]          # pred_R_0001_2022.tif
-        nyear    = int(name_tif.split('_')[-1][:4]) # 2022
-        region   = '_'.join(name_tif.split('_')[1:-1])  # R_0001
+        name_tif  = gcs_path.split('/')[-1]          # pred_00000000000000000033_2022.tif
+        nyear     = int(name_tif.split('_')[-1][:4]) # 2022
+        id_region = str(name_tif.split('_')[1])
+        region    = '_'.join(name_tif.split('_')[1:-1])
 
         if args.years   and nyear  not in args.years:
             continue
         if args.regions and region not in args.regions:
+            continue
+
+        # Se JSON fornecido, pula pares que NÃO estão nas lacunas (já existem no GEE)
+        if missing_pairs is not None and (id_region, nyear) not in missing_pairs:
+            print(f'#{cc:04d}  {name_tif}  [já no GEE — pulado]')
             continue
 
         base     = name_tif.replace('.tif', '').replace('pred', 'reg')
@@ -160,8 +185,10 @@ def main():
         print(f'#{cc:04d}  {name_tif}  →  {namefile}')
         try:
             img = ee.Image.loadGeoTIFF(gcs_path)
-            export_to_asset(img, namefile, args.asset_path,
-                            nyear, args.version, model, backbone)
+            export_to_asset(img.gt(threhold), namefile, args.asset_path,
+                            nyear, args.version, model, 
+                            backbone, id_region
+                    )
             total += 1
         except Exception as exc:
             print(f'  ERRO em {name_tif}: {exc}')

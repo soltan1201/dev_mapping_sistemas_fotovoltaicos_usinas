@@ -60,3 +60,22 @@ asset_região to map
 
 
 python download_dataset_predict_tfrecord_fotovoltaica.py --output dir ~/db_images/dataset_fotovoltaica_npy
+
+Posprocessing
+# 1. Ver status completo (sem executar nada)
+python auditoria_pipeline.py --config config_pipeline_v1.json --report status_patch_version1.csv
+
+# 2. Fixar apenas os TIFs faltando
+python auditoria_pipeline.py --config config_pipeline_v1.json --fix tif
+
+# 3. Fixar upload para GCS
+python auditoria_pipeline.py --config config_pipeline_v1.json --fix upload
+
+# 4. Fixar transfer GCS → GEE
+python auditoria_pipeline.py --config config_pipeline_v1.json --fix transfer
+
+# 5. Corrigir tudo em cascata (download→predict→tif→upload→transfer)
+python auditoria_pipeline.py --config config_pipeline_v1.json --fix all
+
+# 6. Filtrar por ano ou região
+python auditoria_pipeline.py --config config_pipeline_v1.json --years 2016 2020 --fix tif

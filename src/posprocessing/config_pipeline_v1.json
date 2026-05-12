@@ -1,0 +1,19 @@
+{
+    "npy_dir":       "/dados/dataset_fotovoltaica_npy",
+    "predict_dir":   "/dados/predict_fotovoltaica",
+    "tif_dir":       "/home/superuser/db_images/tif_fotovoltaicav1",
+
+    "bucket":        "mapbiomas-energia",
+    "gcs_prefix":    "fotovoltaicas_tif/tif_fotovoltaicav1",
+    "key_json":      "~/Dados/mapbiomas/mykeys/mapbiomas-agua-36521f541610.json",
+    "gcp_project":   "mapbiomas-agua",
+
+    "asset_path":    "projects/geo-data-s/assets/fotovoltaica/usinas_br_gc",
+    "gee_project":   "geo-data-s",
+
+    "model_path":    "models/best_unet_resnet50_20260430_0257.keras",
+    "input_format":  "npy",
+    "batch_size":    8,
+
+    "regions_cache": "~/.cache/fv_regions.json"
+}
