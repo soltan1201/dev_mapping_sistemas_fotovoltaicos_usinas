@@ -27,6 +27,7 @@ Uso:
 """
 
 import argparse
+import json
 import logging
 import os
 import re
@@ -34,6 +35,16 @@ import tempfile
 from pathlib import Path
 
 from google.cloud import storage
+
+# Mapeamento subpasta → backbone (mesmo de auditoria_pipeline.py)
+MODELS = {
+    'tif_fotovoltaicav1': 'unet_resnet50',
+    'tif_fotovoltaicav2': 'unet_resnet101',
+    'tif_fotovoltaicav3': 'unet_resnet152',
+    'tif_fotovoltaicav4': 'unet_mobilenet',
+    'tif_fotovoltaicav5': 'unet_resnext50',
+    'tif_fotovoltaicav6': 'unet_xception',
+}
 
 LOG_FILE = Path('upload_tif_gcs.log')
 logging.basicConfig(
@@ -97,12 +108,29 @@ def main():
     parser.add_argument('--tmp-dir',    type=Path, default=None,
                         help='Pasta para arquivos COG temporários (padrão: /tmp do sistema). '
                              'Use se /tmp estiver cheio.')
+    parser.add_argument('--lacunas-json', type=Path, default=None,
+                        help='JSON gerado pelo auditoria_pipeline --lacunas-gee-json; '
+                             'envia apenas os pares (região × ano) listados como faltando')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
         args.years = list(range(args.years[0], args.years[1] + 1))
 
-    group = args.group or args.tif_dir.name
+    group   = args.group or args.tif_dir.name
+    backbone = MODELS.get(group, group)
+
+    # Carrega pares faltando do JSON da auditoria (filtra somente o que falta no GEE)
+    missing_pairs: set[tuple[str, int]] | None = None
+    if args.lacunas_json:
+        with open(args.lacunas_json, 'r', encoding='utf-8') as fj:
+            lacunas = json.load(fj)
+        backbone_data = lacunas.get(backbone, {})
+        missing_pairs = {
+            (region_id, ano)
+            for region_id, anos in backbone_data.items()
+            for ano in anos
+        }
+        log.info(f'Lacunas carregadas ({backbone}): {len(missing_pairs)} pares a enviar')
 
     tif_files = sorted(args.tif_dir.glob('pred_*.tif'))
     if not tif_files:
@@ -130,6 +158,8 @@ def main():
             if args.years   and year      not in args.years:
                 continue
             if args.regions and region_id not in args.regions:
+                continue
+            if missing_pairs is not None and (region_id, year) not in missing_pairs:
                 continue
 
             blob_name = f'{args.gcs_prefix}/{group}/{tif_path.name}'

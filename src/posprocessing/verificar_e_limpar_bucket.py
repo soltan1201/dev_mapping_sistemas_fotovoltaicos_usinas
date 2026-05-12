@@ -85,11 +85,14 @@ def init_ee(project: str):
 
 
 def listar_assets_colecao(asset_path: str) -> set[str]:
-    """Retorna conjunto de asset IDs presentes na ImageCollection."""
+    """Retorna conjunto de asset IDs (full name) presentes na ImageCollection."""
     assets = set()
     page_token = None
     while True:
-        resp = ee.data.listAssets({'parent': asset_path, 'pageToken': page_token})
+        params = {'parent': asset_path}
+        if page_token:
+            params['pageToken'] = page_token
+        resp = ee.data.listAssets(params)
         for item in resp.get('assets', []):
             assets.add(item['name'])
         page_token = resp.get('nextPageToken')
@@ -155,7 +158,7 @@ def main():
     parser.add_argument('--bucket',      default='mapbiomas-energia',
                         help='Nome do bucket GCS (padrão: mapbiomas-energia)')
     parser.add_argument('--asset-path',
-                        default='projects/geo-data-s/assets/fotovoltaica/usinas_br',
+                        default='projects/geo-data-s/assets/fotovoltaica/usinas_br_gc',
                         help='ImageCollection destino no GEE')
     parser.add_argument('--project',     default='geo-data-s',
                         help='Projeto GEE (padrão: geo-data-s)')
@@ -172,6 +175,9 @@ def main():
                         help='Apagar do GCS os arquivos com asset confirmado (OK)')
     parser.add_argument('--report',      type=Path, default=None,
                         help='Salvar relatório CSV neste arquivo')
+    parser.add_argument('--all-models',  action='store_true',
+                        help='Processa todas as subpastas de MODELS de uma vez '
+                             '(ignora --gcs-prefix)')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
@@ -179,40 +185,61 @@ def main():
 
     key_json = str(Path(args.key_json).expanduser())
 
-    # Derivar modelo/backbone a partir do grupo (último segmento do prefix)
-    group      = args.gcs_prefix.rstrip('/').split('/')[-1]
+    # Monta lista de prefixos a processar
+    if args.all_models:
+        # ex: fotovoltaicas_tif/tif_fotovoltaicav1 → base = fotovoltaicas_tif
+        base_prefix = args.gcs_prefix.rsplit('/', 1)[0]
+        prefixos = [f'{base_prefix}/{group}' for group in MODELS]
+    else:
+        prefixos = [args.gcs_prefix]
+
+    # Carrega assets GEE uma única vez (serve para todos os modelos)
+    init_ee(args.project)
+    log.info('Listando assets na coleção GEE...')
+    assets_existentes = listar_assets_colecao(args.asset_path)
+    log.info('Verificando tasks pendentes no GEE...')
+    tasks_pendentes = listar_tasks_pendentes()
+
+    todos_resultados = []
+    for gcs_prefix in prefixos:
+        _processar_prefixo(
+            gcs_prefix, args, key_json, assets_existentes,
+            tasks_pendentes, todos_resultados,
+        )
+
+    # Relatório CSV consolidado
+    if args.report:
+        with open(args.report, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=['blob', 'asset_id', 'region', 'year', 'status'])
+            writer.writeheader()
+            writer.writerows(todos_resultados)
+        log.info(f'Relatório salvo em: {args.report.resolve()}')
+
+
+def _processar_prefixo(gcs_prefix: str, args, key_json: str,
+                       assets_existentes: set, tasks_pendentes: set,
+                       resultados: list):
+    group      = gcs_prefix.rstrip('/').split('/')[-1]
     model_full = MODELS.get(group, 'unet_resnet50')
     model, backbone = (model_full.split('_', 1) + [''])[:2]
 
     log.info('=' * 65)
-    log.info(f'Bucket       : gs://{args.bucket}/{args.gcs_prefix}')
-    log.info(f'Asset path   : {args.asset_path}')
+    log.info(f'Prefixo GCS  : gs://{args.bucket}/{gcs_prefix}')
     log.info(f'Modelo       : {model_full}')
     log.info(f'Modo         : {"APAGAR confirmados" if args.delete else "APENAS RELATÓRIO (dry-run)"}')
     log.info('=' * 65)
 
-    init_ee(args.project)
-
-    # Carrega estado atual do GEE e tasks em andamento
-    log.info('Listando assets na coleção GEE...')
-    assets_existentes = listar_assets_colecao(args.asset_path)
-
-    log.info('Verificando tasks pendentes no GEE...')
-    tasks_pendentes = listar_tasks_pendentes()
-
-    # Lista TIFs no GCS
-    log.info('Listando TIFs no bucket GCS...')
-    blobs = listar_blobs(args.bucket, args.gcs_prefix, key_json, args.gcp_project)
+    blobs = listar_blobs(args.bucket, gcs_prefix, key_json, args.gcp_project)
     if not blobs:
-        log.warning('Nenhum .tif encontrado no prefixo especificado.')
+        log.warning(f'Nenhum .tif encontrado em {gcs_prefix}')
         return
 
     log.info(f'TIFs encontrados no GCS: {len(blobs)}')
-    log.info('=' * 65)
 
-    resultados = []
     contadores = {STATUS_OK: 0, STATUS_MISSING: 0,
                   STATUS_PENDING: 0, STATUS_ERROR: 0}
+    marker = {STATUS_OK: '✓', STATUS_MISSING: '✗',
+              STATUS_PENDING: '⏳', STATUS_ERROR: '?'}
 
     for blob_name in sorted(blobs):
         fname = blob_name.split('/')[-1]
@@ -232,62 +259,38 @@ def main():
         if not asset_id:
             continue
 
-        # Nome curto da asset (sem o caminho completo) para comparar com tasks
-        asset_name_short = asset_id.split('/')[-1]
+        asset_short = asset_id.split('/')[-1]
 
-        # Determinar status
         if asset_id in assets_existentes:
             status = STATUS_OK
-        elif asset_name_short in tasks_pendentes:
+        elif asset_short in tasks_pendentes:
             status = STATUS_PENDING
         else:
             status = STATUS_MISSING
 
         contadores[status] += 1
         resultados.append({
-            'blob':      blob_name,
-            'asset_id':  asset_id,
-            'region':    region_id,
-            'year':      year,
-            'status':    status,
+            'blob': blob_name, 'asset_id': asset_id,
+            'region': region_id, 'year': year, 'status': status,
         })
 
-        marker = {'OK': '✓', 'FALTANDO': '✗', 'TASK_PENDENTE': '⏳', 'ERRO_VERIFICACAO': '?'}
         log.info(f'  {marker[status]}  {fname}  →  {status}')
 
-        # Apagar do GCS se confirmado
         if status == STATUS_OK and args.delete:
             try:
                 apagar_blob(args.bucket, blob_name, key_json, args.gcp_project)
             except Exception as exc:
                 log.error(f'  Falha ao apagar {blob_name}: {exc}')
 
-    # Sumário
     total = sum(contadores.values())
-    log.info('=' * 65)
-    log.info(f'TOTAL analisado : {total}')
-    log.info(f'  ✓  OK (asset confirmado)    : {contadores[STATUS_OK]}')
-    log.info(f'  ✗  FALTANDO (asset ausente) : {contadores[STATUS_MISSING]}')
-    log.info(f'  ⏳ TASK PENDENTE             : {contadores[STATUS_PENDING]}')
-    log.info(f'  ?  ERRO DE VERIFICAÇÃO       : {contadores[STATUS_ERROR]}')
-    if args.delete:
-        log.info(f'  Arquivos apagados do GCS    : {contadores[STATUS_OK]}')
-    log.info('=' * 65)
+    log.info(f'[{group}] OK:{contadores[STATUS_OK]}  '
+             f'FALTANDO:{contadores[STATUS_MISSING]}  '
+             f'PENDENTE:{contadores[STATUS_PENDING]}  '
+             f'(total={total})')
 
-    # Relatório CSV
-    if args.report:
-        with open(args.report, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=['blob', 'asset_id', 'region', 'year', 'status'])
-            writer.writeheader()
-            writer.writerows(resultados)
-        log.info(f'Relatório salvo em: {args.report.resolve()}')
-
-    # Listar FALTANDO para facilitar reprocessamento
     faltando = [r for r in resultados if r['status'] == STATUS_MISSING]
     if faltando:
-        log.warning(f'\n{len(faltando)} arquivo(s) SEM asset no GEE:')
-        for r in faltando:
-            log.warning(f'  gs://{args.bucket}/{r["blob"]}  (region={r["region"]} year={r["year"]})')
+        log.warning(f'  {len(faltando)} arquivo(s) SEM asset no GEE em {group}')
 
 
 if __name__ == '__main__':
