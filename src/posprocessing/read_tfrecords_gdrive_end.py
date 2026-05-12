@@ -118,8 +118,8 @@ def mover_para_lixeira(service, file_id: str, nome: str):
 
 # ── Lógica principal ──────────────────────────────────────────────────────────
 
-def processar_pasta(service, delete: bool):
-    LOCAL_DEST.mkdir(parents=True, exist_ok=True)
+def processar_pasta(service, delete: bool, dest_dir: Path):
+    dest_dir.mkdir(parents=True, exist_ok=True)
 
     folder_id = buscar_id_pasta(service, DRIVE_FOLDER)
     if not folder_id:
@@ -140,9 +140,8 @@ def processar_pasta(service, delete: bool):
         nome       = f['name']
         file_id    = f['id']
         drive_size = int(f.get('size', 0))
-        dest       = LOCAL_DEST / nome
+        dest       = dest_dir / nome
 
-        # Pula se já existe localmente com tamanho correto
         if dest.exists():
             local_size = dest.stat().st_size
             if local_size > 0 and (local_size == drive_size or drive_size == 0):
@@ -171,7 +170,7 @@ def processar_pasta(service, delete: bool):
     log.info(f'Baixados  : {baixados}')
     log.info(f'Pulados   : {pulados}  (já existiam)')
     log.info(f'Erros     : {erros}')
-    log.info(f'Destino   : {LOCAL_DEST}')
+    log.info(f'Destino   : {dest_dir}')
     log.info('=' * 60)
 
 
@@ -209,9 +208,7 @@ def main():
         log.error(f'Arquivo de credenciais não encontrado: {key_json}')
         sys.exit(1)
 
-    # Sobrescreve o destino global se passado via CLI
-    global LOCAL_DEST
-    LOCAL_DEST = Path(args.dest).expanduser()
+    dest_dir = Path(args.dest).expanduser()
 
     try:
         service = autenticar(key_json)
@@ -224,11 +221,11 @@ def main():
     if args.loop:
         while True:
             log.info(f'[{time.strftime("%H:%M:%S")}] Iniciando ciclo...')
-            processar_pasta(service, delete)
+            processar_pasta(service, delete, dest_dir)
             log.info(f'Aguardando {args.interval}s para o próximo ciclo...')
             time.sleep(args.interval)
     else:
-        processar_pasta(service, delete)
+        processar_pasta(service, delete, dest_dir)
 
 
 if __name__ == '__main__':
