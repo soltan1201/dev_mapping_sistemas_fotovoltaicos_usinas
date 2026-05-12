@@ -94,6 +94,9 @@ def main():
                         help='IDs de região a enviar (padrão: todos)')
     parser.add_argument('--group',      type=str, default=None,
                         help='Subpasta dentro do gcs-prefix (padrão: nome da --tif-dir)')
+    parser.add_argument('--tmp-dir',    type=Path, default=None,
+                        help='Pasta para arquivos COG temporários (padrão: /tmp do sistema). '
+                             'Use se /tmp estiver cheio.')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
@@ -114,7 +117,8 @@ def main():
     log.info('=' * 60)
 
     total = 0
-    with tempfile.TemporaryDirectory(prefix='cog_tmp_') as tmpdir:
+    tmp_kwargs = {'prefix': 'cog_tmp_', 'dir': args.tmp_dir} if args.tmp_dir else {'prefix': 'cog_tmp_'}
+    with tempfile.TemporaryDirectory(**tmp_kwargs) as tmpdir:
         for tif_path in tif_files:
             m = _FNAME_RE.match(tif_path.name)
             if not m:
@@ -138,6 +142,10 @@ def main():
                 total += 1
             except Exception as exc:
                 log.error(f'  Erro em {tif_path.name}: {exc}')
+            finally:
+                # libera espaço em disco imediatamente após upload
+                if cog_path.exists():
+                    cog_path.unlink()
 
     log.info(f'Concluído. Arquivos enviados: {total}  |  Log: {LOG_FILE.resolve()}')
 

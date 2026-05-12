@@ -1,0 +1,27 @@
+((py-DL) ) [superusuario@geodatin-server ~]$ du -sh ~/db_images/* 2>/dev/null
+137G    /home/superusuario/db_images/dataset_fotovoltaica_npy
+15G     /home/superusuario/db_images/dataset_fotovoltaica_tf
+244M    /home/superusuario/db_images/DS_FV_NICFI_TFRECORDS
+4.0K    /home/superusuario/db_images/modelos_utilizados.txt
+944K    /home/superusuario/db_images/PATCHS_S2_Dezembro_CAAT
+380K    /home/superusuario/db_images/PATCHS_S2_Fevereiro_CAAT
+172G    /home/superusuario/db_images/predAlerts
+35G     /home/superusuario/db_images/predict_fotovoltaicV1
+35G     /home/superusuario/db_images/predict_fotovoltaicV2
+35G     /home/superusuario/db_images/predict_fotovoltaicV3
+35G     /home/superusuario/db_images/predict_fotovoltaicV4
+35G     /home/superusuario/db_images/predict_fotovoltaicV5
+35G     /home/superusuario/db_images/predict_fotovoltaicV6
+4.0K    /home/superusuario/db_images/python join_convert_npytoTIF.py
+42G     /home/superusuario/db_images/rasters_alerts
+1.6M    /home/superusuario/db_images/relatorio_db_tfrecords_2026-02-22.json
+516K    /home/superusuario/db_images/relatorio_db_tfrecords_2026-03-01.json
+684K    /home/superusuario/db_images/relatorio_db_tfrecords_2026-03-02.json
+1.6M    /home/superusuario/db_images/relatorio_db_tfrecords_2026-03-29.json
+30G     /home/superusuario/db_images/tif_fotovoltaicav1
+30G     /home/superusuario/db_images/tif_fotovoltaicav2
+31G     /home/superusuario/db_images/tif_fotovoltaicav3
+31G     /home/superusuario/db_images/tif_fotovoltaicav4
+31G     /home/superusuario/db_images/tif_fotovoltaicav5
+31G     /home/superusuario/db_images/tif_fotovoltaicav6
+4.0K    /home/superusuario/db_images/vetor_alerts

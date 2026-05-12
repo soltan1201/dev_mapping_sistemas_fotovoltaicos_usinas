@@ -40,8 +40,14 @@ collections.Callable = collections.abc.Callable
 pathparent = str(Path(os.getcwd()).parents[0])
 sys.path.append(pathparent)
 
+from configure_account_projects_ee import get_current_account, get_project_from_account
+from gee_tools import *
+
+projAccount = get_current_account()
+print(f"projetos selecionado >>> {projAccount} <<<")
+
 try:
-    ee.Initialize(project='mapbiomas-caatinga-cloud04')
+    ee.Initialize(project=projAccount)
     print('Earth Engine inicializado com sucesso!')
 except ee.EEException as e:
     print('Falha ao inicializar Earth Engine:', e)
