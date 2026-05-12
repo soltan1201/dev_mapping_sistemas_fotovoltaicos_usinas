@@ -43,6 +43,12 @@ import subprocess
 import sys
 from pathlib import Path
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    def tqdm(it, **kw):  # fallback silencioso
+        return it
+
 import ee
 from google.cloud import storage
 
@@ -168,17 +174,22 @@ def construir_set_gcs(bucket_name: str, prefix: str,
 
 
 def construir_set_gee(asset_path: str) -> set[str]:
-    """Retorna conjunto de asset names completos da ImageCollection."""
-    list_assets = []
+    """Retorna conjunto de asset names (só o basename) da ImageCollection, com paginação."""
+    assets: set[str] = set()
+    page_token = None
     while True:
-        getlistAsset = ee.data.listAssets(asset_path)
-        assets_lista = getlistAsset['assets']
-        for cc, item in enumerate(assets_lista):
-            name_file = item['name'].split("/")[-1]
-            # print(f"---- #{cc + 1}  <<>>  {name_file}")
-            list_assets.append(name_file)
-
-    return list_assets
+        params = {'parent': asset_path}
+        if page_token:
+            params['pageToken'] = page_token
+        response    = ee.data.listAssets(params)
+        page_items  = response.get('assets', [])
+        for item in page_items:
+            assets.add(item['name'].split('/')[-1])
+        log.info(f'  GEE listAssets: {len(assets)} assets carregados...')
+        page_token = response.get('nextPageToken')
+        if not page_token:
+            break
+    return assets
 
 
 def construir_set_tasks_pendentes() -> set[str]:
@@ -520,24 +531,22 @@ def main():
     log.info(f'  Assets no GEE: {len(set_gee)}  ')
 
     # ── Auditoria ─────────────────────────────────────────────────────────────
+    pares = [(r, y) for r in regioes for y in years]   # 880 pares conhecidos
     resultados = []
-    for region in regioes:
-        for year in years:
-            gcs_key      = f'{region}_{year}'
-            asset_name   = f'{cfg["asset_path"]}/reg_{region}_{year}_{model}_{backbone}'
-            # asset_short  = f'reg_{region}_{year}_{model}_{backbone}'
+    for region, year in tqdm(pares, desc='Auditando pares', unit='par'):
+        gcs_key    = f'{region}_{year}'
+        asset_name = f'{cfg["asset_path"]}/reg_{region}_{year}_{model}_{backbone}'
 
-            row = {
-                'region':      region,
-                'year':        year,
-                'npy':         checar_npy(npy_dir, region, year),
-                'predict':     checar_predict(pred_dir, region, year),
-                'tif':         checar_tif(tif_dir, region, year),
-                'gcs':         gcs_key in set_gcs,
-                'gee':         asset_name in set_gee,
-                # 'gee_pending': asset_short in set_pending,
-            }
-            resultados.append(row)
+        row = {
+            'region':  region,
+            'year':    year,
+            'npy':     checar_npy(npy_dir, region, year),
+            'predict': checar_predict(pred_dir, region, year),
+            'tif':     checar_tif(tif_dir, region, year),
+            'gcs':     gcs_key in set_gcs,
+            'gee':     asset_name in set_gee,
+        }
+        resultados.append(row)
 
     imprimir_relatorio(resultados)
 

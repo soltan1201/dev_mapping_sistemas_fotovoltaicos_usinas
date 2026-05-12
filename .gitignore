@@ -2,6 +2,7 @@ src/dados/*
 src/models/*
 src/prompts/*
 !src/models/.gitkeep
+src/utieis/relatorioTaskXContas.txt
 *.keras
 **/__pycache__/
 *.pyc
