@@ -534,8 +534,8 @@ def main():
     pares = [(r, y) for r in regioes for y in years]   # 880 pares conhecidos
     resultados = []
     for region, year in tqdm(pares, desc='Auditando pares', unit='par'):
-        gcs_key    = f'{region}_{year}'
-        asset_name = f'{cfg["asset_path"]}/reg_{region}_{year}_{model}_{backbone}'
+        gcs_key     = f'{region}_{year}'
+        asset_short = f'reg_{region}_{year}_{model}_{backbone}'  # basename usado no GEE
 
         row = {
             'region':  region,
@@ -544,7 +544,7 @@ def main():
             'predict': checar_predict(pred_dir, region, year),
             'tif':     checar_tif(tif_dir, region, year),
             'gcs':     gcs_key in set_gcs,
-            'gee':     asset_name in set_gee,
+            'gee':     asset_short in set_gee,
         }
         resultados.append(row)
 
