@@ -178,9 +178,9 @@ TFRECORD_FEATURE_SPEC = {
 # (Export.table.toDrive + neighborhoodToArray — rect(128) → 257×257 por banda)
 _GEE_PATCH_FLAT = 257 * 257   # 66 049 valores por banda
 GEE_TFRECORD_FEATURE_SPEC = {
-    **{b: tf.io.FixedLenFeature([_GEE_PATCH_FLAT], tf.int64) for b in FEATURE_BANDS},
+    **{b: tf.io.FixedLenFeature([_GEE_PATCH_FLAT], tf.float32) for b in FEATURE_BANDS},
     'region_id': tf.io.FixedLenFeature([], tf.string),
-    'year':      tf.io.FixedLenFeature([], tf.int64),
+    'year':      tf.io.FixedLenFeature([], tf.float32),
     'latitude':  tf.io.FixedLenFeature([], tf.float32),
     'longitude': tf.io.FixedLenFeature([], tf.float32),
 }
@@ -423,8 +423,8 @@ def _decode_gee_tfrecord(proto):
     """Decodifica Example do formato GEE export → (patch_f32 [256,256,8], meta_dict)."""
     parsed = tf.io.parse_single_example(proto, GEE_TFRECORD_FEATURE_SPEC)
 
-    # Empilha bandas (257×257) e center-crop para 256×256
-    bands = [tf.cast(tf.reshape(parsed[b], [257, 257]), tf.float32) for b in FEATURE_BANDS]
+    # Bandas já são float32; empilha (257×257) e center-crop para 256×256
+    bands = [tf.reshape(parsed[b], [257, 257]) for b in FEATURE_BANDS]
     patch = tf.stack(bands, axis=-1)[:256, :256, :]   # (256, 256, 8)
     patch = patch / NORM_FACTOR
 
@@ -465,7 +465,7 @@ def predict_gee_tfrecord(model, input_dir: Path, output_dir: Path,
 
         for i in range(b):
             region_id = batch_meta['region_id'][i].numpy().decode()
-            year      = int(batch_meta['year'][i].numpy())
+            year      = int(round(float(batch_meta['year'][i].numpy())))
             lat       = float(batch_meta['latitude'][i].numpy())
             lon       = float(batch_meta['longitude'][i].numpy())
 
