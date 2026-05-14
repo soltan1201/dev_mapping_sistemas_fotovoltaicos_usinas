@@ -68,8 +68,12 @@ var mapLeft  = ui.Map();
 var mapRight = ui.Map();
 mapLeft.setOptions('SATELLITE');
 mapRight.setOptions('SATELLITE');
-mapLeft.setControlVisibility({layerList: true, zoomControl: true, mapTypeControl: false});
-mapRight.setControlVisibility({layerList: true, zoomControl: false, mapTypeControl: false});
+mapLeft.setControlVisibility({layerList: true, zoomControl: true,  mapTypeControl: false, drawingToolsControl: true});
+mapRight.setControlVisibility({layerList: true, zoomControl: false, mapTypeControl: false, drawingToolsControl: true});
+
+// Ferramentas de desenho visíveis (para marcar regiões com problema)
+mapLeft.drawingTools().setShown(true);
+mapRight.drawingTools().setShown(true);
 
 // ============================================================
 // 6. FUNÇÃO DE RENDERIZAÇÃO
@@ -253,15 +257,24 @@ var painel = ui.Panel({
 });
 
 // ============================================================
-// 8. MONTAGEM FINAL
+// 8. MONTAGEM FINAL — wipe split + linker
 // ============================================================
 ui.root.clear();
-ui.root.add(mapLeft);
-ui.root.add(mapRight);
 
-ui.Map.Linker([mapLeft, mapRight], 'change-bounds');
+var linker = ui.Map.Linker([mapLeft, mapRight], 'change-bounds');
 
-mapLeft.add(painel);
+var splitPanel = ui.SplitPanel({
+  firstPanel:  linker.get(0),
+  secondPanel: linker.get(1),
+  orientation: 'horizontal',
+  wipe:        true,
+  style:       {stretch: 'both'}
+});
+
+ui.root.add(splitPanel);
+
+// Painel de controle flutua sobre o mapa esquerdo
+linker.get(0).add(painel);
 
 // ============================================================
 // 9. RENDERIZAÇÃO INICIAL

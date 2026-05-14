@@ -100,36 +100,54 @@ def _mosaic_rowcol(patches: list[tuple]) -> tuple[np.ndarray, Affine, str]:
     return mosaic, affine, crs
 
 
+def _cluster_coords(values: list[float], tol: float = 1e-4) -> list[float]:
+    """
+    Agrupa coordenadas que distam menos de `tol` graus (ruído de ponto flutuante
+    entre patches da mesma linha/coluna). Retorna o centroide de cada cluster.
+    tol=1e-4° ≈ 11 m — muito menor que o espaçamento real entre linhas (~0.011°).
+    """
+    sorted_v = sorted(values)
+    clusters: list[list[float]] = [[sorted_v[0]]]
+    for v in sorted_v[1:]:
+        if v - clusters[-1][-1] < tol:
+            clusters[-1].append(v)
+        else:
+            clusters.append([v])
+    return [sum(c) / len(c) for c in clusters]
+
+
 def _mosaic_latlon(patches: list[tuple], pixel_size_m: float = 4.77) -> tuple[np.ndarray, Affine, str]:
     """
     Formato gee-tfrecord: metadados com latitude/longitude (centro do patch).
     pixel_size_m: resolução espacial em metros (Planet NICFI ≈ 4.77 m).
-    Estima tamanho do pixel em graus a partir do espaçamento entre patches;
-    usa pixel_size_m como fallback se houver apenas um patch por eixo.
+    Estima tamanho do pixel em graus a partir do espaçamento entre linhas/colunas
+    reais de patches (depois de agrupar coordenadas com ruído de ponto flutuante).
     """
+    import math
+
     lats = [m['latitude']  for _, m in patches]
     lons = [m['longitude'] for _, m in patches]
 
-    # Pixel size em graus — estimado pelo espaçamento real entre centros de patches
-    unique_lats = sorted(set(round(v, 7) for v in lats), reverse=True)
-    unique_lons = sorted(set(round(v, 7) for v in lons))
+    mid_lat = sum(lats) / len(lats)
 
-    if len(unique_lats) >= 2:
-        spacing_lat = min(abs(a - b) for a, b in zip(unique_lats, unique_lats[1:]))
+    # Agrupa lats/lons por proximidade para eliminar ruído de ponto flutuante
+    row_lats = sorted(_cluster_coords(lats), reverse=True)   # N → S
+    col_lons = sorted(_cluster_coords(lons))                  # W → E
+
+    if len(row_lats) >= 2:
+        spacing_lat = min(abs(a - b) for a, b in zip(row_lats, row_lats[1:]))
         px_lat = spacing_lat / PATCH_SIZE
     else:
-        import math
         px_lat = pixel_size_m / 111_320.0
 
-    if len(unique_lons) >= 2:
-        spacing_lon = min(abs(a - b) for a, b in zip(unique_lons, unique_lons[1:]))
+    if len(col_lons) >= 2:
+        spacing_lon = min(abs(a - b) for a, b in zip(col_lons, col_lons[1:]))
         px_lon = spacing_lon / PATCH_SIZE
     else:
-        import math
-        mid_lat = sum(lats) / len(lats)
         px_lon = pixel_size_m / (111_320.0 * math.cos(math.radians(mid_lat)))
 
-    log.info(f'    px_lat={px_lat:.8f}°  px_lon={px_lon:.8f}°  patches={len(patches)}')
+    log.info(f'    linhas={len(row_lats)}  colunas={len(col_lons)}  '
+             f'px_lat={px_lat:.8f}°  px_lon={px_lon:.8f}°  patches={len(patches)}')
 
     # Corner superior-esquerdo do mosaico (a partir dos centros + meio patch)
     top_lat  = max(lats) + (PATCH_SIZE / 2) * px_lat
@@ -183,21 +201,31 @@ def mosaic_patches(npy_files: list[Path],
         raise ValueError(f'Formato de metadados não reconhecido. Chaves: {list(first.keys())}')
 
 
-def save_tif(mosaic: np.ndarray, transform: Affine, crs_str: str, out_path: Path):
+def save_tif(mosaic: np.ndarray, transform: Affine, crs_str: str, out_path: Path,
+             threshold: float | None = None):
     out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if threshold is not None:
+        data  = (mosaic > threshold).astype(np.uint8)
+        dtype = np.uint8
+        log.info(f'    threshold={threshold}  positivos={data.sum():,}px')
+    else:
+        data  = mosaic
+        dtype = np.float32
+
     with rasterio.open(
         out_path, 'w',
         driver='GTiff',
-        height=mosaic.shape[0],
-        width=mosaic.shape[1],
+        height=data.shape[0],
+        width=data.shape[1],
         count=1,
-        dtype=np.float32,
+        dtype=dtype,
         crs=CRS.from_string(crs_str),
         transform=transform,
         compress='lzw',
     ) as dst:
-        dst.write(mosaic, 1)
-    log.info(f'    salvo → {out_path.name}  ({mosaic.shape[0]}×{mosaic.shape[1]}px)')
+        dst.write(data, 1)
+    log.info(f'    salvo → {out_path.name}  ({data.shape[0]}×{data.shape[1]}px)')
 
 
 def main():
@@ -215,6 +243,9 @@ def main():
                         help='IDs de região a processar (padrão: todos)')
     parser.add_argument('--pixel-size', type=float, default=4.77,
                         help='Resolução em metros para patches lat/lon (padrão: 4.77 — Planet NICFI)')
+    parser.add_argument('--threshold', type=float, default=0.5,
+                        help='Limiar de binarização: pixels > threshold → 1 (padrão: 0.5). '
+                             'Use --threshold 0 para salvar probabilidades float32 sem binarizar.')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
@@ -250,7 +281,8 @@ def main():
             log.info(f'Processando  {region_dir.name}/{year_dir.name}  ({len(npy_files)} patches)')
             try:
                 mosaic, transform, crs = mosaic_patches(npy_files, args.pixel_size)
-                save_tif(mosaic, transform, crs, out_path)
+                thr = args.threshold if args.threshold > 0 else None
+                save_tif(mosaic, transform, crs, out_path, threshold=thr)
             except Exception as exc:
                 log.error(f'  Erro em {region_dir.name}/{year_dir.name}: {exc}')
 
