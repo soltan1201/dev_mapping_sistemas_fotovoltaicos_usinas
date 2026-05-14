@@ -325,6 +325,8 @@ log.info("Carregando feature collection de regiões fotovoltaicas...")
 regions_fc    = ee.FeatureCollection(ASSET_REGIONS)
 region_list   = regions_fc.toList(regions_fc.size())
 total_regions = regions_fc.size().getInfo()
+
+
 log.info(f"Total de regiões: {total_regions} | Processando [{REGION_INIC}:{REGION_END}]")
 
 for cc in range(min(REGION_END - REGION_INIC, total_regions - REGION_INIC)):
