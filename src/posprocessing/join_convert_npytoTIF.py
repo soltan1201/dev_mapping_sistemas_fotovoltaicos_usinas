@@ -246,6 +246,8 @@ def main():
     parser.add_argument('--threshold', type=float, default=0.5,
                         help='Limiar de binarização: pixels > threshold → 1 (padrão: 0.5). '
                              'Use --threshold 0 para salvar probabilidades float32 sem binarizar.')
+    parser.add_argument('--overwrite', action='store_true',
+                        help='Reprocessa mesmo que o TIF de saída já exista.')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
@@ -274,7 +276,7 @@ def main():
                 continue
 
             out_path = args.output_dir / f'pred_{region_base}_{year}.tif'
-            if out_path.exists():
+            if out_path.exists() and not args.overwrite:
                 log.info(f'  já existe, pulando: {out_path.name}')
                 continue
 
