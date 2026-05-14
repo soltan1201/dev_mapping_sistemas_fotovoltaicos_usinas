@@ -32,7 +32,7 @@ from pathlib import Path
 import tensorflow as tf
 import keras
 import keras.ops as kops
-
+tf.keras.mixed_precision.set_global_policy('mixed_float16')
 print(f'TensorFlow: {tf.__version__}  |  Keras: {keras.__version__}')
 
 try:
@@ -435,57 +435,73 @@ def predict_gee_tfrecord(model, input_dir: Path, output_dir: Path,
                           batch_size: int, threshold: float,
                           filter_years, filter_regions, model_path: str):
     """Inferência sobre TFRecords no formato do download_predict_as_tfrecord_fv.py."""
+    import re
+    from collections import defaultdict
+
     log.info(f'[GEE-TFRecord] Fonte: {input_dir}')
 
-    # Aceita estrutura plana ou <region>/<year>/ idêntica ao modo npy
-    # GEE exporta comprimido (.tfrecord.gz) ou não (.tfrecord)
-    tfrecord_files = sorted(
-        str(p) for p in input_dir.rglob('*.tfrecord*')
+    all_files = sorted(
+        p for p in input_dir.rglob('*.tfrecord*')
         if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
     )
-    if not tfrecord_files:
+    if not all_files:
         log.warning('Nenhum arquivo .tfrecord / .tfrecord.gz encontrado.')
         return
 
-    compression = 'GZIP' if tfrecord_files[0].endswith('.gz') else ''
-    log.info(f'Arquivos encontrados: {len(tfrecord_files)}  (compressão: {compression or "nenhuma"})')
+    compression = 'GZIP' if all_files[0].name.endswith('.gz') else ''
+    log.info(f'Arquivos encontrados: {len(all_files)}  (compressão: {compression or "nenhuma"})')
 
-    ds = (tf.data.TFRecordDataset(tfrecord_files,
-                                   compression_type=compression,
-                                   num_parallel_reads=tf.data.AUTOTUNE)
-          .map(_decode_gee_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
-          .batch(batch_size)
-          .prefetch(tf.data.AUTOTUNE))
+    # Agrupa shards por (region_id, year) via nome: predict_fv_{region}_{year}_part{N}
+    pattern = re.compile(r'predict_fv_([0-9a-f]+)_(\d{4})_part\d+')
+    groups: dict[tuple[str, int], list[str]] = defaultdict(list)
+    for p in all_files:
+        m = pattern.search(p.name)
+        if not m:
+            log.warning(f'Nome não reconhecido, pulando: {p.name}')
+            continue
+        region_id, year = m.group(1), int(m.group(2))
+        if filter_regions and region_id not in filter_regions:
+            continue
+        if filter_years and year not in filter_years:
+            continue
+        groups[(region_id, year)].append(str(p))
+
+    log.info(f'Grupos (região × ano) a processar: {len(groups)}')
 
     total_saved = 0
-    for batch_patches, batch_meta in ds:
-        # Filtra por ano e região se solicitado
-        preds = model.predict(batch_patches, verbose=0)   # (B, 256, 256, 1)
-        b     = preds.shape[0]
+    for (region_id, year), files in sorted(groups.items()):
+        out_dir = output_dir / region_id / str(year)
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-        for i in range(b):
-            region_id = batch_meta['region_id'][i].numpy().decode()
-            year      = int(round(float(batch_meta['year'][i].numpy())))
-            lat       = float(batch_meta['latitude'][i].numpy())
-            lon       = float(batch_meta['longitude'][i].numpy())
+        log.info(f'  {region_id}/{year}  — {len(files)} shard(s)')
 
-            if filter_regions and region_id not in filter_regions:
-                continue
-            if filter_years and year not in filter_years:
-                continue
+        ds = (tf.data.TFRecordDataset(files,
+                                       compression_type=compression,
+                                       num_parallel_reads=min(4, len(files)))
+              .map(_decode_gee_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
+              .batch(batch_size)
+              .prefetch(2))
 
-            out_dir = output_dir / region_id / str(year)
-            out_dir.mkdir(parents=True, exist_ok=True)
+        for batch_patches, batch_meta in ds:
+            # model(...) direto evita o overhead por chamada do model.predict()
+            preds = model(batch_patches, training=False).numpy()  # (B, 256, 256, 1)
+            b     = preds.shape[0]
 
-            pred_path = out_dir / f'patch_lat{lat:.5f}_lon{lon:.5f}_pred.npy'
-            if pred_path.exists():
-                continue  # resume
+            for i in range(b):
+                lat = float(batch_meta['latitude'][i].numpy())
+                lon = float(batch_meta['longitude'][i].numpy())
 
-            meta = {'region_id': region_id, 'year': year,
-                    'latitude': lat, 'longitude': lon}
-            save_prediction_gee(preds[i, :, :, 0], meta, out_dir,
-                                threshold, model_path)
-            total_saved += 1
+                pred_path = out_dir / f'patch_lat{lat:.5f}_lon{lon:.5f}_pred.npy'
+                if pred_path.exists():
+                    continue  # resume
+
+                meta = {'region_id': region_id, 'year': year,
+                        'latitude': lat, 'longitude': lon}
+                save_prediction_gee(preds[i, :, :, 0], meta, out_dir,
+                                    threshold, model_path)
+                total_saved += 1
+
+        log.info(f'    → salvos acumulado: {total_saved}')
 
     log.info(f'[GEE-TFRecord] Predições salvas: {total_saved}')
 
