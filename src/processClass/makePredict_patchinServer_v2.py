@@ -438,14 +438,20 @@ def predict_gee_tfrecord(model, input_dir: Path, output_dir: Path,
     log.info(f'[GEE-TFRecord] Fonte: {input_dir}')
 
     # Aceita estrutura plana ou <region>/<year>/ idêntica ao modo npy
-    tfrecord_files = sorted(str(p) for p in input_dir.rglob('*.tfrecord'))
+    # GEE exporta comprimido (.tfrecord.gz) ou não (.tfrecord)
+    tfrecord_files = sorted(
+        str(p) for p in input_dir.rglob('*.tfrecord*')
+        if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
+    )
     if not tfrecord_files:
-        log.warning('Nenhum arquivo .tfrecord encontrado.')
+        log.warning('Nenhum arquivo .tfrecord / .tfrecord.gz encontrado.')
         return
 
-    log.info(f'Arquivos encontrados: {len(tfrecord_files)}')
+    compression = 'GZIP' if tfrecord_files[0].endswith('.gz') else ''
+    log.info(f'Arquivos encontrados: {len(tfrecord_files)}  (compressão: {compression or "nenhuma"})')
 
     ds = (tf.data.TFRecordDataset(tfrecord_files,
+                                   compression_type=compression,
                                    num_parallel_reads=tf.data.AUTOTUNE)
           .map(_decode_gee_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
           .batch(batch_size)

@@ -139,8 +139,12 @@ def main():
     gs_prefix = f'gs://{args.bucket}/{args.gcs_path}'
     cmd = f'gcloud storage ls "{gs_prefix}/*.tif"'
     print(f'Listando: {cmd}')
-    result = subprocess.check_output(cmd, shell=True).decode('utf-8')
-    tif_paths = [p for p in result.strip().split('\n') if p.endswith('.tif')]
+    proc = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if proc.returncode != 0:
+        print(f'Nenhum .tif encontrado em {gs_prefix}')
+        print(f'  (gcloud stderr: {proc.stderr.strip()})')
+        return
+    tif_paths = [p for p in proc.stdout.strip().split('\n') if p.endswith('.tif')]
 
     if not tif_paths:
         print(f'Nenhum .tif encontrado em {gs_prefix}')
