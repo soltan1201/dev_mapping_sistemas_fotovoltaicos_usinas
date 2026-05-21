@@ -18,6 +18,9 @@ Uso:
 
   # Baixar sem apagar do Drive
   python read_tfrecords_gdrive_end.py --key-json ... --no-delete
+
+  # Especificar pasta destino
+  python read_tfrecords_gdrive_end.py --key-json ... --dest /caminho/para/destino
 """
 
 import argparse
@@ -47,7 +50,7 @@ log = logging.getLogger(__name__)
 
 SCOPES       = ['https://www.googleapis.com/auth/drive']
 DRIVE_FOLDER = 'DS_FV_PREDICT_TFRECORDS'
-LOCAL_DEST   = Path('~/db_images/dataset_fotovoltaica_tf').expanduser()
+LOCAL_DEST   = Path('/srv/almacen/db_images/dataset_fotovoltaica_tf_L5').expanduser()
 
 
 # ── Google Drive helpers ──────────────────────────────────────────────────────
