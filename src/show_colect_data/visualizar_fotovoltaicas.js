@@ -40,6 +40,8 @@ var REGIOES = [
 // ============================================================
 // 3. ÍNDICES ESPECTRAIS
 // ============================================================
+
+// Planet NICFI (B, G, R, N) → PVI e NDVI
 var calcularIndices = function(img) {
   var b    = img.select(['B', 'G', 'R', 'N']);
   var pvi  = img.expression('float((R - N) / (R + N))', {
@@ -48,6 +50,35 @@ var calcularIndices = function(img) {
   var ndvi = img.normalizedDifference(['N', 'R']).multiply(10000).rename('ndvi');
   return img.select(['B', 'G', 'R', 'N']).toInt16()
             .addBands([pvi.toInt16(), ndvi.toInt16()]);
+};
+
+// Sentinel-2 SR (B2=B, B3=G, B4=R, B8=N, B11=S1, B12=S2) → índices de solo exposto
+// BSI, MBI, DBSI, NDSoiI — valores já em escala 0-10000 (DN bruto S2)
+var calcularIndicesSolo = function(s2) {
+  var bsi = s2.expression(
+    '((S1 + R) - (N + B)) / ((S1 + R) + (N + B))', {
+    S1: s2.select('B11'), R: s2.select('B4'),
+    N:  s2.select('B8'),  B: s2.select('B2')
+  }).rename('BSI');
+
+  var mbi = s2.expression(
+    '((S1 - S2 - N) / (S1 + S2 + N)) + 0.5', {
+    S1: s2.select('B11'), S2: s2.select('B12'),
+    N:  s2.select('B8')
+  }).rename('MBI');
+
+  var dbsi = s2.expression(
+    '((S1 - G) / (S1 + G)) - ((N - R) / (N + R))', {
+    S1: s2.select('B11'), G: s2.select('B3'),
+    N:  s2.select('B8'),  R: s2.select('B4')
+  }).rename('DBSI');
+
+  var ndsi_soil = s2.expression(
+    '(S2 - G) / (S2 + G)', {
+    S2: s2.select('B12'), G: s2.select('B3')
+  }).rename('NDSI_SOIL');
+
+  return ee.Image([bsi, mbi, dbsi, ndsi_soil]);
 };
 
 // ============================================================
@@ -60,6 +91,13 @@ var visNDVI   = {min: -3000, max: 8000,  palette: ['#8B4513', '#ffffff', '#00aa0
 var visPredE  = {min: 0, max: 1, palette: ['#FF0000']};
 var visPredD  = {min: 0, max: 1, palette: ['#0066FF']};
 var visBuffer = {color: '#FFD700', fillColor: '00000000', width: 1};
+
+// Paleta única para índices de solo exposto (verde escuro → creme → marrom queimado)
+var PAL_SOLO  = ['#1a6b1a', '#f5f5c8', '#c86400'];
+var visBSI    = {min: -0.3,  max:  0.5, palette: PAL_SOLO};
+var visMBI    = {min:  0.3,  max:  0.8, palette: PAL_SOLO};
+var visDBSI   = {min: -0.3,  max:  0.5, palette: PAL_SOLO};
+var visNDSoil = {min: -0.2,  max:  0.4, palette: PAL_SOLO};
 
 // ============================================================
 // 5. MAPAS ESQUERDO E DIREITO
@@ -86,12 +124,21 @@ var renderizar = function(year, regiaoId, modeloE, backboneE, modeloD, backboneD
     ? col_usinaFV.geometry()
     : col_usinaFV.filter(ee.Filter.eq('id', regiaoId)).geometry();
 
-  // Mosaico Planet NICFI — 2º semestre (jul–dez), anual
+  // Mosaico Planet NICFI — 2º semestre (jul–dez)
   var mosaic    = ee.ImageCollection(asset_NICFI)
     .filter(ee.Filter.date(year + '-07-01', year + '-12-31'))
     .median()
     .clip(roi);
   var mosaicIdx = calcularIndices(mosaic);
+
+  // Composto Sentinel-2 SR — mesmo período, nuvens < 20 %
+  var s2 = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
+    .filter(ee.Filter.date(year + '-07-01', year + '-12-31'))
+    .filter(ee.Filter.bounds(roi))
+    .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+    .median()
+    .clip(roi);
+  var soloIdx = calcularIndicesSolo(s2);
 
   // Helper: filtra predições por modelo, backbone e (opcional) região
   var getPred = function(modelo, backbone) {
@@ -111,20 +158,28 @@ var renderizar = function(year, regiaoId, modeloE, backboneE, modeloD, backboneD
   var predD = getPred(modeloD, backboneD);
 
   // --- Mapa esquerdo ---
-  mapLeft.addLayer(mosaic,                    visRGB,   '01. Planet RGB',       true);
-  mapLeft.addLayer(mosaic,                    visFalsa, '02. Falsa Cor',        false);
-  mapLeft.addLayer(mosaicIdx.select('ndvi'),  visNDVI,  '03. NDVI',             false);
-  mapLeft.addLayer(mosaicIdx.select('pvi'),   visPVI,   '04. PVI',              false);
-  mapLeft.addLayer(predE,                     visPredE, '05. ' + modeloE + ' / ' + backboneE, true);
-  mapLeft.addLayer(col_usinaFV,               visBuffer,'06. Buffer 5 km',      true);
+  mapLeft.addLayer(mosaic,                      visRGB,    '01. Planet RGB',       true);
+  mapLeft.addLayer(mosaic,                      visFalsa,  '02. Falsa Cor',        false);
+  mapLeft.addLayer(mosaicIdx.select('ndvi'),    visNDVI,   '03. NDVI',             false);
+  mapLeft.addLayer(mosaicIdx.select('pvi'),     visPVI,    '04. PVI',              false);
+  mapLeft.addLayer(soloIdx.select('BSI'),       visBSI,    '05. BSI (solo)',        false);
+  mapLeft.addLayer(soloIdx.select('MBI'),       visMBI,    '06. MBI (solo mod.)',   false);
+  mapLeft.addLayer(soloIdx.select('DBSI'),      visDBSI,   '07. DBSI (solo seco)',  false);
+  mapLeft.addLayer(soloIdx.select('NDSI_SOIL'), visNDSoil, '08. NDSoiI',           false);
+  mapLeft.addLayer(predE,                       visPredE,  '09. ' + modeloE + ' / ' + backboneE, true);
+  mapLeft.addLayer(col_usinaFV,                 visBuffer, '10. Buffer 5 km',      true);
 
   // --- Mapa direito ---
-  mapRight.addLayer(mosaic,                   visRGB,   '01. Planet RGB',       true);
-  mapRight.addLayer(mosaic,                   visFalsa, '02. Falsa Cor',        false);
-  mapRight.addLayer(mosaicIdx.select('ndvi'), visNDVI,  '03. NDVI',             false);
-  mapRight.addLayer(mosaicIdx.select('pvi'),  visPVI,   '04. PVI',              false);
-  mapRight.addLayer(predD,                    visPredD, '05. ' + modeloD + ' / ' + backboneD, true);
-  mapRight.addLayer(col_usinaFV,              visBuffer,'06. Buffer 5 km',      true);
+  mapRight.addLayer(mosaic,                      visRGB,    '01. Planet RGB',       true);
+  mapRight.addLayer(mosaic,                      visFalsa,  '02. Falsa Cor',        false);
+  mapRight.addLayer(mosaicIdx.select('ndvi'),    visNDVI,   '03. NDVI',             false);
+  mapRight.addLayer(mosaicIdx.select('pvi'),     visPVI,    '04. PVI',              false);
+  mapRight.addLayer(soloIdx.select('BSI'),       visBSI,    '05. BSI (solo)',        false);
+  mapRight.addLayer(soloIdx.select('MBI'),       visMBI,    '06. MBI (solo mod.)',   false);
+  mapRight.addLayer(soloIdx.select('DBSI'),      visDBSI,   '07. DBSI (solo seco)',  false);
+  mapRight.addLayer(soloIdx.select('NDSI_SOIL'), visNDSoil, '08. NDSoiI',           false);
+  mapRight.addLayer(predD,                       visPredD,  '09. ' + modeloD + ' / ' + backboneD, true);
+  mapRight.addLayer(col_usinaFV,                 visBuffer, '10. Buffer 5 km',      true);
 
   mapLeft.centerObject(roi, regiaoId === 'Todas' ? 6 : 10);
 };
@@ -247,6 +302,8 @@ var painel = ui.Panel({
     mkLegRow('#FF0000', 'Predição — esquerdo'),
     mkLegRow('#0066FF', 'Predição — direito'),
     mkLegRow('#FFD700', 'Buffer 5 km'),
+    mkLegRow('#c86400', 'Solo exposto alto (BSI/MBI/DBSI/NDSoiI)'),
+    mkLegRow('#1a6b1a', 'Solo exposto baixo / vegetação'),
   ],
   style: {
     position: 'top-left',

@@ -60,7 +60,7 @@ except Exception:
 # 1. CONFIGURAÇÕES
 # ==============================================================================
 
-ASSET_REGIONS = 'projects/mapbiomas-arida/update_02_05_2026_buffer_fotovoltaic_5km'
+ASSET_REGIONS = 'projects/mapbiomas-arida/energias/shp_revisao2_16_05_2026_buffer_fotovoltaic_5km'
 ASSET_NICFI   = 'projects/planet-nicfi/assets/basemaps/americas'
 
 PATCH_SIZE        = 256   # pixels; kernel rect(128) → saída 257×257
@@ -78,7 +78,7 @@ dict_percentil = {
 
 NICFI_BANDS_SRC = ['B', 'G', 'R', 'N']
 NICFI_BANDS_DST = ['blue', 'green', 'red', 'nir']
-ALL_BANDS       = ['blue', 'green', 'red', 'nir', 'pvi', 'iia', 'ri', 'evi']
+ALL_BANDS       = ['blue', 'green', 'red', 'pvi', 'pvpi']
 SELECTORS       = ALL_BANDS + ['region_id', 'year', 'latitude', 'longitude']
 
 # ==============================================================================
@@ -117,23 +117,13 @@ def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
                {'BLUE': mosaic.select('blue'), 'NIR': mosaic.select('nir')})
            .add(1).divide(2).multiply(10000).toInt16().rename('pvi'))
 
-    iia = (mosaic.expression(
-               "float((green - 4 * nir) / (green + 4 * nir + 1))",
-               {'green': mosaic.select('green'), 'nir': mosaic.select('nir')})
-           .add(1).divide(2).multiply(10000).toInt16().rename('iia'))
+    pvpi = (mosaic.expression(
+                'float((green - blue) / (green + blue))',
+                {'green': mosaic.select('green'), 'blue': mosaic.select('blue')})
+                .add(1).divide(2).multiply(10000).toInt16().rename('pvpi'))
 
-    ri = (mosaic.expression(
-              "float(2.4 * (red - green) / (red + green + 1))",
-              {'red': mosaic.select('red'), 'green': mosaic.select('green')})
-          .add(2.4).divide(4.8).multiply(10000).toInt16().rename('ri'))
-
-    evi = (mosaic.expression(
-               "float(2.4 * (nir - red) / (1 + nir + red))",
-               {'nir': mosaic.select('nir'), 'red': mosaic.select('red')})
-           .add(2.4).divide(4.8).multiply(10000).toInt16().rename('evi'))
-
-    return (scaled_img.multiply(10000).toInt16()
-            .addBands(pvi).addBands(iia).addBands(ri).addBands(evi))
+    return (scaled_img.multiply(10000).toInt16().select(['blue', 'green', 'red'])
+            .addBands(pvi).addBands(pvpi))
 
 
 def build_patches_array(year: int, geometry) -> ee.Image:

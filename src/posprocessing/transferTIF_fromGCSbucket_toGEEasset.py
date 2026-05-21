@@ -56,7 +56,7 @@ def init_ee(project: str):
 
 
 def export_to_asset(image: ee.Image, name: str, asset_path: str,
-                    year: int, version: str, model: str, backbone: str, id_region: str):
+                    year: int, version: str, model: str, backbone: str, id_region: str, formato: str):
     asset_id = os.path.join(asset_path, name)
     data_inic = ee.Date.fromYMD(year, 12, 31)
     image = ee.Image(image).set(
@@ -65,6 +65,7 @@ def export_to_asset(image: ee.Image, name: str, asset_path: str,
         'backbone',           backbone,
         'modelo',             model,
         'region',             id_region, 
+        'formato',            formato,
         'semestre',           2,
         'system:time_start',  data_inic,
     ).selfMask()
@@ -109,6 +110,9 @@ def main():
                         help='Cria a pasta raiz no GEE antes de processar')
     parser.add_argument('--create-collection', action='store_true',
                         help='Cria a ImageCollection no GEE antes de processar')
+    parser.add_argument('--formato', type=str, choices=['npy', 'tfr'], default='tfr',
+                        help='Origem dos TIFs: npy (patches locais) ou tfr (GEE TFRecord). '
+                             'Gravado como propriedade no asset GEE (padrão: tfr)')
     args = parser.parse_args()
 
     if args.years and len(args.years) == 2:
@@ -184,14 +188,14 @@ def main():
             continue
 
         base     = name_tif.replace('.tif', '').replace('pred', 'reg')
-        namefile = f'{base}_{model}_{backbone}'
+        namefile = f'{base}_{model}_{backbone}_{args.formato}'
 
         print(f'#{cc:04d}  {name_tif}  →  {namefile}')
         try:
             img = ee.Image.loadGeoTIFF(gcs_path)
             export_to_asset(img.gt(threhold), namefile, args.asset_path,
-                            nyear, args.version, model, 
-                            backbone, id_region
+                            nyear, args.version, model,
+                            backbone, id_region, args.formato
                     )
             total += 1
         except Exception as exc:

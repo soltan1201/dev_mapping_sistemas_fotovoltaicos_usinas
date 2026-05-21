@@ -60,7 +60,7 @@ log = logging.getLogger(__name__)
 # 2. CONFIGURAÇÕES
 # ==============================================================================
 
-ASSET_REGIONS = "projects/mapbiomas-arida/samples_buffer_fotovoltaic_5km"
+ASSET_REGIONS = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026"
 ASSET_LABEL   = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/solar-panel-br-30m_2016_2024_v2'
 ASSET_NICFI   = 'projects/planet-nicfi/assets/basemaps/americas'
 
@@ -83,16 +83,17 @@ REGION_END  = 50
 
 # Normalização por percentil das bandas brutas do mosaico
 dict_percentil = {
-    "blue":  [148.69946925122218, 750.681280086019],
-    "green": [306.83208478496687, 1166.8854908710632],
-    "red":   [181.3067671032011,  1679.1193497398535],
-    "nir":   [350.4483690014268,  3933.883473994483],
+    "blue":  [100,   800],
+    "green": [300,  1200],
+    "red":   [176,  1700],
+    "nir":   [350,  4000]
 }
 
 NICFI_BANDS_SRC = ['B', 'G', 'R', 'N']
 NICFI_BANDS_DST = ['blue', 'green', 'red', 'nir']
-FEATURE_BANDS   = ['blue', 'green', 'red',  'pvi', 'ndwi', 'ri', 'evi']
-ALL_BANDS       = FEATURE_BANDS + ['label']   # 9 canais → shape (256, 256, 9)
+# FEATURE_BANDS   = ['blue', 'green', 'red',  'pvi', 'ndwi', 'ri', 'evi']
+FEATURE_BANDS   = ['blue', 'green', 'red', 'pvi', 'pvpi']
+ALL_BANDS       = FEATURE_BANDS + ['label']   # 5 canais → shape (256, 256, 5)
 
 STRIDE_M     = STRIDE_PIXELS * SCALE    # metros entre origens de patch
 PATCH_SIZE_M = PATCH_SIZE * SCALE       # extensão métrica de um patch
@@ -152,24 +153,13 @@ def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
             {'BLUE': mosaic.select('blue'), 'NIR': mosaic.select('nir')})
            .add(1).divide(2).multiply(10000).toInt16().rename('pvi'))
 
-    iia = (mosaic.expression(
-            'float((green - 4 * nir) / (green + 4 * nir + 1))',
-            {'green': mosaic.select('green'), 'nir': mosaic.select('nir')})
-           .add(1).divide(2).multiply(10000).toInt16().rename('iia'))
-
-    # NDWI – Normalized Difference Water Index (Green − NIR) / (Green + NIR)
-    ndwi = (mosaic.normalizedDifference(['green', 'nir'])
-                    .add(1).multiply(10000)
-                    .toInt16().rename('ndwi')
-                    )
-
-    evi = (mosaic.expression(
-            'float(2.4 * (nir - red) / (1 + nir + red))',
-            {'nir': mosaic.select('nir'), 'red': mosaic.select('red')})
-           .add(2.4).divide(4.8).multiply(10000).toInt16().rename('evi'))
+    pvpi = (mosaic.expression(
+                'float((green - blue) / (green + blue))',
+                {'green': mosaic.select('green'), 'blue': mosaic.select('blue')})
+                .add(1).divide(2).multiply(10000).toInt16().rename('pvpi'))
 
     return (scaled.multiply(10000).toInt16().select(['blue', 'green', 'red'])
-            .addBands(pvi).addBands(iia).addBands(ndwi).addBands(evi))
+            .addBands(pvi).addBands(pvpi))
 
 
 def build_full_stack(year: int, geometry) -> ee.Image:
