@@ -21,6 +21,13 @@ Uso:
 
   # Especificar pasta destino
   python read_tfrecords_gdrive_end.py --key-json ... --dest /caminho/para/destino
+
+  # all argumentos 
+ python read_tfrecords_gdrive_end.py \ 
+   --key-json ~/.config/gcloud/keys/mapbiomas-caatinga-cloud04-78950c04489a.json \
+   --folder DS_FV_PRED_TFRs \
+   --dest /srv/almacen/db_images/dataset_fotovoltaica_tf_L5
+  
 """
 
 import argparse
@@ -49,7 +56,7 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 SCOPES       = ['https://www.googleapis.com/auth/drive']
-DRIVE_FOLDER = 'DS_FV_PREDICT_TFRECORDS'
+DRIVE_FOLDER = 'DS_FV_PRED_TFRs'
 LOCAL_DEST   = Path('/srv/almacen/db_images/dataset_fotovoltaica_tf_L5').expanduser()
 
 
@@ -121,10 +128,10 @@ def mover_para_lixeira(service, file_id: str, nome: str):
 
 # ── Lógica principal ──────────────────────────────────────────────────────────
 
-def processar_pasta(service, delete: bool, dest_dir: Path):
+def processar_pasta(service, delete: bool, dest_dir: Path, folder_name: str = DRIVE_FOLDER):
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    folder_id = buscar_id_pasta(service, DRIVE_FOLDER)
+    folder_id = buscar_id_pasta(service, folder_name)
     if not folder_id:
         return
 
@@ -193,6 +200,11 @@ def main():
         help=f'Pasta destino local (padrão: {LOCAL_DEST})',
     )
     parser.add_argument(
+        '--folder', type=str,
+        default=DRIVE_FOLDER,
+        help=f'Nome da pasta no Google Drive (padrão: {DRIVE_FOLDER})',
+    )
+    parser.add_argument(
         '--no-delete', action='store_true',
         help='Não mover arquivos para a lixeira do Drive após download',
     )
@@ -224,11 +236,11 @@ def main():
     if args.loop:
         while True:
             log.info(f'[{time.strftime("%H:%M:%S")}] Iniciando ciclo...')
-            processar_pasta(service, delete, dest_dir)
+            processar_pasta(service, delete, dest_dir, args.folder)
             log.info(f'Aguardando {args.interval}s para o próximo ciclo...')
             time.sleep(args.interval)
     else:
-        processar_pasta(service, delete, dest_dir)
+        processar_pasta(service, delete, dest_dir, args.folder)
 
 
 if __name__ == '__main__':
