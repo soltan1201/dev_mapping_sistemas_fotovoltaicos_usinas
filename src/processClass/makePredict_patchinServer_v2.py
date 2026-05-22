@@ -332,13 +332,18 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
                      filter_years, filter_regions, model_path: str):
     log.info(f'[TFRecord] Fonte: {input_dir}')
 
-    # Verificação antecipada: avisa se não há nenhum .tfrecord no input_dir
-    all_tfrecords = list(input_dir.rglob('*.tfrecord'))
+    # Verificação antecipada: avisa se não há nenhum .tfrecord / .tfrecord.gz no input_dir
+    all_tfrecords = [
+        p for p in input_dir.rglob('*')
+        if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
+    ]
     if not all_tfrecords:
         npy_count = sum(1 for _ in input_dir.rglob('patch_*.npy'))
         hint = f' (encontrados {npy_count} arquivos .npy — use --input-format npy)' if npy_count else ''
         log.warning(f'Nenhum arquivo .tfrecord encontrado em {input_dir}{hint}')
         return
+
+    compressed = all_tfrecords[0].name.endswith('.tfrecord.gz')
 
     total_saved = 0
 
@@ -354,7 +359,10 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
             if filter_years and int(year_dir.name) not in filter_years:
                 continue
 
-            tfrecord_files = sorted(str(p) for p in year_dir.glob('*.tfrecord'))
+            tfrecord_files = sorted(
+                str(p) for p in year_dir.glob('*')
+                if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
+            )
             if not tfrecord_files:
                 continue
 
@@ -364,6 +372,7 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
             log.info(f'  {region_dir.name}/{year_dir.name}  — {len(tfrecord_files)} shard(s)')
 
             ds = (tf.data.TFRecordDataset(tfrecord_files,
+                                          compression_type='GZIP' if compressed else '',
                                           num_parallel_reads=tf.data.AUTOTUNE)
                   .map(_decode_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
                   .batch(batch_size)
