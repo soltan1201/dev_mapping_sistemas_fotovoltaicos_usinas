@@ -1,0 +1,56 @@
+{
+  "UNet": {
+    "efficientnetb7": {
+      "L5": {
+        "best_5L_unet_efficientnetb7_20260520_2241.keras": "history_unet_efficientnetb7_20260520_2241.csv"
+      }
+    },
+    "inceptionresnet": {
+      "L5": {
+        "best_5L_unet_inceptionresnet_20260521_0408.keras": "history_unet_inceptionresnet_20260521_0408.csv"
+      }
+    },
+    "resnet152": {
+      "L5": {
+        "best_5L_unet_resnet152_20260520_1514.keras": null,
+        "best_5L_unet_resnet152_20260520_1744.keras": null
+      },
+      "L9": {
+        "best_unet_resnet152_20260506_1118.keras": "history_unet_resnet152_20260506_1118.csv"
+      }
+    },
+    "resnet50": {
+      "L5": {
+        "best_5L_unet_resnet50_20260520_0305.keras": "history_unet_resnet50_20260520_0305.csv",
+        "best_5L_unet_resnet50_20260520_1410.keras": "history_unet_resnet50_20260520_1410.csv"
+      },
+      "L9": {
+        "best_unet_resnet50_20260429_1436.keras": "history_unet_resnet50_20260429_1436.csv",
+        "best_unet_resnet50_20260430_0257.keras": "history_unet_resnet50_20260430_0257.csv"
+      }
+    },
+    "resnext50": {
+      "L5": {
+        "best_5L_unet_resnext50_20260520_1923.keras": "history_unet_resnext50_20260520_1923.csv"
+      },
+      "L9": {
+        "best_unet_resnext50_20260506_1341.keras": "history_unet_resnext50_20260506_1341.csv"
+      }
+    },
+    "mobilenet": {
+      "L9": {
+        "best_unet_mobilenet_20260507_1445.keras": null
+      }
+    },
+    "resnet101": {
+      "L9": {
+        "best_unet_resnet101_20260502_1659.keras": "history_unet_resnet101_20260502_1659.csv"
+      }
+    },
+    "xception": {
+      "L9": {
+        "best_unet_xception_20260507_1824.keras": null
+      }
+    }
+  }
+}

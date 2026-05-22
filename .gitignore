@@ -9,3 +9,4 @@ src/utieis/relatorioTaskXContas.txt
 *.log
 *.npy
 *.tfrecord
+!src/models/models_index.json
