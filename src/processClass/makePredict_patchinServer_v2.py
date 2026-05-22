@@ -345,6 +345,8 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
         return
 
     compressed = all_tfrecords[0].name.endswith('.tfrecord.gz')
+    log.info(f'[TFRecord] {len(all_tfrecords)} arquivo(s) encontrado(s) | comprimido={compressed}')
+    log.info(f'[TFRecord] Exemplo: {all_tfrecords[0].relative_to(input_dir)}')
 
     total_saved = 0
 
