@@ -159,8 +159,9 @@ CUSTOM_OBJECTS = {
 
 NORM_FACTOR   = 10_000.0
 PATCH_SIZE    = 256
-N_BANDS       = 8
-FEATURE_BANDS = ['blue', 'green', 'red', 'nir', 'pvi', 'iia', 'ri', 'evi']
+N_BANDS       = 5
+# FEATURE_BANDS = ['blue', 'green', 'red', 'nir', 'pvi', 'iia', 'ri', 'evi']
+FEATURE_BANDS = ['blue', 'green', 'red', 'pvi', 'pvpi']
 
 # Feature spec para TFRecords gerados por convert_npy_to_tfrecord_fotovoltaica.py
 TFRECORD_FEATURE_SPEC = {
