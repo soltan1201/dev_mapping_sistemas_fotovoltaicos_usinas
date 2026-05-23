@@ -30,6 +30,9 @@ import numpy as np
 from pathlib import Path
 
 import tensorflow as tf
+# memory_growth deve ser configurado antes de qualquer operação que inicialize o contexto CUDA
+for _gpu in tf.config.list_physical_devices('GPU'):
+    tf.config.experimental.set_memory_growth(_gpu, True)
 import keras
 import keras.ops as kops
 tf.keras.mixed_precision.set_global_policy('mixed_float16')
