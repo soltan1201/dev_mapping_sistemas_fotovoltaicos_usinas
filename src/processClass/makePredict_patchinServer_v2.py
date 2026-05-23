@@ -351,62 +351,87 @@ def predict_tfrecord(model, input_dir: Path, output_dir: Path,
     log.info(f'[TFRecord] {len(all_tfrecords)} arquivo(s) encontrado(s) | comprimido={compressed}')
     log.info(f'[TFRecord] Exemplo: {all_tfrecords[0].relative_to(input_dir)}')
 
+    # Detecta estrutura: plana (arquivos direto em input_dir) ou aninhada (region/year/)
+    flat = any(p.parent == input_dir for p in all_tfrecords)
+
+    if flat:
+        # Estrutura plana: predict_fv_{region}_{year}_partNNN.tfrecord[.gz]
+        import re
+        _RE = re.compile(r'^.+?_([^_]+)_(\d{4})_part\d+\.tfrecord(?:\.gz)?$')
+        groups: dict = {}
+        for p in sorted(all_tfrecords):
+            m = _RE.match(p.name)
+            if not m:
+                log.warning(f'Nome de arquivo não reconhecido, ignorando: {p.name}')
+                continue
+            region_id, year = m.group(1), int(m.group(2))
+            if filter_regions and region_id not in filter_regions:
+                continue
+            if filter_years and year not in filter_years:
+                continue
+            groups.setdefault((region_id, year), []).append(str(p))
+        groups_iter = [
+            (region_id, str(year), sorted(files))
+            for (region_id, year), files in sorted(groups.items())
+        ]
+    else:
+        # Estrutura aninhada: input_dir/region/year/*.tfrecord[.gz]
+        groups_iter = []
+        for region_dir in sorted(input_dir.iterdir()):
+            if not region_dir.is_dir():
+                continue
+            if filter_regions and region_dir.name not in filter_regions:
+                continue
+            for year_dir in sorted(region_dir.iterdir()):
+                if not year_dir.is_dir():
+                    continue
+                if filter_years and int(year_dir.name) not in filter_years:
+                    continue
+                files = sorted(
+                    str(p) for p in year_dir.glob('*')
+                    if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
+                )
+                if files:
+                    groups_iter.append((region_dir.name, year_dir.name, files))
+
     total_saved = 0
 
-    for region_dir in sorted(input_dir.iterdir()):
-        if not region_dir.is_dir():
-            continue
-        if filter_regions and region_dir.name not in filter_regions:
-            continue
+    for region_id, year_str, tfrecord_files in groups_iter:
+        out_dir = output_dir / region_id / year_str
+        out_dir.mkdir(parents=True, exist_ok=True)
 
-        for year_dir in sorted(region_dir.iterdir()):
-            if not year_dir.is_dir():
-                continue
-            if filter_years and int(year_dir.name) not in filter_years:
-                continue
+        log.info(f'  {region_id}/{year_str}  — {len(tfrecord_files)} shard(s)')
 
-            tfrecord_files = sorted(
-                str(p) for p in year_dir.glob('*')
-                if p.name.endswith('.tfrecord') or p.name.endswith('.tfrecord.gz')
-            )
-            if not tfrecord_files:
-                continue
+        ds = (tf.data.TFRecordDataset(tfrecord_files,
+                                      compression_type='GZIP' if compressed else '',
+                                      num_parallel_reads=tf.data.AUTOTUNE)
+              .map(_decode_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
+              .batch(batch_size)
+              .prefetch(tf.data.AUTOTUNE))
 
-            out_dir = output_dir / region_dir.name / year_dir.name
-            out_dir.mkdir(parents=True, exist_ok=True)
+        for batch_patches, batch_meta in ds:
+            preds = model.predict(batch_patches, verbose=0)   # (B, 256, 256, 1)
+            b     = preds.shape[0]
 
-            log.info(f'  {region_dir.name}/{year_dir.name}  — {len(tfrecord_files)} shard(s)')
+            for i in range(b):
+                row = int(batch_meta['meta/row'][i].numpy()[0])
+                col = int(batch_meta['meta/col'][i].numpy()[0])
 
-            ds = (tf.data.TFRecordDataset(tfrecord_files,
-                                          compression_type='GZIP' if compressed else '',
-                                          num_parallel_reads=tf.data.AUTOTUNE)
-                  .map(_decode_tfrecord, num_parallel_calls=tf.data.AUTOTUNE)
-                  .batch(batch_size)
-                  .prefetch(tf.data.AUTOTUNE))
+                pred_path = out_dir / f'patch_r{row:04d}_c{col:04d}_pred.npy'
+                if pred_path.exists():
+                    continue  # resume
 
-            for batch_patches, batch_meta in ds:
-                preds = model.predict(batch_patches, verbose=0)   # (B, 256, 256, 1)
-                b     = preds.shape[0]
-
-                for i in range(b):
-                    row = int(batch_meta['meta/row'][i].numpy()[0])
-                    col = int(batch_meta['meta/col'][i].numpy()[0])
-
-                    pred_path = out_dir / f'patch_r{row:04d}_c{col:04d}_pred.npy'
-                    if pred_path.exists():
-                        continue  # resume
-
-                    meta = {
-                        'region_id': batch_meta['meta/region_id'][i].numpy().decode(),
-                        'year':      int(batch_meta['meta/year'][i].numpy()[0]),
-                        'row':       row,
-                        'col':       col,
-                        'transform': batch_meta['meta/transform'][i].numpy().tolist(),
-                        'crs':       batch_meta['meta/crs'][i].numpy().decode(),
-                    }
-                    save_prediction(preds[i, :, :, 0], meta, out_dir,
-                                    threshold, model_path)
-                    total_saved += 1
+                meta = {
+                    'region_id': batch_meta['meta/region_id'][i].numpy().decode(),
+                    'year':      int(batch_meta['meta/year'][i].numpy()[0]),
+                    'row':       row,
+                    'col':       col,
+                    'transform': batch_meta['meta/transform'][i].numpy().tolist(),
+                    'crs':       batch_meta['meta/crs'][i].numpy().decode(),
+                }
+                save_prediction(preds[i, :, :, 0], meta, out_dir,
+                                threshold, model_path)
+                total_saved += 1
 
     log.info(f'[TFRecord] Predições salvas: {total_saved}')
 
