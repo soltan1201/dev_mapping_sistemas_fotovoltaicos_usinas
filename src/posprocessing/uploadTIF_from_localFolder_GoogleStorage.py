@@ -19,7 +19,7 @@ Destino no bucket:
 
 Uso:
   python uploadTIF_from_localFolder_GoogleStorage.py \\
-      --tif-dir    ~/db_images/tif_fotovoltaicav1 \\
+      --tif-dir    /srv/almacen/db_images/tif_tfr_fotovoltaicav7  \\
       --bucket     mapbiomas-energia \\
       --gcs-prefix fotovoltaicas_tif/tif_fotovoltaicav1 \\
       --key-json   ~/keys/mapbiomas-agua-36521f541610.json \\
@@ -44,6 +44,7 @@ MODELS = {
     'tif_fotovoltaicav4': 'unet_mobilenet',
     'tif_fotovoltaicav5': 'unet_resnext50',
     'tif_fotovoltaicav6': 'unet_xception',
+    'tif_tfr_fotovoltaicav7': 'unet_efficientnetb7',
 }
 
 LOG_FILE = Path('upload_tif_gcs.log')

@@ -43,6 +43,8 @@ MODELS = {
     "tif_fotovoltaicav4": "unet_mobilenet",
     "tif_fotovoltaicav5": "unet_resnext50",
     "tif_fotovoltaicav6": "unet_xception",
+    'tif_tfr_fotovoltaicav7': 'unet_efficientnetb7',
+    'tif_tfr_fotovoltaicav8': 'unet_inceptionresnet',
 }
 
 
@@ -65,6 +67,7 @@ def export_to_asset(image: ee.Image, name: str, asset_path: str,
         'backbone',           backbone,
         'modelo',             model,
         'region',             id_region, 
+        'num_layer',          5,
         'formato',            formato,
         'semestre',           2,
         'system:time_start',  data_inic,

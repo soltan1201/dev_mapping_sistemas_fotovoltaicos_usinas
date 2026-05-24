@@ -63,6 +63,9 @@ MODELS = {
     'tif_fotovoltaicav4': 'unet_mobilenet',
     'tif_fotovoltaicav5': 'unet_resnext50',
     'tif_fotovoltaicav6': 'unet_xception',
+    'tif_tfr_fotovoltaicav7': 'unet_efficientnetb7',
+    'tif_tfr_fotovoltaicav8': 'unet_inceptionresnet',
+    
 }
 
 _FNAME_RE = re.compile(r'^pred_(.+)_(\d{4})\.tif$')
