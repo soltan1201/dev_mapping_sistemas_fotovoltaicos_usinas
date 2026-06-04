@@ -19,7 +19,7 @@ Transform salvo no JSON é o necessário para georreferência do predict:
 """
 
 import sys
-import os
+import argparse
 import io
 import math
 import json
@@ -37,7 +37,7 @@ except ImportError:
     def tqdm(it, **kw):
         return it
 
-pathparent = str(Path(os.getcwd()).parents[1])
+pathparent = str(Path(__file__).resolve().parents[1])
 sys.path.append(pathparent)
 from configure_account_projects_ee import get_current_account
 
@@ -59,14 +59,20 @@ log = logging.getLogger(__name__)
 # ==============================================================================
 # 2. CONFIGURAÇÕES
 # ==============================================================================
-
-ASSET_REGIONS = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026"
+# var asset_regioesBuffer = 'projects/mapbiomas-arida/energias/shp_revisao2_16_05_2026_buffer_fotovoltaic_5km';
+# ASSET_REGIONS = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026"
+ASSET_REGIONS = "projects/mapbiomas-arida/energias/shp_revisao2_16_05_2026_buffer_fotovoltaic_5km"
 ASSET_LABEL   = 'projects/mapbiomas-workspace/AMOSTRAS/col10/CAATINGA/solar-panel-br-30m_2016_2024_v2'
 ASSET_NICFI   = 'projects/planet-nicfi/assets/basemaps/americas'
 
-OUTPUT_DIR    = Path('/dados/dataset_fotovoltaica_npy')   # ← ajuste para o servidor
+_ap = argparse.ArgumentParser(description='Download patches NPY — Planet NICFI')
+_ap.add_argument('--output-dir', required=True, type=Path,
+                 help='Diretório raiz onde os patches serão salvos')
+_args = _ap.parse_args()
 
-YEARS         = [2019, 2022, 2024]
+OUTPUT_DIR = _args.output_dir
+
+YEARS         = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016]
 PATCH_SIZE    = 256      # pixels
 SCALE         = 4.77     # metros/pixel — resolução nativa NICFI Planet
 STRIDE_PIXELS = 200      # espaçamento entre patches em pixels
@@ -121,11 +127,11 @@ def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
     Mosaico mediana jul–dez do NICFI com bandas normalizadas e índices.
 
     Bandas de saída (todas Int16 em [0, 10000]):
-      blue, green, red, nir  — normalizadas por percentil
+      blue, green, red — normalizadas por percentil , nir 
       pvi  = (blue-nir)/(blue+nir+1)         ∈ [-1,  1] → (PVI+1)/2   * 10000
-      iia  = (green-4*nir)/(green+4*nir+1)   ∈ [-1,  1] → (IIA+1)/2   * 10000
-      ri   = 2.4*(red-green)/(red+green+1)   ∈ [-2.4,2.4] → (RI+2.4)/4.8 * 10000
-      evi  = 2.4*(nir-red)/(1+nir+red)       ∈ [-2.4,2.4] → (EVI+2.4)/4.8 * 10000
+    #   iia  = (green-4*nir)/(green+4*nir+1)   ∈ [-1,  1] → (IIA+1)/2   * 10000
+    #   ri   = 2.4*(red-green)/(red+green+1)   ∈ [-2.4,2.4] → (RI+2.4)/4.8 * 10000
+    #   evi  = 2.4*(nir-red)/(1+nir+red)       ∈ [-2.4,2.4] → (EVI+2.4)/4.8 * 10000
     """
     mosaic = (ee.ImageCollection(ASSET_NICFI)
               .filterDate(f'{year}-07-01', f'{year + 1}-01-01')
@@ -346,10 +352,14 @@ for cc in range(min(REGION_END - REGION_INIC, total_regions - REGION_INIC)):
         log.warning("  Nenhum patch gerado. Pulando.")
         continue
 
-    for year in YEARS:
+    for year_idx, year in enumerate(YEARS):
+        if year_idx > 0:
+            log.info("  Aguardando 60 s antes do próximo ano...")
+            time.sleep(60)
+
         log.info(f"\n  --- Ano {year} ---")
 
-        out_dir = OUTPUT_DIR / feat_id_safe / str(year)
+        out_dir = OUTPUT_DIR / str(year) / feat_id_safe
         out_dir.mkdir(parents=True, exist_ok=True)
 
         # Monta imagem (8 features + label) e serializa UMA VEZ por (região, ano)

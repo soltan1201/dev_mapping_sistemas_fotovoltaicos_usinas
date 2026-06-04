@@ -6,7 +6,7 @@ SegmentationModelFactory
 Factory para criação, compilação e configuração de modelos de segmentação
 semântica para sensoriamento remoto (5 canais de entrada por padrão).
 
-Heads suportadas : UNet, DeepLabV3+, PSPNet
+Heads suportadas : UNet, DeepLabV3+, PSPNet, FPN
 Backbones        : InceptionV3, ResNet50/101/152, ResNext50 (→ ResNet50),
                    MobileNet, Xception, EfficientNetB0/B3/B7, InceptionResNetV2
 
@@ -175,7 +175,7 @@ _BACKBONE_ALIASES: dict[str, str] = {
     'inceptionresnet'  : 'inceptionresnetv2',
 }
 
-_SUPPORTED_HEADS: set[str] = {'unet', 'deeplabv3plus', 'pspnet'}
+_SUPPORTED_HEADS: set[str] = {'unet', 'deeplabv3plus', 'pspnet', 'fpn'}
 
 # backbone → (AppClass, low_layer, medium_layer, high_layer)
 # low    ≈ stride  4 — detalhes finos (bordas, texturas)
@@ -250,6 +250,7 @@ class SegmentationModelFactory:
             'unet'         : self._build_unet,
             'deeplabv3plus': self._build_deeplabv3plus,
             'pspnet'       : self._build_pspnet,
+            'fpn'          : self._build_fpn,
         }
         self.model = builders[self.segmentation_head]()
         return self.model
@@ -296,6 +297,10 @@ class SegmentationModelFactory:
         return self._deeplabv3plus_with_encoder(use_backbone=False) \
                if self.backbone_name is None \
                else self._deeplabv3plus_with_encoder(use_backbone=True)
+
+    def _build_fpn(self) -> Model:
+        return (self._vanilla_fpn() if self.backbone_name is None
+                else self._fpn_with_backbone())
 
     # ------------------------------------------------------------------
     # Backbone helper (sem pesos pré-treinados — 5 canais)
@@ -389,6 +394,12 @@ class SegmentationModelFactory:
     def _conv_bn_relu(x, filters, kernel=3, **kwargs):
         x = layers.Conv2D(filters, kernel, padding='same',
                           activation='relu', **kwargs)(x)
+        return layers.BatchNormalization()(x)
+
+    @staticmethod
+    def _fpn_lateral(x, filters: int = 256):
+        """Projeção lateral 1×1 sem ativação — alinha canais na pirâmide FPN."""
+        x = layers.Conv2D(filters, 1, padding='same', use_bias=False)(x)
         return layers.BatchNormalization()(x)
 
     # ------------------------------------------------------------------
@@ -666,6 +677,110 @@ class SegmentationModelFactory:
         name = (f'deeplabv3plus_{self.backbone_name}'
                 if use_backbone else 'deeplabv3plus_vanilla')
         return Model(inputs, out, name=name)
+
+    # ------------------------------------------------------------------
+    # FPN — Feature Pyramid Network
+    # ------------------------------------------------------------------
+
+    def _vanilla_fpn(self) -> Model:
+        """
+        FPN vanilla (sem backbone externo).
+
+        Bottom-up : 4 blocos de encoder produzem C2–C5 (strides 2/4/8/16).
+        Top-down  : conexões laterais 1×1 + Add + refinamento 3×3 → P5→P2.
+        Head      : P5–P2 upsampled para resolução de entrada → concat → sigmoid.
+        """
+        FPN_CH = 256
+        inputs = keras.Input(shape=self.input_shape, name='input')
+
+        # ── Bottom-up ────────────────────────────────────────────────
+        def _enc(x, f):
+            x = self._conv_bn_relu(x, f)
+            x = self._conv_bn_relu(x, f)
+            return x
+
+        c2 = _enc(inputs, 64)
+        c3 = _enc(layers.MaxPooling2D()(c2), 128)
+        c4 = _enc(layers.MaxPooling2D()(c3), 256)
+        c5 = _enc(layers.MaxPooling2D()(c4), 512)
+
+        # ── Lateral projections ──────────────────────────────────────
+        l5 = self._fpn_lateral(c5, FPN_CH)
+        l4 = self._fpn_lateral(c4, FPN_CH)
+        l3 = self._fpn_lateral(c3, FPN_CH)
+        l2 = self._fpn_lateral(c2, FPN_CH)
+
+        # ── Top-down fusion ──────────────────────────────────────────
+        p5 = self._conv_bn_relu(l5, FPN_CH)
+        p4 = self._conv_bn_relu(layers.Add()([ResizeLike()([p5, l4]), l4]), FPN_CH)
+        p3 = self._conv_bn_relu(layers.Add()([ResizeLike()([p4, l3]), l3]), FPN_CH)
+        p2 = self._conv_bn_relu(layers.Add()([ResizeLike()([p3, l2]), l2]), FPN_CH)
+
+        # ── Segmentation head ────────────────────────────────────────
+        up5 = ResizeLike(name='fpn_up_p5')([p5, inputs])
+        up4 = ResizeLike(name='fpn_up_p4')([p4, inputs])
+        up3 = ResizeLike(name='fpn_up_p3')([p3, inputs])
+        up2 = ResizeLike(name='fpn_up_p2')([p2, inputs])
+
+        x = layers.Concatenate()([up5, up4, up3, up2])
+        x = self._conv_bn_relu(x, 256)
+        x = layers.Dropout(0.3)(x)
+        x = self._conv_bn_relu(x, 128)
+
+        out = layers.Conv2D(1, 1, activation='sigmoid', name='output')(x)
+        return Model(inputs, out, name='fpn_vanilla')
+
+    def _fpn_with_backbone(self) -> Model:
+        """
+        FPN com backbone encoder.
+
+        Usa as 3 escalas do backbone (low/medium/high) e adiciona um nível
+        mais profundo via Conv stride=2 sobre 'high', totalizando 4 níveis:
+          C_deep   ≈ stride 32
+          C_high   ≈ stride 16
+          C_medium ≈ stride  8
+          C_low    ≈ stride  4
+
+        Pirâmide top-down: lateral 1×1 + Add + refine 3×3.
+        Head: todos os P upsampled para resolução de entrada → concat → sigmoid.
+        """
+        FPN_CH = 256
+        inputs = keras.Input(shape=self.input_shape, name='input')
+        low, medium, high = self._get_backbone_features(inputs)
+
+        # ── Nível mais profundo (stride ~32) ─────────────────────────
+        deep = layers.Conv2D(512, 3, strides=2, padding='same', use_bias=False)(high)
+        deep = layers.BatchNormalization()(deep)
+        deep = layers.Activation('relu')(deep)
+
+        # ── Lateral projections ──────────────────────────────────────
+        l_deep   = self._fpn_lateral(deep,   FPN_CH)
+        l_high   = self._fpn_lateral(high,   FPN_CH)
+        l_medium = self._fpn_lateral(medium, FPN_CH)
+        l_low    = self._fpn_lateral(low,    FPN_CH)
+
+        # ── Top-down fusion ──────────────────────────────────────────
+        p_deep   = self._conv_bn_relu(l_deep, FPN_CH)
+        p_high   = self._conv_bn_relu(
+            layers.Add()([ResizeLike()([p_deep,   l_high]),   l_high]),   FPN_CH)
+        p_medium = self._conv_bn_relu(
+            layers.Add()([ResizeLike()([p_high,   l_medium]), l_medium]), FPN_CH)
+        p_low    = self._conv_bn_relu(
+            layers.Add()([ResizeLike()([p_medium, l_low]),    l_low]),    FPN_CH)
+
+        # ── Segmentation head ────────────────────────────────────────
+        up_deep   = ResizeLike(name='fpn_up_deep')  ([p_deep,   inputs])
+        up_high   = ResizeLike(name='fpn_up_high')  ([p_high,   inputs])
+        up_medium = ResizeLike(name='fpn_up_medium') ([p_medium, inputs])
+        up_low    = ResizeLike(name='fpn_up_low')   ([p_low,    inputs])
+
+        x = layers.Concatenate()([up_deep, up_high, up_medium, up_low])
+        x = self._conv_bn_relu(x, 256)
+        x = layers.Dropout(0.3)(x)
+        x = self._conv_bn_relu(x, 128)
+
+        out = layers.Conv2D(1, 1, activation='sigmoid', name='output')(x)
+        return Model(inputs, out, name=f'fpn_{self.backbone_name}')
 
 
 # ==============================================================================

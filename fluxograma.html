@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluxo — Mapeamento de Sistemas Fotovoltaicos</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 32px 24px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #888;
+      margin-top: 6px;
+    }
+
+    .diagram-container {
+      background: #1a1d27;
+      border: 1px solid #2a2d3e;
+      border-radius: 12px;
+      padding: 32px 16px;
+      overflow-x: auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    .mermaid {
+      min-width: 900px;
+    }
+
+    .legend {
+      margin-top: 28px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: #aaa;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Mapeamento de Sistemas Fotovoltaicos — MapBiomas</h1>
+  <p>Pipeline completo · Planet NICFI · UNet + ResNet101 · GEE</p>
+</header>
+
+<div class="diagram-container">
+  <div class="mermaid">
+%%{init: {
+  "theme": "dark",
+  "themeVariables": {
+    "primaryColor": "#1e2235",
+    "primaryTextColor": "#e0e0e0",
+    "primaryBorderColor": "#3a3f5c",
+    "lineColor": "#6c8ebf",
+    "secondaryColor": "#252a40",
+    "tertiaryColor": "#1a1d2e",
+    "edgeLabelBackground": "#1a1d27",
+    "clusterBkg": "#1a1d2e",
+    "clusterBorder": "#3a3f5c",
+    "fontFamily": "Segoe UI, Arial, sans-serif",
+    "fontSize": "13px"
+  }
+}}%%
+flowchart TD
+
+    %% ── ENTRADA ──────────────────────────────────────────
+    GEE[/"☁ Google Earth Engine\nPlanet NICFI · 8 bandas · 4.77 m/pixel"/]
+
+    %% ── TREINO ───────────────────────────────────────────
+    subgraph TREINO["  TREINO  "]
+        direction TB
+        T1["📥 Fase 1 — Coleta de Treino\ndownload_dataset_tfrecord_fotovoltaica.py\nPatches 257×257×8 + label → Google Drive\nvia ee.batch.Export"]
+        T2["✂️ Fase 2 — Divisão do Dataset\nsplit_tfrecord_dataset.py\ntrain 80%  ·  val 10%  ·  test 10%"]
+        T3["🏋 Fase 3 — Treinamento\ntrain_fotovoltaica_colab.ipynb\nUNet + ResNet101 · Google Colab GPU A100\nLoss: focal_tversky_boundary · 250 épocas"]
+        T1 --> T2 --> T3
+    end
+
+    MODEL[/"🧠 Modelo Treinado\n.keras  ·  UNet + ResNet101\n~34.7 M parâmetros"/]
+
+    %% ── INFERÊNCIA ───────────────────────────────────────
+    subgraph INFER["  INFERÊNCIA  "]
+        direction TB
+        I1["📥 Fase 4 — Coleta de Patches\ndownload_dataset_predict_fotovoltaica.py\nPatches 256×256×8 → disco local\nvia computePixels  ·  sem tasks GEE"]
+
+        subgraph OPC["  Pipeline de Inferência  "]
+            direction LR
+            A["🅐  Opção A\nDireto sobre NPY\n--input-format npy"]
+            B1["🅑  Opção B — Passo 1\nconvert_npy_to_tfrecord\n_fotovoltaica.py\nNPY → TFRecord shards"]
+            B2["🅑  Opção B — Passo 2\nmakePredict com TFRecord\n--input-format tfrecord"]
+            B1 --> B2
+        end
+
+        I1 --> A
+        I1 --> B1
+    end
+
+    I5["🔮 Fase 5 — Predições\nmakePredict_patchinServer_v2.py\nSaída: patch_pred.npy  ·  (256×256) float32 [0,1]"]
+
+    %% ── PÓS-PROCESSAMENTO ────────────────────────────────
+    subgraph POS["  PÓS-PROCESSAMENTO  "]
+        direction TB
+        P1["🗺️ Fase 6 — Montagem GeoTIFF\njoin_convert_npytoTIF.py\nMerge patches + blending → GeoTIFF\npor região × ano"]
+        P2["☁️ Fase 7 — Upload GCS\nuploadTIF_from_localFolder_GoogleStorage.py\nGeoTIFF → COG\nDestino: gs://mapbiomas-energia"]
+        P3["📦 Fase 8 — Ingestão GEE\ntransferTIF_fromGCSbucket_toGEEasset.py\nGCS Bucket → GEE Asset"]
+        P1 --> P2 --> P3
+    end
+
+    ASSET[/"✅ GEE Asset\nMapa Fotovoltaico Final"/]
+
+    %% ── CONEXÕES PRINCIPAIS ──────────────────────────────
+    GEE -->|"ee.batch.Export → Google Drive"| T1
+    GEE -->|"computePixels → disco local"| I1
+    T3  --> MODEL
+    MODEL --> A
+    MODEL --> B2
+    A   --> I5
+    B2  --> I5
+    I5  --> P1
+    P2  --> ASSET
+    P3  --> ASSET
+
+    %% ── ESTILOS ──────────────────────────────────────────
+    style GEE   fill:#1b3a5c,stroke:#4a90d9,color:#cce4ff
+    style MODEL fill:#2d1b4e,stroke:#9b59b6,color:#dcc6f0
+    style ASSET fill:#1a3d2b,stroke:#27ae60,color:#a8f0c0
+    style I5    fill:#1e2235,stroke:#3a3f5c,color:#e0e0e0
+
+    style TREINO fill:#0d1f35,stroke:#4a90d9,color:#8ab8e8
+    style INFER  fill:#1a2a1a,stroke:#27ae60,color:#7fcf9a
+    style POS    fill:#2a1a10,stroke:#e67e22,color:#f0b07a
+    style OPC    fill:#142014,stroke:#27ae60,color:#7fcf9a
+  </div>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><div class="dot" style="background:#4a90d9"></div>Treino (GEE → Modelo)</div>
+  <div class="legend-item"><div class="dot" style="background:#27ae60"></div>Inferência (patches → predições)</div>
+  <div class="legend-item"><div class="dot" style="background:#e67e22"></div>Pós-processamento (NPY → GEE Asset)</div>
+  <div class="legend-item"><div class="dot" style="background:#9b59b6"></div>Modelo treinado</div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    flowchart: { useMaxWidth: false, htmlLabels: true, curve: 'basis' }
+  });
+</script>
+
+</body>
+</html>
