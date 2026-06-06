@@ -1,0 +1,9 @@
+{
+  "mosaicos": "/home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/bd_images/mosaicos_tif",
+  "saidas": {
+    "unet_efficientnetb7": "/home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/bd_images/mosaicos_tif_unet_efficientnetb7",
+    "unet_inceptionresnet": "/home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/bd_images/mosaicos_tif_unet_inceptionresnet",
+    "unet_resnet152": "/home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/bd_images/mosaicos_tif_unet_resnet152",
+    "unet_resnext50": "/home/superuser/Dados/mapbiomas/dev_mapping_sistemas_fotovoltaicos_usinas/src/bd_images/mosaicos_tif_unet_resnext50"
+  }
+}
