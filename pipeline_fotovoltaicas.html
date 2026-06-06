@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pipeline MapBiomas — Sistemas Fotovoltaicos</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card2: #20242f;
+    --border: #2d3245;
+    --accent1: #4f8ef7;  /* azul */
+    --accent2: #34d399;  /* verde */
+    --accent3: #f59e0b;  /* âmbar */
+    --accent4: #a78bfa;  /* lilás */
+    --accent5: #f87171;  /* vermelho */
+    --accent6: #38bdf8;  /* ciano */
+    --accent7: #fb923c;  /* laranja */
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #0d1117;
+    --arrow: #4f8ef7;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0f1117 0%, #1a2040 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+  }
+  header .badge {
+    display: inline-block;
+    background: rgba(79,142,247,0.15);
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4f8ef7, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+  header p { color: var(--muted); font-size: 1rem; }
+
+  /* ── Layout ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 2.5rem 0 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Pipeline flowchart ── */
+  .pipeline-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: 1rem 0;
+  }
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    justify-content: center;
+  }
+  .pipeline-node {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 0.9rem 1.4rem;
+    min-width: 180px;
+    max-width: 220px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .pipeline-node:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .pipeline-node .node-num {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+    opacity: 0.8;
+  }
+  .pipeline-node .node-title { font-size: 0.85rem; font-weight: 600; }
+  .pipeline-node .node-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* Arrow connectors */
+  .arrow-h {
+    width: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--arrow);
+    font-size: 1.4rem;
+  }
+  .arrow-v {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--arrow);
+    font-size: 1.4rem;
+    width: 180px;
+  }
+
+  /* color accents per stage */
+  .s1 { border-color: #4f8ef7; }  .s1 .node-num { color: #4f8ef7; }
+  .s2 { border-color: #4f8ef7; }  .s2 .node-num { color: #4f8ef7; }
+  .s3 { border-color: #a78bfa; }  .s3 .node-num { color: #a78bfa; }
+  .s4 { border-color: #38bdf8; }  .s4 .node-num { color: #38bdf8; }
+  .s5 { border-color: #34d399; }  .s5 .node-num { color: #34d399; }
+  .s5a { border-color: #34d399; } .s5a .node-num { color: #34d399; }
+  .s6 { border-color: #f59e0b; }  .s6 .node-num { color: #f59e0b; }
+  .s7 { border-color: #fb923c; }  .s7 .node-num { color: #fb923c; }
+  .s8 { border-color: #f87171; }  .s8 .node-num { color: #f87171; }
+  .s9 { border-color: #a78bfa; }  .s9 .node-num { color: #a78bfa; }
+  .sutil { border-color: #64748b; } .sutil .node-num { color: #94a3b8; }
+  .cloud { border-color: #38bdf8; } .cloud .node-num { color: #38bdf8; }
+
+  /* ── Stage cards ── */
+  .stages { display: flex; flex-direction: column; gap: 1.2rem; }
+  .stage-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .stage-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.4rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .stage-header:hover { background: var(--card2); }
+  .stage-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .stage-title { font-size: 1rem; font-weight: 600; flex: 1; }
+  .stage-sub { font-size: 0.8rem; color: var(--muted); }
+  .chevron { color: var(--muted); font-size: 0.85rem; transition: transform 0.2s; flex-shrink: 0; }
+  .stage-body {
+    padding: 0 1.4rem 1.4rem;
+    display: none;
+    border-top: 1px solid var(--border);
+    padding-top: 1.2rem;
+  }
+  .stage-body.open { display: block; }
+
+  /* color variants */
+  .c1 { background: rgba(79,142,247,0.12); color: #4f8ef7; }
+  .c2 { background: rgba(79,142,247,0.12); color: #4f8ef7; }
+  .c3 { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .c4 { background: rgba(56,189,248,0.12); color: #38bdf8; }
+  .c5 { background: rgba(52,211,153,0.12); color: #34d399; }
+  .c6 { background: rgba(245,158,11,0.12); color: #f59e0b; }
+  .c7 { background: rgba(251,146,60,0.12); color: #fb923c; }
+  .c8 { background: rgba(248,113,113,0.12); color: #f87171; }
+  .c9 { background: rgba(167,139,250,0.15); color: #a78bfa; }
+  .cutil { background: rgba(100,116,139,0.15); color: #94a3b8; }
+
+  /* ── IO grid ── */
+  .io-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+  @media(max-width: 640px){ .io-grid { grid-template-columns: 1fr; } }
+  .io-box { background: var(--card2); border-radius: 8px; padding: 0.9rem; }
+  .io-box h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
+  .io-in h4 { color: #38bdf8; }
+  .io-out h4 { color: #34d399; }
+  .io-box ul { list-style: none; padding: 0; }
+  .io-box li { font-size: 0.82rem; color: var(--muted); padding: 0.15rem 0; }
+  .io-box li::before { content: '• '; }
+
+  /* ── Scripts list ── */
+  .scripts-list { margin: 0.8rem 0; }
+  .scripts-list h4 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #f59e0b; margin-bottom: 0.5rem; }
+  .script-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .script-item:last-child { border-bottom: none; }
+  .script-path { font-family: 'Courier New', monospace; font-size: 0.78rem; color: #4f8ef7; }
+  .script-desc { font-size: 0.82rem; color: var(--muted); }
+
+  /* ── Code blocks ── */
+  .code-wrap { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; margin: 1rem 0; overflow: hidden; }
+  .code-title { font-size: 0.7rem; color: var(--muted); padding: 0.4rem 0.9rem; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); }
+  pre { font-family: 'Courier New', monospace; font-size: 0.78rem; line-height: 1.6; padding: 0.9rem; overflow-x: auto; color: #c9d1d9; }
+  pre .kw { color: #ff7b72; }
+  pre .str { color: #a5d6ff; }
+  pre .cm { color: #8b949e; }
+  pre .fl { color: #79c0ff; }
+
+  /* ── Bands table ── */
+  .bands-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 1rem 0; }
+  .bands-table th { background: var(--card2); color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.1em; padding: 0.6rem 0.8rem; text-align: left; }
+  .bands-table td { padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--border); }
+  .bands-table tr:last-child td { border-bottom: none; }
+  .bands-table tr:hover td { background: var(--card2); }
+  .band-idx { font-weight: 700; color: #a78bfa; font-family: monospace; }
+  .band-name { font-family: monospace; color: #4f8ef7; }
+  .band-formula { font-family: monospace; color: #34d399; font-size: 0.75rem; }
+  .band-role { color: var(--muted); }
+
+  /* ── Models grid ── */
+  .models-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
+  .model-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem;
+  }
+  .model-name { font-size: 0.82rem; font-weight: 600; color: #a78bfa; margin-bottom: 0.3rem; font-family: monospace; }
+  .model-size { font-size: 0.75rem; color: var(--muted); }
+  .model-tag { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.5rem; border-radius: 999px; margin-top: 0.3rem; }
+  .tag-latest { background: rgba(52,211,153,0.15); color: #34d399; border: 1px solid #34d399; }
+  .tag-compact { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
+
+  /* ── Cloud resources ── */
+  .cloud-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
+  .cloud-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    gap: 0.8rem;
+    align-items: flex-start;
+  }
+  .cloud-icon { font-size: 1.5rem; flex-shrink: 0; }
+  .cloud-label { font-size: 0.78rem; font-weight: 600; margin-bottom: 0.3rem; }
+  .cloud-detail { font-size: 0.75rem; color: var(--muted); font-family: monospace; }
+
+  /* ── Stats bar ── */
+  .stats-row { display: flex; flex-wrap: wrap; gap: 1rem; margin: 1.5rem 0; }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.4rem;
+    min-width: 130px;
+  }
+  .stat-val { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+  .stat-lbl { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  /* ── Alert box ── */
+  .alert { border-radius: 8px; padding: 0.8rem 1rem; font-size: 0.82rem; margin: 0.8rem 0; display: flex; gap: 0.5rem; align-items: flex-start; }
+  .alert-warn { background: rgba(245,158,11,0.1); border-left: 3px solid #f59e0b; color: #fcd34d; }
+  .alert-info { background: rgba(79,142,247,0.1); border-left: 3px solid #4f8ef7; color: #93c5fd; }
+  .alert-ok { background: rgba(52,211,153,0.1); border-left: 3px solid #34d399; color: #6ee7b7; }
+
+  /* ── Decision logic ── */
+  .decision-tree {
+    font-family: monospace;
+    font-size: 0.8rem;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+    color: #c9d1d9;
+    line-height: 1.8;
+  }
+  .dt-root { color: #a78bfa; }
+  .dt-yes { color: #34d399; }
+  .dt-no { color: #f87171; }
+  .dt-leaf { color: #f59e0b; }
+
+  /* ── Expand all toggle ── */
+  .toolbar {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .btn {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--card2);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: var(--card); color: var(--text); border-color: var(--accent1); }
+
+  /* ── Breadcrumb nav ── */
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+  }
+  .toc-item {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .toc-item:hover { background: var(--card2); color: var(--text); }
+
+  /* ── Big pipeline diagram ── */
+  .diagram-scroll { overflow-x: auto; padding-bottom: 1rem; }
+  .diag-row { display: flex; align-items: center; }
+  .diag-col { display: flex; flex-direction: column; align-items: center; }
+  .diag-node {
+    border-radius: 8px;
+    border: 1.5px solid;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 130px;
+    white-space: nowrap;
+  }
+  .diag-arrow-h { font-size: 1.3rem; padding: 0 0.4rem; color: var(--arrow); flex-shrink: 0; }
+  .diag-arrow-v { font-size: 1.3rem; color: var(--arrow); line-height: 1.4; text-align: center; }
+  .diag-label { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; text-align: center; max-width: 130px; }
+  .fork-wrap { display: flex; gap: 2rem; align-items: flex-start; }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">MapBiomas · Energia</div>
+  <h1>Pipeline de Mapeamento de Sistemas Fotovoltaicos</h1>
+  <p>Do Google Earth Engine ao asset público — detecção por segmentação semântica com imagens Planet NICFI (4,77 m/pixel)</p>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-val" style="color:#4f8ef7">91</div><div class="stat-lbl">Regiões</div></div>
+    <div class="stat"><div class="stat-val" style="color:#34d399">10</div><div class="stat-lbl">Anos (2016–2025)</div></div>
+    <div class="stat"><div class="stat-val" style="color:#a78bfa">8</div><div class="stat-lbl">Canais espectrais</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f59e0b">4</div><div class="stat-lbl">Modelos treinados</div></div>
+    <div class="stat"><div class="stat-val" style="color:#fb923c">256px</div><div class="stat-lbl">Tamanho do patch</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f87171">910</div><div class="stat-lbl">Combinações região×ano</div></div>
+  </div>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <a class="toc-item" href="#overview">Visão geral</a>
+    <a class="toc-item" href="#stage1">1 · Coleta treino</a>
+    <a class="toc-item" href="#stage2">2 · Split dataset</a>
+    <a class="toc-item" href="#stage3">3 · Treinamento</a>
+    <a class="toc-item" href="#stage4">4 · Coleta inferência</a>
+    <a class="toc-item" href="#stage4b">4b · Export TIF Drive</a>
+    <a class="toc-item" href="#stage4c">4c · Download TIF</a>
+    <a class="toc-item" href="#stage5">5 · Predição (patches)</a>
+    <a class="toc-item" href="#stage5b">5b · Predição (TIF)</a>
+    <a class="toc-item" href="#stage6">6 · Merge → GeoTIFF</a>
+    <a class="toc-item" href="#stage7">7 · Upload GCS</a>
+    <a class="toc-item" href="#stage8">8 · Ingestão GEE</a>
+    <a class="toc-item" href="#viz">Visualização</a>
+    <a class="toc-item" href="#bands">Bandas</a>
+    <a class="toc-item" href="#models">Modelos</a>
+    <a class="toc-item" href="#cloud">Cloud</a>
+  </nav>
+
+  <!-- Flowchart overview -->
+  <div id="overview" class="section-title">Fluxo completo do pipeline</div>
+  <div class="diagram-scroll">
+  <div style="min-width:900px; padding: 1rem; background: var(--card); border: 1px solid var(--border); border-radius:12px;">
+
+    <!-- Row 0: GEE source -->
+    <div class="diag-row" style="justify-content:center; margin-bottom:0.5rem;">
+      <div>
+        <div class="diag-node" style="border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08); min-width:360px; text-align:center;">
+          ☁️ &nbsp;Google Earth Engine — Planet NICFI 4,77 m/px + Vetores FV + Geometrias de Região
+        </div>
+      </div>
+    </div>
+    <div class="diag-row" style="justify-content:center;">
+      <div class="fork-wrap">
+        <div class="diag-col" style="align-items:center; width:220px;">
+          <div class="diag-arrow-v">↓</div>
+          <div class="diag-label" style="color:#4f8ef7">Caminho TREINAMENTO</div>
+        </div>
+        <div class="diag-col" style="align-items:center; width:220px;">
+          <div class="diag-arrow-v">↓</div>
+          <div class="diag-label" style="color:#38bdf8">Caminho INFERÊNCIA</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 1: dual path -->
+    <div class="diag-row" style="justify-content:center; gap:4rem;">
+      <!-- Training path -->
+      <div class="diag-col">
+        <div class="diag-node" style="border-color:#4f8ef7; color:#4f8ef7; background:rgba(79,142,247,0.08);">
+          1 · Coleta treino<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">TFRecord → Drive</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#4f8ef7; color:#4f8ef7; background:rgba(79,142,247,0.08);">
+          2 · Split dataset<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">train / val / test</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08);">
+          3 · Treino Colab GPU<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">.keras → Drive</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08);">
+          📥 Download modelo<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Drive → servidor</span>
+        </div>
+      </div>
+
+      <!-- Inference path -->
+      <div class="diag-col">
+        <div class="diag-node" style="border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
+          4 · Coleta inferência<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">TFRecord / NPY → Drive</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
+          4b · Export TIF NICFI<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Mosaico TIF → Drive</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#38bdf8; color:#38bdf8; background:rgba(56,189,248,0.08);">
+          4c · Download TIF<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Drive → /srv/almacen</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merge point -->
+    <div class="diag-row" style="justify-content:center; margin-top: 0.5rem;">
+      <div class="diag-col" style="align-items:center">
+        <div class="diag-arrow-v" style="font-size:1rem; color:var(--muted); letter-spacing:-0.1em">↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ↓</div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-top:-0.5rem">modelo + dados</div>
+        <div class="diag-arrow-v">↓</div>
+      </div>
+    </div>
+    <div class="diag-row" style="justify-content:center; margin-bottom:0.3rem;">
+      <div class="diag-col" style="align-items:center">
+        <div class="diag-node" style="border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.08); min-width:240px; text-align:center;">
+          5 · Predição — UNet + Backbone<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">patches → _pred.npy &nbsp;/&nbsp; TIF → pred_TIF</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#f59e0b; color:#f59e0b; background:rgba(245,158,11,0.08); min-width:240px; text-align:center;">
+          6 · Merge patches → GeoTIFF<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">join_convert_npytoTIF.py</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#fb923c; color:#fb923c; background:rgba(251,146,60,0.08); min-width:240px; text-align:center;">
+          7 · Upload GCS &nbsp;(COG)<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">gs://mapbiomas-energia/fotovoltaicas_tif/</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#f87171; color:#f87171; background:rgba(248,113,113,0.08); min-width:240px; text-align:center;">
+          8 · Ingestão GEE<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">GCS → GEE ImageCollection asset</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08); min-width:240px; text-align:center;">
+          9 · Visualização GEE<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Code Editor / Earth Engine App</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side viz apps -->
+    <div class="diag-row" style="justify-content:center; margin-top:1rem; gap:1rem; flex-wrap:wrap;">
+      <div class="diag-node" style="border-color:#4f8ef7; color:#4f8ef7; background:rgba(79,142,247,0.06); font-size:0.73rem;">
+        📊 Dashboard Dash<br><span style="font-size:0.65rem; color:var(--muted)">NICFI + overlay predição</span>
+      </div>
+      <div class="diag-node" style="border-color:#34d399; color:#34d399; background:rgba(52,211,153,0.06); font-size:0.73rem;">
+        🖼️ Viewer Streamlit<br><span style="font-size:0.65rem; color:var(--muted)">patches .npy por região/ano</span>
+      </div>
+      <div class="diag-node" style="border-color:#64748b; color:#94a3b8; background:rgba(100,116,139,0.06); font-size:0.73rem;">
+        🔍 Auditoria pipeline<br><span style="font-size:0.65rem; color:var(--muted)">check 910 combinações</span>
+      </div>
+    </div>
+
+  </div>
+  </div><!-- end diagram-scroll -->
+
+  <!-- ── Stage cards ── -->
+  <div id="stage1" class="section-title">Estágios do pipeline</div>
+  <div class="toolbar">
+    <button class="btn" onclick="toggleAll(true)">Expandir tudo</button>
+    <button class="btn" onclick="toggleAll(false)">Recolher tudo</button>
+  </div>
+
+  <div class="stages">
+
+    <!-- STAGE 1 -->
+    <div class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c1">Estágio 1</span>
+        <div>
+          <div class="stage-title">Coleta de dados — Treinamento</div>
+          <div class="stage-sub">GEE → TFRecord compactado → Google Drive</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Exporta patches 257×257×8 bandas + rótulo binário como TFRecord compactado (.tfrecord.gz) para o Google Drive.
+          Dois sub-pipelines: grade regular 5 km ao redor das regiões + patches extras dentro das FVs para balanceamento.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>NICFI Monthly (Planet) — 4,77 m/px</li>
+              <li>Vetores FV (labels binários)</li>
+              <li>Geometrias de região (GEE asset)</li>
+              <li>Parâmetros: YEARS, REGION_INIC, REGION_END, STRIDE_PIXELS</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">Drive/&lt;year&gt;/&lt;region&gt;/*.tfrecord.gz</code></li>
+              <li>Patches 257×257×8 + label 257×257×1</li>
+              <li>Relatório de tasks: <code style="color:#a5d6ff; font-size:0.78rem">relatorio_tasks_tfrecord.txt</code></li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/preprocessing/download_dataset_tfrecord_fotovoltaica_precomp.py</div>
+              <div class="script-desc">Script principal — exporta TFRecords via <code>ee.batch.Export.image.toTFRecord()</code></div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/preprocessing/export_labels_2024_asset.py</div>
+              <div class="script-desc">Pré-exporta rótulos 2024 como assets GEE (roda uma vez para evitar recomputação)</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/preprocessing/gerenciar_tasks_tfrecord.py</div>
+              <div class="script-desc">Monitora fila de tasks GEE; cancela tasks travadas (RUNNING/READY)</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/preprocessing/inGEE/get_id_regions.py</div>
+              <div class="script-desc">Recupera IDs das regiões no GEE</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          ℹ️ Para 2024, rodar <code>export_labels_2024_asset.py</code> antes do script principal elimina um bottleneck de recomputação por task.
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 2 -->
+    <div id="stage2" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c2">Estágio 2</span>
+        <div>
+          <div class="stage-title">Split do Dataset</div>
+          <div class="stage-sub">Organiza TFRecords em train / val / test (sem vazamento por região)</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Lê os TFRecords do Drive e os distribui em 80% / 10% / 10% garantindo que todos os patches
+          de uma mesma região fiquem em apenas um split — sem vazamento de dados.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul><li><code style="color:#a5d6ff; font-size:0.78rem">Drive/&lt;year&gt;/&lt;region&gt;/*.tfrecord.gz</code></li></ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">DATASET_FOTOVOLTAICA_NICFI_TFRECORDS/train/</code> (80 %)</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">…/val/</code> (10 %)</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">…/test/</code> (10 %)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/old/preprocessing/split_tfrecord_dataset.py</div>
+              <div class="script-desc">Divide TFRecords por região (sem data leakage)</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python split_tfrecord_dataset.py --root /path/to/DATASET_FOTOVOLTAICA_NICFI_TFRECORDS</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 3 -->
+    <div id="stage3" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c3">Estágio 3</span>
+        <div>
+          <div class="stage-title">Treinamento — Google Colab (GPU A100)</div>
+          <div class="stage-sub">UNet + Backbones — saída: .keras salvo no Drive</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Treina modelo de segmentação semântica UNet + backbone no Google Colab com GPU A100.
+          Entrada: patches (256, 256, 8) em Int16 normalizados para float32. Saída: máscara binária (256, 256, 1).
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Dataset split (TFRecords train/val/test)</li>
+              <li>Modelo: UNet + backbone configurável</li>
+              <li>Hiperparâmetros (epochs, batch, lr)</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">best_&lt;backbone&gt;_&lt;timestamp&gt;.keras</code> → Drive</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">history_&lt;backbone&gt;_&lt;timestamp&gt;.csv</code></li>
+              <li>Logs TensorBoard</li>
+            </ul>
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin:1rem 0; font-size:0.8rem;">
+          <div style="background:var(--card2); padding:0.8rem; border-radius:8px;">
+            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Arquitetura</div>
+            UNet + backbone (8 variantes)<br>
+            Input: (256, 256, <b>8</b>) bandas<br>
+            Output: (256, 256, 1) máscara<br>
+            Mixed precision: float16<br>
+            Loss: Focal Tversky + Boundary<br>
+            α=0.3, β=0.7, γ=1.25
+          </div>
+          <div style="background:var(--card2); padding:0.8rem; border-radius:8px;">
+            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Configuração</div>
+            Epochs: 250 (EarlyStopping)<br>
+            Batch size: 46<br>
+            LR: 1e-5 (ReduceLROnPlateau)<br>
+            Normalização: ÷ 10000<br>
+            Aug: flip, rot90, shift ±64px, ruído
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/train_fotovoltaica_colab.ipynb</div>
+              <div class="script-desc">Notebook principal — rodar no Google Colab com GPU A100</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/train_fotovoltaica_colab_v2.ipynb</div>
+              <div class="script-desc">Versão v2 com melhorias de backbone</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/train_fotovoltaica.py</div>
+              <div class="script-desc">Alternativa local (sem GPU obrigatória)</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/segmentation_model_factory.py</div>
+              <div class="script-desc">Factory UNet + backbones, losses customizadas, callbacks</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/custom_losses.py</div>
+              <div class="script-desc">Registra objetos customizados para <code>tf.keras.models.load_model()</code></div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-warn">
+          ⚠️ Após o treino, baixar o <code>.keras</code> do Drive para o servidor local antes da inferência.
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 4 -->
+    <div id="stage4" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c4">Estágio 4</span>
+        <div>
+          <div class="stage-title">Coleta de dados — Inferência (patches)</div>
+          <div class="stage-sub">GEE → TFRecord / NPY sem rótulo → Drive</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Baixa patches sem rótulo para rodar inferência. Dois modos disponíveis:
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin:0.8rem 0;">
+          <div style="background:var(--card2); border-radius:8px; padding:0.9rem;">
+            <div style="color:#38bdf8; font-size:0.75rem; font-weight:700; margin-bottom:.4rem">Opção A — NPY direto (legado)</div>
+            <div style="font-size:0.78rem; color:var(--muted)">
+              <code>ee.data.computePixels()</code><br>
+              Sem consumo de task quota<br>
+              Saída: <code>&lt;region&gt;/&lt;year&gt;/patch_*.npy</code><br>
+              Limite: 1 req/s
+            </div>
+          </div>
+          <div style="background:var(--card2); border-radius:8px; padding:0.9rem;">
+            <div style="color:#4f8ef7; font-size:0.75rem; font-weight:700; margin-bottom:.4rem">Opção B — TFRecord GEE (recomendado)</div>
+            <div style="font-size:0.78rem; color:var(--muted)">
+              <code>ee.batch.Export.table.toDrive()</code><br>
+              Múltiplos patches por task<br>
+              Pré-processamento idêntico ao treino<br>
+              Melhor para volume grande
+            </div>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/download_predict_as_tfrecord_fv.py</div>
+              <div class="script-desc">Script principal (Opção B) — exporta patches de inferência como TFRecord</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python download_predict_as_tfrecord_fv.py \
+    --year_inic 2016 --year_end 2025 \
+    --region_inic 0 --region_end 90</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 4b -->
+    <div id="stage4b" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c4">Estágio 4b</span>
+        <div>
+          <div class="stage-title">Export mosaico TIF NICFI → Drive</div>
+          <div class="stage-sub">GEE → GeoTIFF 5 bandas por região/ano → Drive</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Exporta mosaico NICFI completo de uma região como GeoTIFF multi-banda para o Drive.
+          Usado quando a inferência roda sobre TIFs em vez de patches NPY.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>NICFI (GEE) + geometria da região</li>
+              <li>Ano, id_region</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">Drive/dataset_fotovoltaica_TIFreg/&lt;id&gt;_&lt;ano&gt;.tif</code></li>
+              <li>5 bandas: blue, green, red, pvi, pvpi</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/export_mosaico_tif_drive.py</div>
+              <div class="script-desc">Exporta mosaico NICFI como GeoTIFF para o Drive (91 regiões × 10 anos)</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          ℹ️ Ordem das bandas no TIF: 1=blue, 2=green, 3=red, 4=pvi, 5=pvpi. RGB usa <code>src.read([3, 2, 1])</code>.
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 4c -->
+    <div id="stage4c" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c4">Estágio 4c</span>
+        <div>
+          <div class="stage-title">Download TIFs do Drive → servidor</div>
+          <div class="stage-sub">Google Drive → /srv/almacen/db_images</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Baixa TIFs da pasta <code>dataset_fotovoltaica_TIFreg</code> do Drive para o servidor local.
+          Após download bem-sucedido, tenta mover o arquivo para a lixeira do Drive (requer permissão de escrita na conta de serviço).
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Google Drive: <code style="color:#a5d6ff; font-size:0.78rem">dataset_fotovoltaica_TIFreg/</code></li>
+              <li>Credencial da conta de serviço</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">/srv/almacen/db_images/dataset_fotovoltaica_TIFreg/*.tif</code></li>
+              <li>886 / 910 combinações baixadas (91 regiões × 10 anos)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/read_TIF_from_gdrive.py</div>
+              <div class="script-desc">Download TIFs com retomada automática; <code>--loop</code> verifica a cada 1h</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/check_missing_tifs.py</div>
+              <div class="script-desc">Auditoria: lista combinações {region}_{ano}.tif ausentes (910 esperados)</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python src/posprocessing/read_TIF_from_gdrive.py 4 \
+    --dir-save-img /srv/almacen/db_images
+
+# verificar faltantes:
+python src/posprocessing/check_missing_tifs.py \
+    --img-dir /srv/almacen/db_images/dataset_fotovoltaica_TIFreg</pre>
+        </div>
+        <div class="alert alert-warn">
+          ⚠️ <code>HttpError 403</code> no step de lixeira é comportamento esperado quando a conta de serviço tem só leitura — o download já foi concluído com sucesso.
+        </div>
+        <div class="alert alert-info">
+          ℹ️ Bug conhecido da API Drive: usar <code>files().update(fileId=..., body={'trashed':True})</code> — <code>files().delete()</code> ignora o body e faz deleção permanente.
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 5 -->
+    <div id="stage5" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c5">Estágio 5</span>
+        <div>
+          <div class="stage-title">Predição em patches (NPY / TFRecord)</div>
+          <div class="stage-sub">Modelo .keras → _pred.npy por patch</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Roda o modelo de segmentação semântica sobre patches em batch. Suporta NPY e TFRecord.
+          Retoma automaticamente pulando predições já existentes.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Modelo: <code style="color:#a5d6ff; font-size:0.78rem">best_*.keras</code></li>
+              <li>Patches: <code style="color:#a5d6ff; font-size:0.78rem">&lt;region&gt;/&lt;year&gt;/patch_*.npy</code></li>
+              <li>Threshold (default 0.5)</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">patch_*_pred.npy</code> — float32 [0,1]</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">patch_*_pred.json</code> — geotransform + params</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/makePredict_patchinServer_v2.py</div>
+              <div class="script-desc">Inferência em batch sobre patches NPY ou TFRecord com retomada automática</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python src/processClass/makePredict_patchinServer_v2.py \
+    --model-path models/best_5L_unet_efficientnetb7_20260520_2241.keras \
+    --input-dir /data/patches \
+    --input-format npy \
+    --output-dir /data/predictions \
+    --threshold 0.5 \
+    --batch-size 8</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 5b -->
+    <div id="stage5b" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c5">Estágio 5b</span>
+        <div>
+          <div class="stage-title">Predição em GeoTIFF (mosaico completo)</div>
+          <div class="stage-sub">TIF → sliding window → pred_TIF + predict_index.json</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Inferência sobre mosaicos GeoTIFF completos com sliding window (stride configurável) e blending de sobreposição.
+          Gera <code>predict_index.json</code> que alimenta o Dashboard Dash.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">&lt;id&gt;_&lt;ano&gt;.tif</code> — 5 bandas</li>
+              <li>Modelo: <code style="color:#a5d6ff; font-size:0.78rem">.keras</code></li>
+              <li>Stride (default 200 px)</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">mosaicos_tif_&lt;backbone&gt;/&lt;id&gt;_&lt;ano&gt;.tif</code></li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">predict_index.json</code> — índice para o Dash</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/makePredict_fromTIF.py</div>
+              <div class="script-desc">Sliding window com blending de bordas; gera predict_index.json automaticamente</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python src/processClass/makePredict_fromTIF.py \
+    --model-path models/best_5L_unet_efficientnetb7_20260520_2241.keras \
+    --input-dir /srv/almacen/db_images/dataset_fotovoltaica_TIFreg \
+    --stride 200 \
+    --batch-size 8
+# → gera predict_index.json e pasta mosaicos_tif_unet_efficientnetb7/</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 6 -->
+    <div id="stage6" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c6">Estágio 6</span>
+        <div>
+          <div class="stage-title">Merge patches → GeoTIFF regional</div>
+          <div class="stage-sub">_pred.npy → pred_&lt;region&gt;_&lt;ano&gt;.tif com blending de bordas</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Une todos os patches de predição de uma região×ano em um único GeoTIFF georreferenciado.
+          Inferência automática de stride a partir dos metadados e blending ponderado nas sobreposições.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">patch_*_pred.npy + .json</code> por região/ano</li>
+              <li>Parâmetros: --years, --regions</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">pred_&lt;region_id&gt;_&lt;year&gt;.tif</code></li>
+              <li>Float32, CRS EPSG:4326 preservado</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/old/posprocessing/join_convert_npytoTIF.py</div>
+              <div class="script-desc">Monta mosaico de predição por região×ano com blending ponderado nas sobreposições</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python join_convert_npytoTIF.py \
+    --predict-dir ~/predict_fotovoltaica \
+    --output-dir  ~/tif_fotovoltaica \
+    --years 2016 2025</pre>
+        </div>
+        <div class="alert alert-warn">⚠️ Este script está em <code>src/old/</code> — verificar se há versão mais recente antes de usar.</div>
+      </div>
+    </div>
+
+    <!-- STAGE 7 -->
+    <div id="stage7" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c7">Estágio 7</span>
+        <div>
+          <div class="stage-title">Upload para Google Cloud Storage (COG)</div>
+          <div class="stage-sub">GeoTIFF → Cloud Optimized GeoTIFF → gs://mapbiomas-energia</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Converte GeoTIFFs de predição para COG via <code>gdal_translate</code> e sobe para o bucket GCS.
+          Resume automaticamente pulando arquivos já presentes no bucket.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">pred_&lt;region&gt;_&lt;ano&gt;.tif</code></li>
+              <li>Credencial JSON da conta de serviço GCS</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">gs://mapbiomas-energia/fotovoltaicas_tif/&lt;group&gt;/pred_*.tif</code></li>
+              <li>Cloud Optimized GeoTIFF (COG)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/uploadTIF_from_localFolder_GoogleStorage.py</div>
+              <div class="script-desc">Converte para COG e sobe para GCS com retomada automática</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/verificar_e_limpar_bucket.py</div>
+              <div class="script-desc">Auditoria e limpeza do bucket GCS</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python uploadTIF_from_localFolder_GoogleStorage.py \
+    --tif-dir ~/tif_fotovoltaica \
+    --bucket mapbiomas-energia \
+    --gcs-prefix fotovoltaicas_tif \
+    --key-json ~/.google/mapbiomas-*.json \
+    --years 2016 2025</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 8 -->
+    <div id="stage8" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c8">Estágio 8</span>
+        <div>
+          <div class="stage-title">Ingestão no Google Earth Engine</div>
+          <div class="stage-sub">GCS → GEE ImageCollection asset público</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Importa os GeoTIFFs do GCS como assets de ImageCollection no GEE com metadados do modelo/backbone.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">gs://mapbiomas-energia/fotovoltaicas_tif/</code></li>
+              <li>Caminho do asset GEE de destino</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">projects/geo-data-s/assets/fotovoltaica/usinas_br/</code></li>
+              <li>ImageCollection com propriedades: modelo, backbone, região, ano</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/transferTIF_fromGCSbucket_toGEEasset.py</div>
+              <div class="script-desc">Lista GCS → cria tasks de ingestão GEE com metadados de modelo</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/dar_acesso_allFeatCol.py</div>
+              <div class="script-desc">Compartilha assets GEE com membros da equipe</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Setup inicial (uma vez)</div>
+          <pre>earthengine create folder projects/geo-data-s/assets/fotovoltaica
+earthengine create collection projects/geo-data-s/assets/fotovoltaica/usinas_br</pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Uso</div>
+          <pre>python transferTIF_fromGCSbucket_toGEEasset.py \
+    --gcs-path fotovoltaicas_tif/tif_fotovoltaicav1 \
+    --bucket mapbiomas-energia \
+    --asset-path projects/geo-data-s/assets/fotovoltaica/usinas_br \
+    --project geo-data-s --version 1</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIZ -->
+    <div id="viz" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num" style="background:rgba(79,142,247,0.12); color:#4f8ef7">Viz</span>
+        <div>
+          <div class="stage-title">Ferramentas de Visualização & QA</div>
+          <div class="stage-sub">Dashboard Dash + Streamlit viewer + Auditoria de pipeline</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.8rem; margin:0.8rem 0;">
+          <div style="background:var(--card2); border-radius:8px; padding:0.9rem; border-left:3px solid #4f8ef7;">
+            <div style="font-weight:600; color:#4f8ef7; margin-bottom:.4rem; font-size:0.85rem">📊 Dashboard Dash</div>
+            <div style="font-size:0.78rem; color:var(--muted)">
+              Painel esquerdo: RGB NICFI<br>
+              Painel direito: RGB + overlay amarelo<br>
+              Dropdowns: Modelo / Região / Ano<br>
+              Badges: predições | pendentes<br>
+              Porta padrão: <b>8051</b>
+            </div>
+          </div>
+          <div style="background:var(--card2); border-radius:8px; padding:0.9rem; border-left:3px solid #34d399;">
+            <div style="font-weight:600; color:#34d399; margin-bottom:.4rem; font-size:0.85rem">🖼️ Viewer Streamlit</div>
+            <div style="font-size:0.78rem; color:var(--muted)">
+              Grade de patches .npy<br>
+              Navegação por região/ano<br>
+              Modos: RGB, NIR, índices<br>
+              Estrutura: <code style="color:#a5d6ff">&lt;region&gt;/&lt;year&gt;/patch_*.npy</code><br>
+              Porta padrão: <b>8052</b>
+            </div>
+          </div>
+          <div style="background:var(--card2); border-radius:8px; padding:0.9rem; border-left:3px solid #64748b;">
+            <div style="font-weight:600; color:#94a3b8; margin-bottom:.4rem; font-size:0.85rem">🔍 Auditoria Pipeline</div>
+            <div style="font-size:0.78rem; color:var(--muted)">
+              Verifica 910 combinações:<br>
+              NPY / PREDICT / TIF / GCS / GEE<br>
+              <code>--fix</code> executa estágios ausentes<br>
+              Salva relatório CSV
+            </div>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/dash/dashboard_predict.py</div>
+              <div class="script-desc">Dashboard Dash — DARKLY theme, lru_cache para TIFs, overlay amarelo das predições</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/show_colect_data/viewer_patches_npy.py</div>
+              <div class="script-desc">Viewer Streamlit — inspeciona patches coletados antes de rodar inferência</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/auditoria_pipeline.py</div>
+              <div class="script-desc">Auditoria completa do pipeline + auto-correção de estágios ausentes</div>
+            </div>
+          </div>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Subir os dois apps (smoke script)</div>
+          <pre>bash .claude/skills/run-fotovoltaicas/smoke.sh
+# → screenshots em /tmp/dash_smoke.png e /tmp/streamlit_smoke.png</pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-title">Manual</div>
+          <pre>python3 src/dash/dashboard_predict.py \
+    --index-file src/dash/predict_index.json --port 8051
+
+streamlit run src/show_colect_data/viewer_patches_npy.py \
+    --server.port 8052 --server.headless true</pre>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end stages -->
+
+  <!-- ── Bandas espectrais ── -->
+  <div id="bands" class="section-title">Bandas espectrais de entrada</div>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">8 canais normalizados: Int16 [0, 10000] no GEE → float32 [0, 1] na inferência (÷ 10000)</p>
+  <table class="bands-table">
+    <thead><tr><th>Ch</th><th>Nome</th><th>Fonte</th><th>Fórmula</th><th>Papel na discriminação</th></tr></thead>
+    <tbody>
+      <tr><td class="band-idx">0</td><td class="band-name">blue</td><td>NICFI</td><td class="band-formula">B</td><td class="band-role">Base RGB — alta reflectância em painéis</td></tr>
+      <tr><td class="band-idx">1</td><td class="band-name">green</td><td>NICFI</td><td class="band-formula">G</td><td class="band-role">Base RGB</td></tr>
+      <tr><td class="band-idx">2</td><td class="band-name">red</td><td>NICFI</td><td class="band-formula">R</td><td class="band-role">Base RGB — discriminação solo exposto</td></tr>
+      <tr><td class="band-idx">3</td><td class="band-name">nir</td><td>NICFI</td><td class="band-formula">NIR</td><td class="band-role">Separação vegetação vs. painéis (baixo NIR)</td></tr>
+      <tr><td class="band-idx">4</td><td class="band-name">pvi</td><td>Derivado</td><td class="band-formula">(Blue − NIR) / (Blue + NIR + 1)</td><td class="band-role">Separa painéis de água/sombra (PVI alto = painel)</td></tr>
+      <tr><td class="band-idx">5</td><td class="band-name">iia</td><td>Derivado</td><td class="band-formula">(Green − 4·NIR) / (Green + 4·NIR + 1)</td><td class="band-role">Separa {painéis, água} de {solo, vegetação}</td></tr>
+      <tr><td class="band-idx">6</td><td class="band-name">ri</td><td>Derivado</td><td class="band-formula">2.4·(Red − Green) / (Red + Green + 1)</td><td class="band-role">Separa solo exposto de alvos escuros</td></tr>
+      <tr><td class="band-idx">7</td><td class="band-name">evi</td><td>Derivado</td><td class="band-formula">2.4·(NIR − Red) / (1 + NIR + Red)</td><td class="band-role">Sensibilidade à vegetação densa</td></tr>
+    </tbody>
+  </table>
+
+  <div style="margin:1.2rem 0;">
+    <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem">Lógica de decisão espectral</div>
+    <div class="decision-tree">
+<span class="dt-root">NIR alto?</span>  → Solo / Vegetação
+  ├─ <span class="dt-yes">RI alto?</span>   → <span class="dt-leaf">Solo exposto / área queimada</span>
+  └─ <span class="dt-no">RI baixo?</span>  → <span class="dt-leaf">Vegetação densa</span>
+
+<span class="dt-root">NIR baixo?</span> → Alvo escuro (IIA alto)
+  ├─ <span class="dt-yes">PVI alto?</span>  → <span class="dt-leaf">☀️  Painel solar (Blue relativamente alto)</span>
+  └─ <span class="dt-no">PVI baixo?</span> → <span class="dt-leaf">💧 Água / sombra</span>
+    </div>
+  </div>
+
+  <!-- ── Modelos ── -->
+  <div id="models" class="section-title">Modelos treinados</div>
+  <div class="models-grid">
+    <div class="model-card">
+      <div class="model-name">unet_efficientnetb7</div>
+      <div class="model-size">585 MB · 20260520</div>
+      <span class="model-tag tag-latest">latest</span>
+    </div>
+    <div class="model-card">
+      <div class="model-name">unet_inceptionresnet</div>
+      <div class="model-size">585 MB · 20260521</div>
+      <span class="model-tag tag-latest">latest</span>
+    </div>
+    <div class="model-card">
+      <div class="model-name">unet_resnet152</div>
+      <div class="model-size">579 MB · 20260520</div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">unet_resnext50</div>
+      <div class="model-size">180 MB · 20260520</div>
+      <span class="model-tag tag-compact">compact</span>
+    </div>
+    <div class="model-card">
+      <div class="model-name">unet_resnet101</div>
+      <div class="model-size">primary in README</div>
+    </div>
+    <div class="model-card">
+      <div class="model-name">unet_resnet50 / mobilenet / xception</div>
+      <div class="model-size">variantes testadas</div>
+    </div>
+  </div>
+  <div class="alert alert-info" style="margin-top:0.8rem">
+    ℹ️ Todos os modelos foram treinados do zero com 8 canais (sem pretraining ImageNet). Usar <code>src/processClass/custom_losses.py</code> antes de <code>load_model()</code> para registrar objetos customizados.
+  </div>
+
+  <!-- ── Cloud resources ── -->
+  <div id="cloud" class="section-title">Recursos em nuvem</div>
+  <div class="cloud-grid">
+    <div class="cloud-card">
+      <div class="cloud-icon">🌍</div>
+      <div>
+        <div class="cloud-label">Google Earth Engine</div>
+        <div class="cloud-detail">NICFI Monthly imagery<br>Geometrias de região<br>Vetores FV (labels)<br>Projeto: geo-data-s<br>Asset: fotovoltaica/usinas_br</div>
+      </div>
+    </div>
+    <div class="cloud-card">
+      <div class="cloud-icon">📁</div>
+      <div>
+        <div class="cloud-label">Google Drive</div>
+        <div class="cloud-detail">TFRecords de treino (entrada)<br>TFRecords de inferência<br>TIFs NICFI por região/ano<br>Modelos .keras treinados<br>Pasta: dataset_fotovoltaica_TIFreg</div>
+      </div>
+    </div>
+    <div class="cloud-card">
+      <div class="cloud-icon">☁️</div>
+      <div>
+        <div class="cloud-label">Google Cloud Storage</div>
+        <div class="cloud-detail">Bucket: mapbiomas-energia<br>Prefix: fotovoltaicas_tif/<br>Formato: COG (Cloud Optimized GeoTIFF)<br>Projeto: mapbiomas-agua</div>
+      </div>
+    </div>
+    <div class="cloud-card">
+      <div class="cloud-icon">💻</div>
+      <div>
+        <div class="cloud-label">Servidor local</div>
+        <div class="cloud-detail">Patches NPY: /data/patches/<br>Predições: /data/predictions/<br>TIFs: /srv/almacen/db_images/<br>Modelos: src/models/</div>
+      </div>
+    </div>
+    <div class="cloud-card">
+      <div class="cloud-icon">🎓</div>
+      <div>
+        <div class="cloud-label">Google Colab</div>
+        <div class="cloud-detail">GPU A100 para treinamento<br>Notebook: train_fotovoltaica_colab.ipynb<br>Saída → Google Drive</div>
+      </div>
+    </div>
+    <div class="cloud-card">
+      <div class="cloud-icon">🔑</div>
+      <div>
+        <div class="cloud-label">Contas de serviço</div>
+        <div class="cloud-detail">cloud04: mapbiomas-caatinga-cloud04<br>engine17: ee-solkancengine17<br>Chaves: ~/.config/gcloud/keys/</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end container -->
+
+<footer>
+  MapBiomas · Detecção de Sistemas Fotovoltaicos · Pipeline documentado em 2026-06-06
+</footer>
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const open = body.classList.toggle('open');
+  chevron.textContent = open ? '▼' : '▶';
+}
+
+function toggleAll(open) {
+  document.querySelectorAll('.stage-body').forEach(b => {
+    b.classList.toggle('open', open);
+  });
+  document.querySelectorAll('.chevron').forEach(c => {
+    c.textContent = open ? '▼' : '▶';
+  });
+}
+
+// smooth anchor scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const el = document.querySelector(a.getAttribute('href'));
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+});
+</script>
+</body>
+</html>

@@ -117,12 +117,17 @@ def download_files_from_folder(folder_name: str, dest_base: str):
 
                 if local_size > 0 and (local_size == drive_size or drive_size == 0):
                     local_mb = local_size / (1024 * 1024)
-                    print(f'✅ {local_mb:.2f} MB — movendo para lixeira...', end=' ')
-                    # files().update() para lixeira; files().delete() faz deleção permanente
-                    service.files().update(
-                        fileId=file_id, body={'trashed': True}
-                    ).execute()
-                    print('OK!')
+                    print(f'✅ {local_mb:.2f} MB', end=' ')
+                    # Tenta mover para lixeira — pode falhar se a conta de serviço
+                    # não tiver permissão de escrita no arquivo (403), o que não
+                    # invalida o download já concluído.
+                    try:
+                        service.files().update(
+                            fileId=file_id, body={'trashed': True}
+                        ).execute()
+                        print('🗑️  movido para lixeira.')
+                    except Exception as trash_err:
+                        print(f'(sem permissão para mover lixeira: {trash_err})')
                 else:
                     print(f'⚠️  Tamanho divergente (local {local_size} / drive {drive_size}). Mantendo.')
 
