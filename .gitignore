@@ -1,5 +1,6 @@
 src/dados/*
 src/models/*
+src/bd_images/*
 src/prompts/*
 !src/models/.gitkeep
 src/utieis/relatorioTaskXContas.txt
