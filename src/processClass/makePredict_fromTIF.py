@@ -358,25 +358,34 @@ def main():
         log.error(f'Nenhum .tif encontrado em {input_dir}')
         return
 
-    log.info(f'TIFs encontrados: {len(tif_files)}')
-    processed = 0
-
+    # Pré-filtra e indexa regiões únicas para o contador (região X/N)
+    filtered: list = []
     for tif_path in tif_files:
-        # Espera nome: <region_id>_<year>.tif
         parts = tif_path.stem.rsplit('_', 1)
         if len(parts) != 2 or not parts[1].isdigit():
             log.warning(f'Nome não reconhecido, pulando: {tif_path.name}')
             continue
-
         region_id, year = parts[0], int(parts[1])
-
-        if args.years   and year      not in args.years:
+        if args.years and year not in args.years:
             continue
         if args.regions and region_id not in args.regions:
             continue
+        filtered.append((tif_path, region_id, int(year)))
+
+    region_order: dict = {}
+    for _, rid, _ in filtered:
+        if rid not in region_order:
+            region_order[rid] = len(region_order) + 1
+    total_regions = len(region_order)
+
+    log.info(f'TIFs a processar: {len(filtered)} ({total_regions} regiões)')
+    processed = 0
+
+    for tif_path, region_id, year in filtered:
+        region_idx = region_order[region_id]
 
         log.info(f'\n{"="*60}')
-        log.info(f'Região: {region_id}  |  Ano: {year}')
+        log.info(f'Região: {region_id} ({region_idx}/{total_regions})  |  Ano: {year}')
 
         try:
             predict_tif(

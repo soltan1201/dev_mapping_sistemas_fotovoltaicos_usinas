@@ -30,7 +30,7 @@ except Exception as e:
 
 # ── Dados da regions ─────────────────────────────────────────────────────────────
 
-ASSET_REGIONS_2024 = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026" 
+ASSET_REGIONS_2024 ="projects/mapbiomas-arida/energias/shp_revisao2_16_05_2026_buffer_fotovoltaic_5km"
 regions = ee.FeatureCollection(ASSET_REGIONS_2024)
 lst_id_regions = regions.reduceColumns(ee.Reducer.toList(), ['system:index']).get('list').getInfo()
 print(f"we have {len(lst_id_regions)} regions")

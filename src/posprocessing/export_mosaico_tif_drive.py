@@ -12,12 +12,30 @@ Cada tarefa GEE gera:
 Bandas (5):
   0 blue  1 green  2 red  3 pvi  4 pvpi
 
+Modos de seleção de regiões (ordem de prioridade):
+  1. --pairs     ID:ano1,ano2 ...  →  combinações exatas por região
+  2. --region-ids ID1 ID2 ...     →  IDs específicos; usa --years para todos
+  3. --region-start / --region-end →  intervalo por índice (padrão)
+
 Uso:
+  # intervalo (padrão)
   python export_mosaico_tif_drive.py \
       --drive-folder fotovoltaica_mosaicos \
       [--years 2022 2024] \
-      [--region-start 0] [--region-end 90] \
-      [--max-active-tasks 50]
+      [--region-start 0] [--region-end 90]
+
+  # IDs específicos (todos os anos em --years)
+  python export_mosaico_tif_drive.py \
+      --drive-folder fotovoltaica_mosaicos \
+      --region-ids 00000000000000000057 00000000000000000058 \
+      --years 2025
+
+  # pares exatos região:anos (saída do check_missing_tifs.py)
+  python export_mosaico_tif_drive.py \
+      --drive-folder fotovoltaica_mosaicos \
+      --pairs 00000000000000000057:2025 \
+              00000000000000000058:2022,2025 \
+              0000000000000000005a:2016,2017,2018,2019,2020,2021,2022,2023,2024,2025
 """
 
 import sys
@@ -55,6 +73,13 @@ _ap.add_argument('--region-start', type=int, default=0,
                  help='Índice inicial das regiões (inclusive, default=0)')
 _ap.add_argument('--region-end', type=int, default=9999,
                  help='Índice final das regiões (exclusive, default=todas)')
+_ap.add_argument('--region-ids', nargs='+', type=str, default=None,
+                 help='IDs específicos de região (ex: 00000000000000000057 0000000000000000005a). '
+                      'Tem prioridade sobre --region-start/--region-end; usa --years para todos.')
+_ap.add_argument('--pairs', nargs='+', type=str, default=None,
+                 help='Pares região:anos no formato ID:ano1,ano2 '
+                      '(ex: 00000000000000000057:2025 00000000000000000058:2022,2025). '
+                      'Tem prioridade sobre --region-ids e --region-start/--region-end.')
 _ap.add_argument('--max-active-tasks', type=int, default=50,
                  help='Máximo de tarefas GEE ativas em paralelo (default=50)')
 _args = _ap.parse_args()
@@ -64,6 +89,20 @@ YEARS            = _args.years
 REGION_INIC      = _args.region_start
 REGION_END       = _args.region_end
 MAX_ACTIVE_TASKS = _args.max_active_tasks
+
+# Constrói lista de trabalho [(region_id_str, [anos])] quando IDs são explícitos.
+# None significa usar o loop por índice (modo padrão).
+if _args.pairs:
+    _WORK_LIST = []
+    for _p in _args.pairs:
+        if ':' not in _p:
+            raise SystemExit(f"Formato inválido em --pairs: '{_p}'. Esperado ID:ano1,ano2")
+        _rid, _yrs_str = _p.split(':', 1)
+        _WORK_LIST.append((_rid.strip(), [int(y) for y in _yrs_str.split(',')]))
+elif _args.region_ids:
+    _WORK_LIST = [(_rid.strip(), YEARS) for _rid in _args.region_ids]
+else:
+    _WORK_LIST = None   # usa loop por índice
 
 # ==============================================================================
 # 3. CONFIGURAÇÕES
@@ -160,53 +199,73 @@ def wait_for_task_slot(max_active: int, poll_s: int = 30):
 # ==============================================================================
 log.info("Carregando feature collection de regiões fotovoltaicas...")
 regions_fc    = ee.FeatureCollection(ASSET_REGIONS)
-region_list   = regions_fc.toList(regions_fc.size())
 total_regions = regions_fc.size().getInfo()
-
-region_end_eff = min(REGION_END, total_regions)
-n_tasks = (region_end_eff - REGION_INIC) * len(YEARS)
-
-log.info(f"Total de regiões: {total_regions} | "
-         f"Processando [{REGION_INIC}:{region_end_eff}] × {len(YEARS)} anos = {n_tasks} tarefas")
+log.info(f"Total de regiões no asset: {total_regions}")
 log.info(f"Destino: Google Drive / {DRIVE_FOLDER}")
+
+
+def _submit_task(feat_id_safe: str, geom, year: int, submitted: int, n_tasks: int):
+    task_name = f"{feat_id_safe}_{year}"
+    wait_for_task_slot(MAX_ACTIVE_TASKS)
+    image = build_nicfi_mosaic(year, geom)
+    task = ee.batch.Export.image.toDrive(
+        image          = image,
+        description    = task_name,
+        folder         = DRIVE_FOLDER,
+        fileNamePrefix = task_name,
+        region         = geom,
+        scale          = SCALE,
+        crs            = CRS,
+        maxPixels      = 1e10,
+        fileFormat     = 'GeoTIFF',
+        formatOptions  = {'cloudOptimized': True},
+    )
+    task.start()
+    log.info(f"  ✓ Submetida [{submitted}/{n_tasks}]: {task_name}")
+    time.sleep(0.5)  # evita burst na API do GEE
+
 
 submitted = 0
 
-for cc in range(region_end_eff - REGION_INIC):
-    global_idx = REGION_INIC + cc
-    feature    = ee.Feature(region_list.get(global_idx))
-    geom       = feature.geometry()
+if _WORK_LIST is not None:
+    # ── Modo IDs explícitos (--region-ids ou --pairs) ──────────────────────
+    n_tasks = sum(len(yrs) for _, yrs in _WORK_LIST)
+    log.info(f"Modo IDs explícitos: {len(_WORK_LIST)} regiões × anos variáveis = {n_tasks} tarefas")
 
-    feat_id      = feature.get('system:index').getInfo() or f'{global_idx:04d}'
-    feat_id_safe = str(feat_id).replace('/', '_').replace(':', '_')
+    for region_id, years in _WORK_LIST:
+        feature = regions_fc.filter(ee.Filter.eq('system:index', region_id)).first()
+        geom    = feature.geometry()
 
-    log.info(f"\n{'='*60}")
-    log.info(f"[{global_idx + 1}/{total_regions}] Região: {feat_id_safe}")
+        feat_id_safe = region_id.replace('/', '_').replace(':', '_')
+        log.info(f"\n{'='*60}")
+        log.info(f"Região: {feat_id_safe}  →  anos: {years}")
 
-    for year in YEARS:
-        task_name = f"{feat_id_safe}_{year}"
+        for year in years:
+            submitted += 1
+            _submit_task(feat_id_safe, geom, year, submitted, n_tasks)
 
-        wait_for_task_slot(MAX_ACTIVE_TASKS)
+else:
+    # ── Modo intervalo por índice (--region-start / --region-end) ──────────
+    region_list    = regions_fc.toList(regions_fc.size())
+    region_end_eff = min(REGION_END, total_regions)
+    n_tasks        = (region_end_eff - REGION_INIC) * len(YEARS)
 
-        image = build_nicfi_mosaic(year, geom)
+    log.info(f"Modo intervalo: [{REGION_INIC}:{region_end_eff}] × {len(YEARS)} anos = {n_tasks} tarefas")
 
-        task = ee.batch.Export.image.toDrive(
-            image          = image,
-            description    = task_name,
-            folder         = DRIVE_FOLDER,
-            fileNamePrefix = task_name,
-            region         = geom,
-            scale          = SCALE,
-            crs            = CRS,
-            maxPixels      = 1e10,
-            fileFormat     = 'GeoTIFF',
-            formatOptions  = {'cloudOptimized': True},
-        )
-        task.start()
-        submitted += 1
-        log.info(f"  ✓ Submetida [{submitted}/{n_tasks}]: {task_name}")
+    for cc in range(region_end_eff - REGION_INIC):
+        global_idx = REGION_INIC + cc
+        feature    = ee.Feature(region_list.get(global_idx))
+        geom       = feature.geometry()
 
-        time.sleep(0.5)  # evita burst na API do GEE
+        feat_id      = feature.get('system:index').getInfo() or f'{global_idx:04d}'
+        feat_id_safe = str(feat_id).replace('/', '_').replace(':', '_')
+
+        log.info(f"\n{'='*60}")
+        log.info(f"[{global_idx + 1}/{total_regions}] Região: {feat_id_safe}")
+
+        for year in YEARS:
+            submitted += 1
+            _submit_task(feat_id_safe, geom, year, submitted, n_tasks)
 
 log.info(f"\n{'='*60}")
 log.info(f"Concluído. {submitted} tarefas submetidas.")
