@@ -32,75 +32,51 @@ except:
 
 # sys.setrecursionlimit(1000000000)
 
-relatorios = open("relatorioTaskXContas.txt", 'a+')
-
-param = {
-    'cancelar' : False,
-    'unicaconta': True,
-    'numeroTask': 30,
-    'numeroLimit': 9,
-    'conta' : {
-        '0': 'caatinga01',
-        '1': 'caatinga02',
-        '2': 'caatinga03',
-        '3': 'caatinga04',
-        '4': 'caatinga05',        
-        '5': 'solkan1201',
-        '6': 'solkanGeodatin',        
-        # '7': 'diegoGmail',
-        '8': 'superconta',
-        # '6': 'diegoUEFS', 
-        # '7': 'soltangalano',
-        # '8': 'Rafael',
-        '9': 'solkanCengine',
-        # '10': 'Nerivaldo',
-        # '12': 'rodrigo',
-        # '13': 'ellen',
-        # '14': 'vinicius',   
-    }
+contas = {
+    '0': 'caatinga01',
+    '1': 'caatinga02',
+    '2': 'caatinga03',
+    '3': 'caatinga04',
+    '4': 'caatinga05',
+    '5': 'solkan1201',
+    '6': 'solkanGeodatin',
+    '8': 'superconta',
+    '9': 'solkanCengine',
 }
 
-def gerenciador(cont):    
-    #=====================================
-    # gerenciador de contas para controlar 
-    # processos task no gee   
-    #=====================================
-    numberofChange = [kk for kk in param['conta'].keys()]
-    print(numberofChange)
-    
-    if str(cont) in numberofChange:        
-        switch_user(param['conta'][str(cont)])
-        projAccount = get_project_from_account(param['conta'][str(cont)])
+unicaconta = input("É única conta (Y/N): ").strip().upper() == 'Y'
+conta_escolhida = int(input("Qual conta deseja usar: ").strip()) if unicaconta else None
+numero_tasks = int(input("Quantas run tasks deseja visualizar: ").strip())
+cancelar = input("Vai eliminar as tasks da nova conta (Y/N): ").strip().upper() == 'Y'
+
+numeroLimit = max(int(k) for k in contas.keys())
+
+def gerenciador(cont):
+    if str(cont) in contas:
+        switch_user(contas[str(cont)])
+        projAccount = get_project_from_account(contas[str(cont)])
         try:
-            ee.Initialize(project= projAccount) # project='ee-cartassol'
-            print('The Earth Engine package initialized successfully!')
-        except ee.EEException as e:
-            print('The Earth Engine package failed to initialize!') 
+            ee.Initialize(project=projAccount)
+        except ee.EEException:
+            print('The Earth Engine package failed to initialize!')
+            return cont + 1
 
-        # tasks(n= param['numeroTask'], return_list= True) 
-        relatorios.write("Conta de: " + param['conta'][str(cont)] + '\n')
+        print(f"\n--- Conta: {contas[str(cont)]} ---")
+        tarefas = tasks(n=numero_tasks, return_list=True)
+        for lin in tarefas:
+            print(lin)
 
-        tarefas = tasks(
-            n= param['numeroTask'],
-            return_list= True)
-        
-        for lin in tarefas:            
-            relatorios.write(str(lin) + '\n')
-    
-    elif cont > param['numeroLimit']:
+    elif cont > numeroLimit:
         return 0
-    cont += 1    
-    return cont
+    return cont + 1
 
-if param['unicaconta']:    
-    cont = 3
-    print(f"changing to  especifique account # {cont} <> {param['conta'][str(cont)]}")
-    cont = gerenciador(cont)
-    if param['cancelar']:
+if unicaconta:
+    print(f"Mudando para conta #{conta_escolhida} <> {contas[str(conta_escolhida)]}")
+    gerenciador(conta_escolhida)
+    if cancelar:
         cancel(opentasks=True)
 else:
-    cont = 0
-    for ii in range(0,param['numeroLimit']):        
-        cont = gerenciador(ii)
-        if param['cancelar']:
+    for ii in range(0, numeroLimit + 1):
+        gerenciador(ii)
+        if cancelar:
             cancel(opentasks=True)

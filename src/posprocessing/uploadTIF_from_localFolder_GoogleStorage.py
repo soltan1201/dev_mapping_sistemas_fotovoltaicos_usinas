@@ -11,17 +11,17 @@ Estrutura esperada de entrada (pasta plana):
   <tif-dir>/pred_<region_id>_<year>.tif
 
 Destino no bucket:
-  <gcs-prefix>/<group>/pred_<region_id>_<year>.tif
+  <gcs-prefix>/<folder>/pred_<region_id>_<year>.tif
 
-  <group> = valor de --group, ou o nome da pasta --tif-dir se omitido.
-  Exemplo: --tif-dir db_images/tif_fotovoltaicav1  →  group = tif_fotovoltaicav1
-           --group grupo_v1                         →  group = grupo_v1
+  <folder> = nome curto do modelo (sem o prefixo "dataset_fotovoltaica_TIFreg_")
+  Exemplo: --tif-dir .../dataset_fotovoltaica_TIFreg_unet_resnet152
+           → pasta no bucket: unet_resnet152
 
 Uso:
   python uploadTIF_from_localFolder_GoogleStorage.py \\
-      --tif-dir    /srv/almacen/db_images/tif_tfr_fotovoltaicav7  \\
+      --tif-dir    /srv/almacen/db_images/dataset_fotovoltaica_TIFreg_unet_resnet152 \\
       --bucket     mapbiomas-energia \\
-      --gcs-prefix fotovoltaicas_tif/tif_fotovoltaicav1 \\
+      --gcs-prefix fotovoltaicas_tif \\
       --key-json   ~/keys/mapbiomas-agua-36521f541610.json \\
       --years      2022 2025
 """
@@ -36,15 +36,14 @@ from pathlib import Path
 
 from google.cloud import storage
 
-# Mapeamento subpasta → backbone (mesmo de auditoria_pipeline.py)
+prefixo = "dataset_fotovoltaica_TIFreg_"
+
+# Chave: nome completo da pasta local  →  Valor: nome curto usado no bucket
 MODELS = {
-    'tif_fotovoltaicav1': 'unet_resnet50',
-    'tif_fotovoltaicav2': 'unet_resnet101',
-    'tif_fotovoltaicav3': 'unet_resnet152',
-    'tif_fotovoltaicav4': 'unet_mobilenet',
-    'tif_fotovoltaicav5': 'unet_resnext50',
-    'tif_fotovoltaicav6': 'unet_xception',
-    'tif_tfr_fotovoltaicav7': 'unet_efficientnetb7',
+    f"{prefixo}unet_efficientnetb7":  "unet_efficientnetb7",
+    f"{prefixo}unet_inceptionresnet": "unet_inceptionresnet",
+    f"{prefixo}unet_resnet152":       "unet_resnet152",
+    f"{prefixo}unet_resnext50":       "unet_resnext50",
 }
 
 LOG_FILE = Path('upload_tif_gcs.log')
@@ -58,7 +57,6 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-# Padrão do nome gerado por join_convert_npytoTIF: pred_<region_id>_<year>.tif
 _FNAME_RE = re.compile(r'^pred_(.+)_(\d{4})\.tif$')
 
 
@@ -105,7 +103,7 @@ def main():
     parser.add_argument('--regions',    type=str, nargs='+', default=None,
                         help='IDs de região a enviar (padrão: todos)')
     parser.add_argument('--group',      type=str, default=None,
-                        help='Subpasta dentro do gcs-prefix (padrão: nome da --tif-dir)')
+                        help='Sobrescreve a subpasta no bucket (padrão: nome curto do modelo)')
     parser.add_argument('--tmp-dir',    type=Path, default=None,
                         help='Pasta para arquivos COG temporários (padrão: /tmp do sistema). '
                              'Use se /tmp estiver cheio.')
@@ -117,10 +115,16 @@ def main():
     if args.years and len(args.years) == 2:
         args.years = list(range(args.years[0], args.years[1] + 1))
 
-    group   = args.group or args.tif_dir.name
-    backbone = MODELS.get(group, group)
+    # backbone = nome completo da pasta (chave no JSON de lacunas)
+    backbone = args.tif_dir.name
 
-    # Carrega pares faltando do JSON da auditoria (filtra somente o que falta no GEE)
+    # folder = nome curto para a pasta no bucket (sem prefixo)
+    if args.group:
+        folder = args.group
+    else:
+        folder = MODELS.get(backbone, backbone.replace(prefixo, "", 1))
+
+    # Carrega pares faltando do JSON da auditoria
     missing_pairs: set[tuple[str, int]] | None = None
     if args.lacunas_json:
         with open(args.lacunas_json, 'r', encoding='utf-8') as fj:
@@ -140,7 +144,8 @@ def main():
 
     log.info('=' * 60)
     log.info(f'Fonte        : {args.tif_dir}  ({len(tif_files)} arquivos)')
-    log.info(f'Bucket       : gs://{args.bucket}/{args.gcs_prefix}/{group}')
+    log.info(f'Backbone     : {backbone}')
+    log.info(f'Bucket       : gs://{args.bucket}/{args.gcs_prefix}/{folder}')
     log.info(f'Anos         : {args.years or "todos"}')
     log.info(f'Regiões      : {args.regions or "todas"}')
     log.info('=' * 60)
@@ -163,7 +168,7 @@ def main():
             if missing_pairs is not None and (region_id, year) not in missing_pairs:
                 continue
 
-            blob_name = f'{args.gcs_prefix}/{group}/{tif_path.name}'
+            blob_name = f'{args.gcs_prefix}/{folder}/{tif_path.name}'
             cog_path  = Path(tmpdir) / tif_path.name
 
             log.info(f'Processando  {tif_path.name}  (region={region_id}  year={year})')
@@ -174,7 +179,6 @@ def main():
             except Exception as exc:
                 log.error(f'  Erro em {tif_path.name}: {exc}')
             finally:
-                # libera espaço em disco imediatamente após upload
                 if cog_path.exists():
                     cog_path.unlink()
 
