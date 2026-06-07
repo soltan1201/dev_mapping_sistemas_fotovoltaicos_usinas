@@ -1,0 +1,9 @@
+{
+  "mosaicos": "/srv/almacen/db_images/dataset_fotovoltaica_TIFreg",
+  "saidas": {
+    "unet_efficientnetb7": "/srv/almacen/db_images/dataset_fotovoltaica_TIFreg_unet_efficientnetb7",
+    "unet_inceptionresnet": "/srv/almacen/db_images/dataset_fotovoltaica_TIFreg_unet_inceptionresnet",
+    "unet_resnet152": "/srv/almacen/db_images/dataset_fotovoltaica_TIFreg_unet_resnet152",
+    "unet_resnext50": "/srv/almacen/db_images/dataset_fotovoltaica_TIFreg_unet_resnext50"
+  }
+}
