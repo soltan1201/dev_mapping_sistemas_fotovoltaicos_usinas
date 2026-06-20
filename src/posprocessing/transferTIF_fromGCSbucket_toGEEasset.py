@@ -37,14 +37,10 @@ collections.Callable = collections.abc.Callable
 
 # Mapeamento subpasta → modelo_backbone
 MODELS = {
-    "tif_fotovoltaicav1": "unet_resnet50",
-    "tif_fotovoltaicav2": "unet_resnet101",
-    "tif_fotovoltaicav3": "unet_resnet152",
-    "tif_fotovoltaicav4": "unet_mobilenet",
-    "tif_fotovoltaicav5": "unet_resnext50",
-    "tif_fotovoltaicav6": "unet_xception",
-    'tif_tfr_fotovoltaicav7': 'unet_efficientnetb7',
-    'tif_tfr_fotovoltaicav8': 'unet_inceptionresnet',
+    "unet_efficientnetb7":  "unet_efficientnetb7",
+    "unet_inceptionresnet": "unet_inceptionresnet",
+    "unet_resnet152":       "unet_resnet152",
+    "unet_resnext50":       "unet_resnext50",
 }
 
 
@@ -124,8 +120,8 @@ def main():
     init_ee(args.project)
 
     # Derivar modelo e backbone a partir do nome do grupo
-    group = args.gcs_path.split('/')[-1]          # ex: tif_fotovoltaicav1
-    model_full = MODELS.get(group, 'unet_resnet50')
+    group = args.gcs_path.split('/')[-1]          # ex: tif_fotovoltaicav1 ou unet_efficientnetb7
+    model_full = MODELS.get(group, group)
     parts    = model_full.split('_', 1)
     model    = parts[0]                            # ex: unet
     backbone = parts[1] if len(parts) > 1 else ''  # ex: resnet50

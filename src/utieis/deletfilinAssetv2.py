@@ -21,7 +21,8 @@ except:
 
 
 # asset = 'projects/geo-data-s/assets/fotovoltaica/version_3'
-asset = 'projects/geo-data-s/assets/fotovoltaica/version_4'
+# asset = 'projects/geo-data-s/assets/fotovoltaica/version_4'
+asset = "projects/geo-data-s/assets/fotovoltaica/usinas_br_gc"
 
 imgCol = (ee.ImageCollection(asset)
                 # .filter(ee.Filter.eq('version', 4)) 

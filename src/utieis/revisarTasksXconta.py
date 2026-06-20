@@ -33,13 +33,13 @@ except:
 # sys.setrecursionlimit(1000000000)
 
 contas = {
-    '0': 'caatinga01',
-    '1': 'caatinga02',
-    '2': 'caatinga03',
-    '3': 'caatinga04',
-    '4': 'caatinga05',
-    '5': 'solkan1201',
-    '6': 'solkanGeodatin',
+    '1': 'caatinga01',
+    '2': 'caatinga02',
+    '3': 'caatinga03',
+    '4': 'caatinga04',
+    '5': 'caatinga05',
+    '6': 'solkan1201',
+    '7': 'solkanGeodatin',
     '8': 'superconta',
     '9': 'solkanCengine',
 }
@@ -47,7 +47,7 @@ contas = {
 unicaconta = input("É única conta (Y/N): ").strip().upper() == 'Y'
 conta_escolhida = int(input("Qual conta deseja usar: ").strip()) if unicaconta else None
 numero_tasks = int(input("Quantas run tasks deseja visualizar: ").strip())
-cancelar = input("Vai eliminar as tasks da nova conta (Y/N): ").strip().upper() == 'Y'
+cancelar = input("Vai CANCELAR as tasks da nova conta (Y/N): ").strip().upper() == 'n'
 
 numeroLimit = max(int(k) for k in contas.keys())
 

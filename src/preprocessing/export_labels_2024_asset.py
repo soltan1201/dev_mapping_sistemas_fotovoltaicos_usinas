@@ -45,7 +45,8 @@ except Exception as e:
 ASSET_REGIONS_2024       = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026"
 ASSET_POINT_SAMPLES      = "projects/mapbiomas-arida/energias/pontos_areas_DB_16_05_2026"
 ASSET_LABEL_2024         = "projects/geo-data-s/assets/fotovoltaica/usinas_br_gc"
-ASSET_LIMIT_ROTULOS_2024 = "projects/mapbiomas-arida/energias/polygons_base_paneis_fotovoltaicos_16_05_2026"
+# aqui estão os poligons complementares
+ASSET_LIMIT_ROTULOS_2024 = "projects/mapbiomas-arida/energias/polygons_base_paneis_fotovoltaicos_16_05_2026"  
 ASSET_EXCLUSION_2024     = "projects/mapbiomas-arida/energias/poligons_exclusion_comision_16_05_2026"
 
 ASSET_OUTPUT_COLLECTION  = "projects/mapbiomas-caatinga-cloud04/assets/rotulos_fv_2024"
@@ -154,7 +155,7 @@ for global_idx in range(REGION_INIC, region_end + 1):
 
     try:
         label = build_label_2024(YEAR, geom)
-        export_label_asset(label, geom, asset_name, feat_id_safe)
+        export_label_asset(label.toByte(), geom, asset_name, feat_id_safe)
         print(f"→ task submetida: {asset_id}")
         submetidas += 1
     except Exception as e:
