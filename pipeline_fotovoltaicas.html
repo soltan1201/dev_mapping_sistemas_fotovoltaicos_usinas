@@ -399,11 +399,14 @@
   <div class="stats-row">
     <div class="stat"><div class="stat-val" style="color:#4f8ef7">91</div><div class="stat-lbl">Regiões</div></div>
     <div class="stat"><div class="stat-val" style="color:#34d399">10</div><div class="stat-lbl">Anos (2016–2025)</div></div>
-    <div class="stat"><div class="stat-val" style="color:#a78bfa">8</div><div class="stat-lbl">Canais espectrais</div></div>
-    <div class="stat"><div class="stat-val" style="color:#f59e0b">4</div><div class="stat-lbl">Modelos treinados</div></div>
+    <div class="stat"><div class="stat-val" style="color:#a78bfa">5</div><div class="stat-lbl">Canais espectrais (L5, atual)</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f59e0b">8</div><div class="stat-lbl">Backbones com treino registrado</div></div>
     <div class="stat"><div class="stat-val" style="color:#fb923c">256px</div><div class="stat-lbl">Tamanho do patch</div></div>
     <div class="stat"><div class="stat-val" style="color:#f87171">910</div><div class="stat-lbl">Combinações região×ano</div></div>
   </div>
+  <p style="text-align:center; font-size:0.75rem; color:var(--muted); margin-top:-0.6rem; margin-bottom:1.2rem;">
+    "L5" / "L9" = quantidade de bandas espectrais de entrada do modelo (ver seção <a href="#bands" style="color:#a5d6ff">Bandas</a>) — os dois convivem no mesmo <code>models_index.json</code>.
+  </p>
 
   <!-- TOC -->
   <nav class="toc">
@@ -419,6 +422,9 @@
     <a class="toc-item" href="#stage6">6 · Merge → GeoTIFF</a>
     <a class="toc-item" href="#stage7">7 · Upload GCS</a>
     <a class="toc-item" href="#stage8">8 · Ingestão GEE</a>
+    <a class="toc-item" href="#stage9">9 · Grade rural</a>
+    <a class="toc-item" href="#stage10">10 · Coleção 11 (publicação)</a>
+    <a class="toc-item" href="#stage11">11 · Análise & divulgação</a>
     <a class="toc-item" href="#viz">Visualização</a>
     <a class="toc-item" href="#bands">Bandas</a>
     <a class="toc-item" href="#models">Modelos</a>
@@ -515,7 +521,31 @@
         </div>
         <div class="diag-arrow-v">↓</div>
         <div class="diag-node" style="border-color:#a78bfa; color:#a78bfa; background:rgba(167,139,250,0.08); min-width:240px; text-align:center;">
-          9 · Visualização GEE<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Code Editor / Earth Engine App</span>
+          Visualização GEE (por região/ano)<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">Code Editor / Earth Engine App</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row: rural grid + col11 publication + analysis -->
+    <div class="diag-row" style="justify-content:center; margin-top:1.2rem;">
+      <div class="diag-col" style="align-items:center">
+        <div class="diag-label" style="color:#a78bfa">↓ &nbsp;além do asset por região/modelo (acima), a mesma predição alimenta a curadoria pública</div>
+        <div class="diag-arrow-v">↓</div>
+      </div>
+    </div>
+    <div class="diag-row" style="justify-content:center; gap:2rem; flex-wrap:wrap;">
+      <div class="diag-col" style="align-items:center; width:260px;">
+        <div class="diag-node" style="border-color:#8e5fc4; color:#c9a8ec; background:rgba(142,95,196,0.08); min-width:240px; text-align:center;">
+          9 · Grade rural<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">setup_grades_rural.py → export …_rural.py → reconcile_grades_rural.py</span>
+        </div>
+      </div>
+      <div class="diag-col" style="align-items:center; width:260px;">
+        <div class="diag-node" style="border-color:#e05252; color:#f0a8a8; background:rgba(224,82,82,0.08); min-width:240px; text-align:center;">
+          10 · Coleção 11<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">col11_v2.py (QA por região) → col11_final.py (asset público)</span>
+        </div>
+        <div class="diag-arrow-v">↓</div>
+        <div class="diag-node" style="border-color:#2ecfa0; color:#8ff0d6; background:rgba(46,207,160,0.08); min-width:240px; text-align:center;">
+          11 · Análise & divulgação<br><span style="font-size:0.65rem; font-weight:400; color:var(--muted)">área por bioma → notebooks Plotly → fv_dashboard.html</span>
         </div>
       </div>
     </div>
@@ -557,24 +587,26 @@
       </div>
       <div class="stage-body">
         <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
-          Exporta patches 257×257×8 bandas + rótulo binário como TFRecord compactado (.tfrecord.gz) para o Google Drive.
-          Dois sub-pipelines: grade regular 5 km ao redor das regiões + patches extras dentro das FVs para balanceamento.
+          Exporta patches 256×256, <b>5 bandas</b> (blue, green, red, pvi, pvpi) + rótulo binário, como TFRecord
+          compactado para o Google Drive. Dois sub-pipelines: grade regular ao redor das regiões + patches
+          extras dentro das FVs confirmadas para balanceamento. Os rótulos de 2024 podem ser pré-computados uma
+          vez (ver alerta abaixo) em vez de recalculados a cada shard.
         </p>
         <div class="io-grid">
           <div class="io-box io-in">
             <h4>Entradas</h4>
             <ul>
               <li>NICFI Monthly (Planet) — 4,77 m/px</li>
-              <li>Vetores FV (labels binários)</li>
-              <li>Geometrias de região (GEE asset)</li>
-              <li>Parâmetros: YEARS, REGION_INIC, REGION_END, STRIDE_PIXELS</li>
+              <li>Rótulos FV por ano (2022–2025), asset <code>layers_energia</code></li>
+              <li>Geometrias de região (GEE asset, 2024: <code>shp_area_fotovoltaic_samples_update_16_05_2026</code>)</li>
+              <li>Parâmetros: YEARS, REGION_INIC, REGION_END, STRIDE_PIXELS (230px)</li>
             </ul>
           </div>
           <div class="io-box io-out">
             <h4>Saídas</h4>
             <ul>
-              <li><code style="color:#a5d6ff; font-size:0.78rem">Drive/&lt;year&gt;/&lt;region&gt;/*.tfrecord.gz</code></li>
-              <li>Patches 257×257×8 + label 257×257×1</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">Drive/DS_FV_NICFI_TFR_V3/&lt;year&gt;/&lt;region&gt;/*.tfrecord</code></li>
+              <li>Patches 256×256×5 + label 256×256×1</li>
               <li>Relatório de tasks: <code style="color:#a5d6ff; font-size:0.78rem">relatorio_tasks_tfrecord.txt</code></li>
             </ul>
           </div>
@@ -584,7 +616,7 @@
           <div class="script-item">
             <div>
               <div class="script-path">src/preprocessing/download_dataset_tfrecord_fotovoltaica_precomp.py</div>
-              <div class="script-desc">Script principal — exporta TFRecords via <code>ee.batch.Export.image.toTFRecord()</code></div>
+              <div class="script-desc">Script principal — exporta TFRecords via <code>ee.batch.Export.table.toDrive(fileFormat='TFRecord')</code></div>
             </div>
           </div>
           <div class="script-item">
@@ -669,58 +701,66 @@
       </div>
       <div class="stage-body">
         <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
-          Treina modelo de segmentação semântica UNet + backbone no Google Colab com GPU A100.
-          Entrada: patches (256, 256, 8) em Int16 normalizados para float32. Saída: máscara binária (256, 256, 1).
+          Treina o modelo de segmentação semântica (Focus U-Net + backbone) no Google Colab com GPU A100.
+          A versão atual (<code>train_fotovoltaica_colab_v2.ipynb</code>) usa entrada <b>(256, 256, 5)</b> —
+          o notebook v1 (<code>train_fotovoltaica_colab.ipynb</code>) usava 8 bandas e segue arquivado como
+          referência dos modelos "L9" ainda servidos no dashboard. Saída: máscara binária (256, 256, 1).
         </p>
         <div class="io-grid">
           <div class="io-box io-in">
             <h4>Entradas</h4>
             <ul>
-              <li>Dataset split (TFRecords train/val/test)</li>
-              <li>Modelo: UNet + backbone configurável</li>
+              <li>Dataset split + balanceado (TFRecords train/val/test)</li>
+              <li>Cabeça + backbone configuráveis (<code>segmentation_model_factory.py</code>)</li>
               <li>Hiperparâmetros (epochs, batch, lr)</li>
             </ul>
           </div>
           <div class="io-box io-out">
             <h4>Saídas</h4>
             <ul>
-              <li><code style="color:#a5d6ff; font-size:0.78rem">best_&lt;backbone&gt;_&lt;timestamp&gt;.keras</code> → Drive</li>
-              <li><code style="color:#a5d6ff; font-size:0.78rem">history_&lt;backbone&gt;_&lt;timestamp&gt;.csv</code></li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">best_5L_&lt;backbone&gt;_&lt;timestamp&gt;_v3.keras</code> → Drive</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">history_&lt;backbone&gt;_&lt;timestamp&gt;.csv</code> (nem sempre gerado — ver nota)</li>
               <li>Logs TensorBoard</li>
             </ul>
           </div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin:1rem 0; font-size:0.8rem;">
           <div style="background:var(--card2); padding:0.8rem; border-radius:8px;">
-            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Arquitetura</div>
-            UNet + backbone (8 variantes)<br>
-            Input: (256, 256, <b>8</b>) bandas<br>
+            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Arquitetura (notebook v2 atual)</div>
+            Cabeça: Focus U-Net (<code>USE_ATTENTION=True</code>)<br>
+            Backbone atual: <b>inceptionresnet</b> (<code>BACKBONE_NAME</code>)<br>
+            Input: (256, 256, <b>5</b>) bandas<br>
             Output: (256, 256, 1) máscara<br>
-            Mixed precision: float16<br>
-            Loss: Focal Tversky + Boundary<br>
-            α=0.3, β=0.7, γ=1.25
+            Loss: Focal Tversky + Boundary (α=0.3, β=0.7, γ=1.25)<br>
+            Métricas-alvo: Dice ≥ 0.95 · BinaryIoU (thr 0.75)
           </div>
           <div style="background:var(--card2); padding:0.8rem; border-radius:8px;">
-            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Configuração</div>
-            Epochs: 250 (EarlyStopping)<br>
+            <div style="color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:.1em; margin-bottom:.5rem">Configuração (v2 vs v1)</div>
+            Epochs: 250 · steps/epoch: 250 (v1: 200)<br>
             Batch size: 46<br>
-            LR: 1e-5 (ReduceLROnPlateau)<br>
+            LR: <b>1e-4</b> (v1: 1e-5) · ReduceLROnPlateau<br>
             Normalização: ÷ 10000<br>
-            Aug: flip, rot90, shift ±64px, ruído
+            Filtro de patches vazios ligado: <code>EMPTY_PATCH_KEEP_RATE=0.25</code> (v1 definia mas não usava)
           </div>
         </div>
         <div class="scripts-list">
           <h4>Scripts</h4>
           <div class="script-item">
             <div>
-              <div class="script-path">src/processClass/train_fotovoltaica_colab.ipynb</div>
-              <div class="script-desc">Notebook principal — rodar no Google Colab com GPU A100</div>
+              <div class="script-path">src/processClass/balance_tfrecord_dataset_colab.ipynb</div>
+              <div class="script-desc">Novo — corrige desbalanceamento em disco antes do treino: de ~1029 shards de treino, 15% dos patches eram positivos (neg:pos ≈ 5,7:1); shards 100% negativos vão para quarentena (<code>train_sem_alerta/</code>) e só o suficiente volta para atingir neg:pos = 3:1</div>
             </div>
           </div>
           <div class="script-item">
             <div>
               <div class="script-path">src/processClass/train_fotovoltaica_colab_v2.ipynb</div>
-              <div class="script-desc">Versão v2 com melhorias de backbone</div>
+              <div class="script-desc">Notebook de treino atual — Focus U-Net + backbone configurável, 5 bandas</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/processClass/train_fotovoltaica_colab.ipynb</div>
+              <div class="script-desc">Notebook v1 (arquivado) — 8 bandas, gerou os modelos "L9"</div>
             </div>
           </div>
           <div class="script-item">
@@ -732,7 +772,7 @@
           <div class="script-item">
             <div>
               <div class="script-path">src/processClass/segmentation_model_factory.py</div>
-              <div class="script-desc">Factory UNet + backbones, losses customizadas, callbacks</div>
+              <div class="script-desc">Factory: 5 cabeças (<code>unet, deeplabv3plus, pspnet, fpn</code> e a nova <code>segformerb5</code>) × 11 backbones (todos <code>weights=None</code>); ver <code>arquiteturas_modelos_deep_learning.html</code></div>
             </div>
           </div>
           <div class="script-item">
@@ -742,8 +782,19 @@
             </div>
           </div>
         </div>
+        <div class="alert alert-info">
+          ℹ️ <code>segformerb5</code> (cabeça transformer MiT-B5) foi adicionada ao factory mas ainda não tem
+          nenhum treino registrado em <code>models_index.json</code> — disponível, não validada.
+        </div>
+        <div class="alert alert-warn">
+          ⚠️ Inconsistência conhecida: o módulo <code>custom_losses.py</code> define <code>boundary_weight=0.85</code>
+          por padrão, mas o notebook de treino redefine a função inline com <code>boundary_weight=0.25</code>
+          (≈67% Tversky + 33% boundary) — é essa segunda versão que efetivamente roda no treino.
+        </div>
         <div class="alert alert-warn">
           ⚠️ Após o treino, baixar o <code>.keras</code> do Drive para o servidor local antes da inferência.
+          Os 4 checkpoints "L5" mais recentes (efficientnetb7, inceptionresnet, resnet152, resnext50) não têm
+          CSV de histórico no repositório — sem métricas finais registradas até o momento.
         </div>
       </div>
     </div>
@@ -812,8 +863,10 @@
       </div>
       <div class="stage-body">
         <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
-          Exporta mosaico NICFI completo de uma região como GeoTIFF multi-banda para o Drive.
-          Usado quando a inferência roda sobre TIFs em vez de patches NPY.
+          Exporta o mosaico NICFI completo (mediana jul–dez, mesmo cálculo de <code>pvi</code>/<code>pvpi</code>
+          da coleta de treino) de uma região como GeoTIFF multi-banda para o Drive.
+          Usado quando a inferência roda sobre TIFs em vez de patches NPY. Há duas variantes com a mesma
+          lógica de mosaico, diferindo apenas na seleção de regiões e no controle de progresso.
         </p>
         <div class="io-grid">
           <div class="io-box io-in">
@@ -835,8 +888,14 @@
           <h4>Scripts</h4>
           <div class="script-item">
             <div>
-              <div class="script-path">src/posprocessing/export_mosaico_tif_drive.py</div>
-              <div class="script-desc">Exporta mosaico NICFI como GeoTIFF para o Drive (91 regiões × 10 anos)</div>
+              <div class="script-path">src/posprocessing/export_mosaicTIF_GEEtoDrive.py</div>
+              <div class="script-desc">Variante geral — lê as ~91 regiões candidatas de <code>shp_revisao2_16_05_2026_buffer_fotovoltaic_5km</code>; seleção via <code>--pairs</code>, <code>--region-ids</code> ou <code>--region-start/--region-end</code> × <code>--years</code></div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/export_mosaicTIF_GEEtoDrive_rural.py</div>
+              <div class="script-desc">Variante rural — lê só as células da grade nacional que intersectam <code>fotovoltaic_rural</code> (ver Estágio 9); progresso rastreado em <code>src/dados/log_rurais/*.json</code>, sem reconsulta ao GEE</div>
             </div>
           </div>
         </div>
@@ -1187,6 +1246,186 @@ earthengine create collection projects/geo-data-s/assets/fotovoltaica/usinas_br<
       </div>
     </div>
 
+    <!-- STAGE 9 -->
+    <div id="stage9" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c8">Estágio 9</span>
+        <div>
+          <div class="stage-title">Grade rural — subconjunto dedicado</div>
+          <div class="stage-sub">Novo · células da grade nacional (35 patches BR) que intersectam FVs rurais</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Fluxo paralelo ao Estágio 4b, focado em zonas rurais: em vez das ~91 regiões candidatas gerais,
+          processa células da grade nacional de 35 patches que intersectam o asset de pontos
+          <code>fotovoltaic_rural</code>. Mantém seu próprio controle de progresso local, já que os logs de
+          submissão podem ficar defasados quando a cota do Drive enche ou uma geometria vem nula.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Grade nacional: <code style="color:#a5d6ff; font-size:0.78rem">SHP_grades_BR_35pathces_AllBrV3</code></li>
+              <li>Pontos FV rurais: <code style="color:#a5d6ff; font-size:0.78rem">projects/mapbiomas-arida/fotovoltaic_rural</code></li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li>Asset: <code style="color:#a5d6ff; font-size:0.78rem">shp_grades_BR_fotovoltaic_rural</code> (com contagem <code>quantidade</code> de pontos por célula)</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">src/dados/log_rurais/grades_rural_all.json</code> — universo ordenado por quantidade</li>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">grades_rural_&lt;ano&gt;_reconciled_&lt;timestamp&gt;.json</code> — pendências corrigidas</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/setup_grades_rural.py</div>
+              <div class="script-desc">Roda uma vez — monta a grade rural e o universo de células a processar</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/reconcile_grades_rural.py</div>
+              <div class="script-desc">Compara <code>list_id_grades.csv</code> (o que de fato foi exportado) contra o universo e o log de submissão, e escreve uma lista de pendências corrigida</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 10 -->
+    <div id="stage10" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num c7">Estágio 10</span>
+        <div>
+          <div class="stage-title">Curadoria & publicação — Coleção 11</div>
+          <div class="stage-sub">Novo · regras de QA por região → mosaico nacional público</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          Etapa final de publicação: aplica correções manuais/por região sobre as predições brutas e monta o
+          asset nacional público consumido pela MapBiomas Coleção 11 (tema Energias Renováveis).
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Tiles v1 por região/ano: <code style="color:#a5d6ff; font-size:0.78rem">.../col11/CAATINGA/layers_energia</code></li>
+              <li>Regras manuais por região (excluir / mesclar / cortar)</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li>Tiles v2 corrigidos (mesmo workspace, <code>version=2</code>)</li>
+              <li>Asset público: <code style="color:#a5d6ff; font-size:0.78rem">projects/mapbiomas-brazil/assets/LAND-COVER-10M/COLLECTION-4/RENEWABLE-ENERGY/solar-panels/solar-panel-&lt;ano&gt;-2</code> (2016–2025, 10 m, EPSG:4326)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/export_solar_panels_col11_v2.py</div>
+              <div class="script-desc">QA por região sobre os tiles v1: <b>EXCLUDE</b> (8 regiões zeradas — sem FV confirmada), <b>MERGE_COL10</b> (14 regiões recuperadas cruzando com a Coleção 10), <b>ZERO_BACK</b> (zera anos ≤ corte por região, remove falsos positivos antigos); EXCLUDE tem prioridade sobre ZERO_BACK</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/export_solar_panels_col11_final.py</div>
+              <div class="script-desc">Mosaica os tiles v2 já corrigidos de todas as regiões em uma única imagem por ano e exporta o asset público final</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-info">
+          ℹ️ <code>export_solar_panels_col11_temporal_v2.py</code> é um método alternativo mais antigo (consistência
+          temporal automática ano N ⟹ presente também em N+1, sem regras manuais por região) — não é o caminho
+          usado pela versão "final" atual, mantido apenas como referência.
+        </div>
+      </div>
+    </div>
+
+    <!-- STAGE 11 -->
+    <div id="stage11" class="stage-card">
+      <div class="stage-header" onclick="toggle(this)">
+        <span class="stage-num" style="background:rgba(46,207,160,0.12); color:#2ecfa0">Estágio 11</span>
+        <div>
+          <div class="stage-title">Análise & divulgação</div>
+          <div class="stage-sub">Novo · área por ano/bioma → gráficos Plotly → página pública</div>
+        </div>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="stage-body">
+        <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+          A partir do asset público da Coleção 11 (Estágio 10), calcula área por ano e bioma e produz os
+          gráficos de acompanhamento — incluindo uma comparação com o mapeamento de energia eólica.
+        </p>
+        <div class="io-grid">
+          <div class="io-box io-in">
+            <h4>Entradas</h4>
+            <ul>
+              <li>Asset público: <code style="color:#a5d6ff; font-size:0.78rem">.../RENEWABLE-ENERGY/solar-panels</code></li>
+              <li>Biomas: <code style="color:#a5d6ff; font-size:0.78rem">bioma_2025_e250k_5kbuffer</code> (6 biomas)</li>
+            </ul>
+          </div>
+          <div class="io-box io-out">
+            <h4>Saídas</h4>
+            <ul>
+              <li><code style="color:#a5d6ff; font-size:0.78rem">solar_panels_area_by_year_biome_col11.csv</code> (year, Bioma, area_ha)</li>
+              <li>Gráficos Plotly (PNG) — evolução por bioma/estado/país, participação, crescimento 2021→2025</li>
+              <li>Página estática pública com o resumo de área por ano/bioma</li>
+            </ul>
+          </div>
+        </div>
+        <div class="scripts-list">
+          <h4>Scripts</h4>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/inGEE/area_fv_por_ano_bioma_col11.js</div>
+              <div class="script-desc">Script para o Code Editor do GEE — <code>reduceRegions(sum)</code> de área (30 m, tileScale 4) por bioma × ano, exporta CSV para o Drive</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/graficos/graficos_UFV.ipynb</div>
+              <div class="script-desc">Notebook Plotly — evolução por bioma/estado/país, participação e crescimento (fotovoltaica)</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/graficos/graficos_eolica.ipynb</div>
+              <div class="script-desc">Mesma análise para o mapeamento de energia eólica</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/graficos/graficos_UFV_eolica.ipynb</div>
+              <div class="script-desc">Combina as duas fontes — evolução conjunta e comparação UFV × Eólica por ano</div>
+            </div>
+          </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/dash/fv_dashboard.html</div>
+              <div class="script-desc">Página HTML estática (não é export do Dash) — gráfico de barras em canvas/JS puro a partir do CSV de área por bioma, com cards de crescimento</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-warn">
+          ⚠️ Os CSVs brutos por região usados pelos notebooks (<code>src/graficos/dados/usina_FV_*.csv</code>) não
+          têm um script de exportação rastreado neste repositório — foram gerados manualmente a partir do GEE.
+          A energia eólica não tem CSV bruto por região no repositório: <code>eolica_consolidado.csv</code> é a
+          própria fonte, de origem externa/manual.
+        </div>
+      </div>
+    </div>
+
     <!-- VIZ -->
     <div id="viz" class="stage-card">
       <div class="stage-header" onclick="toggle(this)">
@@ -1246,9 +1485,20 @@ earthengine create collection projects/geo-data-s/assets/fotovoltaica/usinas_br<
           <div class="script-item">
             <div>
               <div class="script-path">src/posprocessing/auditoria_pipeline.py</div>
-              <div class="script-desc">Auditoria completa do pipeline + auto-correção de estágios ausentes</div>
+              <div class="script-desc">Auditoria completa do pipeline (NPY, predição, TIF, GCS, GEE) + auto-correção de estágios ausentes via <code>--fix</code>; config central em <code>config_pipeline_v1.json</code></div>
             </div>
           </div>
+          <div class="script-item">
+            <div>
+              <div class="script-path">src/posprocessing/check_missing_tifs.py</div>
+              <div class="script-desc">Auditoria local mais leve — compara TIFs presentes contra as 91 regiões × 10 anos esperados, sem chamadas GCS/GEE</div>
+            </div>
+          </div>
+        </div>
+        <div class="alert alert-warn">
+          ⚠️ Bug conhecido: <code>auditoria_pipeline.py --fix tif</code> chama <code>join_convert_npytoTIF.py</code>
+          esperando encontrá-lo em <code>src/posprocessing/</code>, mas esse script só existe hoje em
+          <code>src/old/posprocessing/</code> — o fix falha até o caminho ser corrigido ou o script movido de volta.
         </div>
         <div class="code-wrap">
           <div class="code-title">Subir os dois apps (smoke script)</div>
@@ -1270,24 +1520,40 @@ streamlit run src/show_colect_data/viewer_patches_npy.py \
 
   <!-- ── Bandas espectrais ── -->
   <div id="bands" class="section-title">Bandas espectrais de entrada</div>
-  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">8 canais normalizados: Int16 [0, 10000] no GEE → float32 [0, 1] na inferência (÷ 10000)</p>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+    <b>Versão atual — "L5" (5 canais):</b> usada por <code>download_dataset_tfrecord_fotovoltaica_precomp.py</code>,
+    <code>export_mosaicTIF_GEEtoDrive(_rural).py</code> e <code>train_fotovoltaica_colab_v2.ipynb</code>.
+    Int16 [0, 10000] no GEE → float32 [0, 1] na inferência (÷ 10000).
+  </p>
   <table class="bands-table">
     <thead><tr><th>Ch</th><th>Nome</th><th>Fonte</th><th>Fórmula</th><th>Papel na discriminação</th></tr></thead>
     <tbody>
-      <tr><td class="band-idx">0</td><td class="band-name">blue</td><td>NICFI</td><td class="band-formula">B</td><td class="band-role">Base RGB — alta reflectância em painéis</td></tr>
-      <tr><td class="band-idx">1</td><td class="band-name">green</td><td>NICFI</td><td class="band-formula">G</td><td class="band-role">Base RGB</td></tr>
-      <tr><td class="band-idx">2</td><td class="band-name">red</td><td>NICFI</td><td class="band-formula">R</td><td class="band-role">Base RGB — discriminação solo exposto</td></tr>
-      <tr><td class="band-idx">3</td><td class="band-name">nir</td><td>NICFI</td><td class="band-formula">NIR</td><td class="band-role">Separação vegetação vs. painéis (baixo NIR)</td></tr>
-      <tr><td class="band-idx">4</td><td class="band-name">pvi</td><td>Derivado</td><td class="band-formula">(Blue − NIR) / (Blue + NIR + 1)</td><td class="band-role">Separa painéis de água/sombra (PVI alto = painel)</td></tr>
-      <tr><td class="band-idx">5</td><td class="band-name">iia</td><td>Derivado</td><td class="band-formula">(Green − 4·NIR) / (Green + 4·NIR + 1)</td><td class="band-role">Separa {painéis, água} de {solo, vegetação}</td></tr>
-      <tr><td class="band-idx">6</td><td class="band-name">ri</td><td>Derivado</td><td class="band-formula">2.4·(Red − Green) / (Red + Green + 1)</td><td class="band-role">Separa solo exposto de alvos escuros</td></tr>
-      <tr><td class="band-idx">7</td><td class="band-name">evi</td><td>Derivado</td><td class="band-formula">2.4·(NIR − Red) / (1 + NIR + Red)</td><td class="band-role">Sensibilidade à vegetação densa</td></tr>
+      <tr><td class="band-idx">0</td><td class="band-name">blue</td><td>NICFI</td><td class="band-formula">B (normalizada por percentil p1/p99)</td><td class="band-role">Base RGB — alta reflectância em painéis</td></tr>
+      <tr><td class="band-idx">1</td><td class="band-name">green</td><td>NICFI</td><td class="band-formula">G (normalizada por percentil p1/p99)</td><td class="band-role">Base RGB</td></tr>
+      <tr><td class="band-idx">2</td><td class="band-name">red</td><td>NICFI</td><td class="band-formula">R (normalizada por percentil p1/p99)</td><td class="band-role">Base RGB — discriminação solo exposto</td></tr>
+      <tr><td class="band-idx">3</td><td class="band-name">pvi</td><td>Derivado</td><td class="band-formula">((Blue − NIR) / (Blue + NIR + 1) + 1) / 2</td><td class="band-role">Separa painéis de água/sombra (PVI alto = painel); NIR entra só como intermediário, não é exportado como banda própria</td></tr>
+      <tr><td class="band-idx">4</td><td class="band-name">pvpi</td><td>Derivado</td><td class="band-formula">((Green − Blue) / (Green + Blue) + 1) / 2</td><td class="band-role">Índice novo (não existia na versão de 8 bandas) — reforça a separação entre painel e solo/vegetação usando Green×Blue</td></tr>
     </tbody>
   </table>
 
-  <div style="margin:1.2rem 0;">
-    <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem">Lógica de decisão espectral</div>
-    <div class="decision-tree">
+  <details style="margin:1rem 0;">
+    <summary style="cursor:pointer; font-size:0.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;">Versão anterior — "L9" (8 canais, legado — modelos resnet50/101/152/resnext50/mobilenet/xception treinados com este conjunto)</summary>
+    <table class="bands-table" style="margin-top:0.8rem;">
+      <thead><tr><th>Ch</th><th>Nome</th><th>Fonte</th><th>Fórmula</th><th>Papel na discriminação</th></tr></thead>
+      <tbody>
+        <tr><td class="band-idx">0</td><td class="band-name">blue</td><td>NICFI</td><td class="band-formula">B</td><td class="band-role">Base RGB</td></tr>
+        <tr><td class="band-idx">1</td><td class="band-name">green</td><td>NICFI</td><td class="band-formula">G</td><td class="band-role">Base RGB</td></tr>
+        <tr><td class="band-idx">2</td><td class="band-name">red</td><td>NICFI</td><td class="band-formula">R</td><td class="band-role">Base RGB</td></tr>
+        <tr><td class="band-idx">3</td><td class="band-name">nir</td><td>NICFI</td><td class="band-formula">NIR</td><td class="band-role">Separação vegetação vs. painéis (baixo NIR)</td></tr>
+        <tr><td class="band-idx">4</td><td class="band-name">pvi</td><td>Derivado</td><td class="band-formula">(Blue − NIR) / (Blue + NIR + 1)</td><td class="band-role">Separa painéis de água/sombra (PVI alto = painel)</td></tr>
+        <tr><td class="band-idx">5</td><td class="band-name">iia</td><td>Derivado</td><td class="band-formula">(Green − 4·NIR) / (Green + 4·NIR + 1)</td><td class="band-role">Separa {painéis, água} de {solo, vegetação}</td></tr>
+        <tr><td class="band-idx">6</td><td class="band-name">ri</td><td>Derivado</td><td class="band-formula">2.4·(Red − Green) / (Red + Green + 1)</td><td class="band-role">Separa solo exposto de alvos escuros</td></tr>
+        <tr><td class="band-idx">7</td><td class="band-name">evi</td><td>Derivado</td><td class="band-formula">2.4·(NIR − Red) / (1 + NIR + Red)</td><td class="band-role">Sensibilidade à vegetação densa</td></tr>
+      </tbody>
+    </table>
+    <div style="margin:1rem 0 0.4rem;">
+      <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem">Lógica de decisão espectral (conjunto de 8 bandas)</div>
+      <div class="decision-tree">
 <span class="dt-root">NIR alto?</span>  → Solo / Vegetação
   ├─ <span class="dt-yes">RI alto?</span>   → <span class="dt-leaf">Solo exposto / área queimada</span>
   └─ <span class="dt-no">RI baixo?</span>  → <span class="dt-leaf">Vegetação densa</span>
@@ -1295,43 +1561,70 @@ streamlit run src/show_colect_data/viewer_patches_npy.py \
 <span class="dt-root">NIR baixo?</span> → Alvo escuro (IIA alto)
   ├─ <span class="dt-yes">PVI alto?</span>  → <span class="dt-leaf">☀️  Painel solar (Blue relativamente alto)</span>
   └─ <span class="dt-no">PVI baixo?</span> → <span class="dt-leaf">💧 Água / sombra</span>
+      </div>
     </div>
+  </details>
+
+  <div class="alert alert-info" style="margin-bottom:1.2rem">
+    ℹ️ No conjunto de 5 bandas, <code>iia</code>/<code>ri</code>/<code>evi</code> foram removidos e <code>pvpi</code>
+    foi adicionado; não há uma árvore de decisão em cascata formalizada para esse conjunto novo no código —
+    <code>pvi</code> mantém o papel principal de separar alvos escuros (painel/água/sombra) do restante, e
+    <code>pvpi</code> ajuda a distinguir painel de solo/vegetação dentro desse grupo escuro.
   </div>
 
   <!-- ── Modelos ── -->
   <div id="models" class="section-title">Modelos treinados</div>
+  <p style="font-size:0.85rem; color:var(--muted); margin-bottom:1rem;">
+    Registro completo em <code>src/models/models_index.json</code> (gerado por <code>src/generate_models_json.py</code>),
+    usado pelo dropdown de modelo do Dashboard Dash. Todos: Focus U-Net, <code>weights=None</code> (sem pretraining
+    ImageNet) — usar <code>src/processClass/custom_losses.py</code> antes de <code>load_model()</code>.
+  </p>
+
+  <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem">L5 — 5 bandas (atual, checkpoints mais recentes)</div>
   <div class="models-grid">
     <div class="model-card">
       <div class="model-name">unet_efficientnetb7</div>
-      <div class="model-size">585 MB · 20260520</div>
-      <span class="model-tag tag-latest">latest</span>
+      <div class="model-size">585 MB · 20260520_2241</div>
+      <span class="model-tag tag-latest">sem métricas registradas</span>
     </div>
     <div class="model-card">
       <div class="model-name">unet_inceptionresnet</div>
-      <div class="model-size">585 MB · 20260521</div>
-      <span class="model-tag tag-latest">latest</span>
+      <div class="model-size">585 MB · 20260521_0408</div>
+      <span class="model-tag tag-latest">config atual do notebook v2</span>
     </div>
     <div class="model-card">
       <div class="model-name">unet_resnet152</div>
-      <div class="model-size">579 MB · 20260520</div>
+      <div class="model-size">579 MB · duas execuções (20260520_1514, 1744)</div>
     </div>
     <div class="model-card">
       <div class="model-name">unet_resnext50</div>
-      <div class="model-size">180 MB · 20260520</div>
+      <div class="model-size">180 MB · 20260520_1923</div>
       <span class="model-tag tag-compact">compact</span>
     </div>
     <div class="model-card">
-      <div class="model-name">unet_resnet101</div>
-      <div class="model-size">primary in README</div>
-    </div>
-    <div class="model-card">
-      <div class="model-name">unet_resnet50 / mobilenet / xception</div>
-      <div class="model-size">variantes testadas</div>
+      <div class="model-name">unet_resnet50</div>
+      <div class="model-size">duas execuções (20260520_0305, 1410)</div>
     </div>
   </div>
-  <div class="alert alert-info" style="margin-top:0.8rem">
-    ℹ️ Todos os modelos foram treinados do zero com 8 canais (sem pretraining ImageNet). Usar <code>src/processClass/custom_losses.py</code> antes de <code>load_model()</code> para registrar objetos customizados.
+  <div class="alert alert-warn" style="margin:0.8rem 0 1.4rem">
+    ⚠️ Nenhum dos checkpoints "L5" acima tem CSV de histórico no repositório — só o <code>.keras</code> foi salvo,
+    então não há Dice/IoU final registrado para eles ainda. O backbone <code>inceptionresnet</code> é o que consta
+    configurado no notebook de treino v2 na última execução salva.
   </div>
+
+  <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:.1em; margin-bottom:.6rem">L9 — 8 bandas (legado, com métricas completas em <code>src/dados/history_unet_*.csv</code>)</div>
+  <table class="bands-table" style="margin-bottom:1rem;">
+    <thead><tr><th>Backbone</th><th>Melhor época</th><th>val_dice</th><th>val_iou</th><th>Situação</th></tr></thead>
+    <tbody>
+      <tr><td class="band-name">resnet152</td><td>66</td><td>0,910</td><td>0,920</td><td class="band-role">Melhor resultado da série L9</td></tr>
+      <tr><td class="band-name">resnext50</td><td>71</td><td>0,907</td><td>0,913</td><td class="band-role">Compacto (180 MB) e competitivo</td></tr>
+      <tr><td class="band-name">xception</td><td>45</td><td>0,901</td><td>0,848</td><td class="band-role">Bom Dice, IoU mais baixo</td></tr>
+      <tr><td class="band-name">mobilenet</td><td>53</td><td>0,895</td><td>0,897</td><td class="band-role">Backbone leve</td></tr>
+      <tr><td class="band-name">resnet50</td><td>19</td><td>0,873</td><td>0,815</td><td class="band-role">2ª execução — treino interrompido cedo</td></tr>
+      <tr><td class="band-name">resnet101</td><td>—</td><td>~0,50</td><td>—</td><td class="band-role">Treino não convergiu</td></tr>
+      <tr><td class="band-name">resnet50</td><td>—</td><td>~0,53</td><td>—</td><td class="band-role">1ª execução — não convergiu</td></tr>
+    </tbody>
+  </table>
 
   <!-- ── Cloud resources ── -->
   <div id="cloud" class="section-title">Recursos em nuvem</div>
@@ -1383,7 +1676,7 @@ streamlit run src/show_colect_data/viewer_patches_npy.py \
 </div><!-- end container -->
 
 <footer>
-  MapBiomas · Detecção de Sistemas Fotovoltaicos · Pipeline documentado em 2026-06-06
+  MapBiomas · Detecção de Sistemas Fotovoltaicos · Pipeline documentado em 2026-06-06 · Atualizado em 2026-07-14
 </footer>
 
 <script>

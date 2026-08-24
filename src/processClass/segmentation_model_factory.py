@@ -6,7 +6,7 @@ SegmentationModelFactory
 Factory para criação, compilação e configuração de modelos de segmentação
 semântica para sensoriamento remoto (5 canais de entrada por padrão).
 
-Heads suportadas : UNet, DeepLabV3+, PSPNet, FPN
+Heads suportadas : UNet, DeepLabV3+, PSPNet, FPN, SegFormerB5
 Backbones        : InceptionV3, ResNet50/101/152, ResNext50 (→ ResNet50),
                    MobileNet, Xception, EfficientNetB0/B3/B7, InceptionResNetV2
 
@@ -175,7 +175,20 @@ _BACKBONE_ALIASES: dict[str, str] = {
     'inceptionresnet'  : 'inceptionresnetv2',
 }
 
-_SUPPORTED_HEADS: set[str] = {'unet', 'deeplabv3plus', 'pspnet', 'fpn'}
+_SUPPORTED_HEADS: set[str] = {'unet', 'deeplabv3plus', 'pspnet', 'fpn', 'segformerb5'}
+
+# MiT-B5 (encoder do SegFormer-B5) — valores oficiais (Xie et al., NeurIPS 2021,
+# arXiv:2105.15203 / config HuggingFace SegformerConfig para o checkpoint b5).
+_SEGFORMER_B5_CONFIG = dict(
+    embed_dims  = [64, 128, 320, 512],
+    depths      = [3, 6, 40, 3],
+    num_heads   = [1, 2, 5, 8],
+    sr_ratios   = [8, 4, 2, 1],
+    mlp_ratios  = [4, 4, 4, 4],
+    patch_sizes = [7, 3, 3, 3],
+    strides     = [4, 2, 2, 2],
+    decoder_dim = 768,
+)
 
 # backbone → (AppClass, low_layer, medium_layer, high_layer)
 # low    ≈ stride  4 — detalhes finos (bordas, texturas)
@@ -207,10 +220,13 @@ class SegmentationModelFactory:
     Parameters
     ----------
     segmentation_head : str
-        'unet', 'deeplabv3plus' ou 'pspnet'
+        'unet', 'deeplabv3plus', 'pspnet', 'fpn' ou 'segformerb5'.
+        'segformerb5' tem um encoder MiT-B5 embutido (transformer hierárquico)
+        e não aceita backbone_name — é uma arquitetura autocontida.
     backbone_name : str | None
-        Backbone encoder. Se None, usa arquitetura vanilla.
-        Todos os backbones usam weights=None (5 bandas, sem ImageNet).
+        Backbone encoder (ignorado quando segmentation_head='segformerb5').
+        Se None, usa arquitetura vanilla. Todos os backbones usam weights=None
+        (5 bandas, sem ImageNet).
     input_shape : tuple
         (H, W, C) — padrão (256, 256, 5).
     """
@@ -226,6 +242,12 @@ class SegmentationModelFactory:
         if head not in _SUPPORTED_HEADS:
             raise ValueError(f"segmentation_head='{segmentation_head}' inválido. "
                              f"Opções: {sorted(_SUPPORTED_HEADS)}")
+
+        if head == 'segformerb5' and backbone_name is not None:
+            raise ValueError(
+                "segmentation_head='segformerb5' tem encoder MiT-B5 embutido "
+                "e não aceita backbone_name externo — defina backbone_name=None."
+            )
 
         if backbone_name is not None:
             bb = backbone_name.lower().replace('-', '').replace('_', '')
@@ -251,6 +273,7 @@ class SegmentationModelFactory:
             'deeplabv3plus': self._build_deeplabv3plus,
             'pspnet'       : self._build_pspnet,
             'fpn'          : self._build_fpn,
+            'segformerb5'  : self._build_segformerb5,
         }
         self.model = builders[self.segmentation_head]()
         return self.model
@@ -782,6 +805,132 @@ class SegmentationModelFactory:
         out = layers.Conv2D(1, 1, activation='sigmoid', name='output')(x)
         return Model(inputs, out, name=f'fpn_{self.backbone_name}')
 
+    # ------------------------------------------------------------------
+    # SegFormer-B5 — encoder MiT-B5 (transformer hierárquico) + All-MLP head
+    # ------------------------------------------------------------------
+    #
+    # Referência: Xie et al., "SegFormer: Simple and Efficient Design for
+    # Semantic Segmentation with Transformers", NeurIPS 2021 (arXiv:2105.15203).
+    #
+    # Sem checkpoint pré-treinado disponível para 5 bandas (só existe ImageNet/
+    # ADE20K 3 canais) — mesma situação dos demais backbones desta factory:
+    # a topologia é reaproveitada, os pesos são aprendidos do zero.
+
+    def _overlap_patch_embed(self, x_spatial, filters: int, patch_size: int, stride: int):
+        """
+        Patch embedding com sobreposição (Conv2D em vez de patches não-sobrepostos
+        do ViT) — preserva continuidade espacial local entre patches vizinhos.
+        Retorna (seq, H, W): sequência (B, H·W, filters) + resolução do estágio.
+        """
+        x = layers.Conv2D(filters, patch_size, strides=stride, padding='same')(x_spatial)
+        H, W = x.shape[1], x.shape[2]
+        seq = layers.Reshape((H * W, filters))(x)
+        seq = layers.LayerNormalization(epsilon=1e-6)(seq)
+        return seq, H, W
+
+    @staticmethod
+    def _efficient_self_attention(seq, H: int, W: int, filters: int,
+                                  num_heads: int, sr_ratio: int):
+        """
+        Self-attention com redução espacial (SR): em vez de atenção O(N²) sobre
+        todos os H·W tokens, a chave/valor são primeiro sub-amostrados por um
+        Conv2D(stride=sr_ratio) — reduzindo o custo quadrático nos estágios de
+        maior resolução (sr_ratio=8 no estágio 1) sem custar isso nos de menor
+        resolução (sr_ratio=1 no estágio 4, sem redução).
+        """
+        if sr_ratio > 1:
+            kv = layers.Reshape((H, W, filters))(seq)
+            kv = layers.Conv2D(filters, sr_ratio, strides=sr_ratio, padding='same')(kv)
+            Hr, Wr = kv.shape[1], kv.shape[2]
+            kv = layers.Reshape((Hr * Wr, filters))(kv)
+            kv = layers.LayerNormalization(epsilon=1e-6)(kv)
+        else:
+            kv = seq
+        mha = layers.MultiHeadAttention(num_heads=num_heads, key_dim=filters // num_heads)
+        return mha(query=seq, value=kv, key=kv)
+
+    @staticmethod
+    def _mix_ffn(seq, H: int, W: int, filters: int, mlp_ratio: int):
+        """
+        Mix-FFN: substitui o positional encoding fixo do ViT por uma conv
+        depthwise 3×3 dentro do MLP — o "vazamento" de posição via convolução
+        (zero-padding implícito) é suficiente e permite inferência em qualquer
+        resolução, sem interpolar embeddings posicionais.
+        """
+        hidden = filters * mlp_ratio
+        x = layers.Dense(hidden)(seq)
+        x = layers.Reshape((H, W, hidden))(x)
+        x = layers.DepthwiseConv2D(3, padding='same')(x)
+        x = layers.Reshape((H * W, hidden))(x)
+        x = layers.Activation('gelu')(x)
+        return layers.Dense(filters)(x)
+
+    def _segformer_block(self, seq, H: int, W: int, filters: int,
+                         num_heads: int, sr_ratio: int, mlp_ratio: int):
+        """Um bloco transformer: (Norm → Atenção eficiente → +residual) → (Norm → Mix-FFN → +residual)."""
+        x = layers.LayerNormalization(epsilon=1e-6)(seq)
+        x = self._efficient_self_attention(x, H, W, filters, num_heads, sr_ratio)
+        seq = layers.Add()([seq, x])
+
+        x = layers.LayerNormalization(epsilon=1e-6)(seq)
+        x = self._mix_ffn(x, H, W, filters, mlp_ratio)
+        seq = layers.Add()([seq, x])
+        return seq
+
+    def _segformer_stage(self, x_spatial, filters: int, patch_size: int, stride: int,
+                         depth: int, num_heads: int, sr_ratio: int, mlp_ratio: int):
+        """Um estágio MiT completo: patch embed → `depth` blocos → LayerNorm final → mapa espacial (B,H,W,filters)."""
+        seq, H, W = self._overlap_patch_embed(x_spatial, filters, patch_size, stride)
+        for _ in range(depth):
+            seq = self._segformer_block(seq, H, W, filters, num_heads, sr_ratio, mlp_ratio)
+        seq = layers.LayerNormalization(epsilon=1e-6)(seq)
+        return layers.Reshape((H, W, filters))(seq)
+
+    def _build_segformerb5(self) -> Model:
+        """
+        SegFormer-B5 completo: 4 estágios do encoder MiT-B5 (strides 4/8/16/32,
+        ~82M parâmetros — o maior encoder desta factory) + decode head All-MLP
+        (projeta cada estágio para 768 canais, upsample para stride 4, concatena,
+        funde com 1 conv 1×1 + BN + ReLU, classifica e faz upsample final).
+
+        use_attention/focal_gamma (Focus Gate) não se aplicam a esta cabeça — o
+        próprio encoder já tem atenção global em cada estágio; são ignorados
+        aqui, igual ao que já ocorre em pspnet/deeplabv3plus/fpn.
+        """
+        cfg = _SEGFORMER_B5_CONFIG
+        inputs = keras.Input(shape=self.input_shape, name='input')
+
+        x = inputs
+        stage_outputs = []
+        for i in range(4):
+            x = self._segformer_stage(
+                x, cfg['embed_dims'][i], cfg['patch_sizes'][i], cfg['strides'][i],
+                cfg['depths'][i], cfg['num_heads'][i], cfg['sr_ratios'][i], cfg['mlp_ratios'][i],
+            )
+            stage_outputs.append(x)
+
+        # ── All-MLP decode head ───────────────────────────────────────
+        c1 = stage_outputs[0]   # stride 4 — resolução alvo da fusão
+        decoder_dim = cfg['decoder_dim']
+        projected = []
+        for idx, c in enumerate(stage_outputs):
+            p = layers.Dense(decoder_dim)(c)   # "MLP" do paper == Dense no último eixo (equiv. a conv 1×1)
+            if idx != 0:
+                p = ResizeLike(name=f'segformer_upsample_stage{idx + 1}')([p, c1])
+            projected.append(p)
+
+        x = layers.Concatenate()(projected)
+        x = layers.Conv2D(decoder_dim, 1, use_bias=False)(x)
+        x = layers.BatchNormalization()(x)
+        x = layers.Activation('relu')(x)
+        x = layers.Dropout(0.1)(x)
+
+        logits = layers.Conv2D(1, 1, name='segformer_logits')(x)
+        logits = ResizeLike(name='segformer_upsample_to_input')([logits, inputs])
+        out = layers.Activation('sigmoid', name='output')(logits)
+
+        return Model(inputs, out, name='segformerb5')
+
 
 # ==============================================================================
 # 5. EXEMPLO DE USO
@@ -802,6 +951,8 @@ if __name__ == '__main__':
         ('unet', 'efficientnetb3',(256, 256, 9),  True,  'hybrid_focal'),
         # Heavyweight Focus U-Net + Xception
         ('unet', 'xception',      (256, 256, 9),  True,  'hybrid_focal'),
+        # SegFormer-B5 — encoder MiT-B5 embutido, sem backbone (~82M parâmetros)
+        ('segformerb5', None,     (256, 256, 9),  False, 'bce_dice'),
     ]
 
     for head, backbone, shape, attn, loss in configs:

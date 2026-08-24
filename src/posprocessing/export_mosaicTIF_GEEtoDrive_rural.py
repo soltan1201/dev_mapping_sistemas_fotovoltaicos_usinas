@@ -4,18 +4,22 @@
 export_mosaicTIF_GEEtoDrive_rural.py
 =====================================
 Exporta mosaico Planet NICFI (5 bandas Int16) recortado pelas grades do grid
-BR que contêm pontos do asset fotovoltaic_rural, ordenadas da grade com mais
-pontos para a com menos.
+BR que contêm pontos do asset fotovoltaic_rural.
+
+PRÉ-REQUISITO: rodar setup_grades_rural.py --year <ano> uma vez antes.
+Isso gera:
+  - Asset GEE  : projects/mapbiomas-arida/energias/shp_grades_BR_fotovoltaic_rural
+  - JSON local : src/dados/log_rurais/grades_rural_all_<year>.json
 
 Assets GEE utilizados:
-  grades     : projects/nexgenmap/SAD_MapBiomas/DL/SHP_grades_BR_35pathces_AllBrV3
-  fotovoltaic: projects/mapbiomas-arida/fotovoltaic_rural
+  grades (pré-filtradas): projects/mapbiomas-arida/energias/shp_grades_BR_fotovoltaic_rural
+  nicfi                 : projects/planet-nicfi/assets/basemaps/americas
 
 Controle de progresso:
-  - Ao iniciar, lê todos os JSONs em src/dados/log_rurais/grades_rural_<year>_*.json
-    e exclui da fila as grades já submetidas (identificadas por system:index + ano).
-  - Ao final do batch, salva um JSON grades_rural_<year>_<data_atual>.json com
-    o registro das grades submetidas nesta execução.
+  - Universo lido do JSON local grades_rural_all_<year>.json (sem chamar GEE).
+  - Já submetidas identificadas pelos JSONs grades_rural_<year>_*.json em log_rurais/.
+  - Pendentes = universo - já submetidas (comparação só entre JSONs locais).
+  - Ao final do batch, salva grades_rural_<year>_<timestamp>.json com esta execução.
 
 Uso:
   python export_mosaicTIF_GEEtoDrive_rural.py \\
@@ -61,7 +65,7 @@ _ap.add_argument('--year', type=int, default=2024,
 _ap.add_argument('--limit', type=int, default=100,
                  help='Número máximo de grades a submeter neste batch (padrão: 100)')
 _ap.add_argument('--max-active-tasks', type=int, default=500,
-                 help='Máximo de tarefas GEE ativas em paralelo (padrão: 50)')
+                 help='Máximo de tarefas GEE ativas em paralelo (padrão: 500)')
 _args = _ap.parse_args()
 
 DRIVE_FOLDER     = _args.drive_folder
@@ -79,9 +83,8 @@ _LOG_DIR.mkdir(parents=True, exist_ok=True)
 # ==============================================================================
 # 4. CONFIGURAÇÕES GEE
 # ==============================================================================
-ASSET_GRADE        = 'projects/nexgenmap/SAD_MapBiomas/DL/SHP_grades_BR_35pathces_AllBrV3'
-ASSET_PHOTOVOLTAIC = 'projects/mapbiomas-arida/fotovoltaic_rural'
-ASSET_NICFI        = 'projects/planet-nicfi/assets/basemaps/americas'
+ASSET_GRADE_FV = 'projects/mapbiomas-arida/energias/shp_grades_BR_fotovoltaic_rural'
+ASSET_NICFI    = 'projects/planet-nicfi/assets/basemaps/americas'
 
 SCALE = 4.77
 CRS   = 'EPSG:3857'
@@ -110,20 +113,37 @@ except Exception as e:
     raise
 
 # ==============================================================================
-# 6. LEITURA DOS LOGS ANTERIORES (grades já submetidas para este ano)
+# 6. LEITURA DOS JSONS LOCAIS (sem chamar GEE)
 # ==============================================================================
+
+def load_all_grades() -> list:
+    """
+    Lê grades_rural_all.json — universo completo gerado pelo setup.
+    Retorna lista de dicts [{'system_index': str, 'quantidade': int}, ...]
+    já ordenada decrescente por quantidade.
+    """
+    path = _LOG_DIR / 'grades_rural_all.json'
+    if not path.exists():
+        log.error(f'Arquivo de universo não encontrado: {path}')
+        log.error('Execute primeiro: python setup_grades_rural.py')
+        sys.exit(1)
+    entries = json.loads(path.read_text(encoding='utf-8'))
+    log.info(f'Universo carregado: {len(entries)} grades — {path.name}')
+    return entries
+
 
 def load_submitted_ids(year: int) -> set:
     """
     Lê todos os JSONs grades_rural_<year>_*.json em _LOG_DIR e retorna
-    o conjunto de system:index já submetidos para este ano.
+    o conjunto de system_index já submetidos para este ano.
+    Ignora o arquivo de universo (grades_rural_all_<year>.json).
     """
     done: set = set()
-    pattern = f'grades_rural_{year}_*.json'
+    pattern   = f'grades_rural_{year}_*.json'
     log_files = sorted(_LOG_DIR.glob(pattern))
 
     if not log_files:
-        log.info(f'Nenhum log anterior encontrado para o ano {year}.')
+        log.info(f'Nenhum log de submissão anterior encontrado para o ano {year}.')
         return done
 
     for lf in log_files:
@@ -136,52 +156,24 @@ def load_submitted_ids(year: int) -> set:
         except Exception as exc:
             log.warning(f'Erro ao ler log {lf.name}: {exc}')
 
-    log.info(f'Grades já submetidas (ano {year}): {len(done)} — lidas de {len(log_files)} arquivo(s)')
+    log.info(f'Grades já submetidas (ano {year}): {len(done)} — de {len(log_files)} arquivo(s)')
     return done
 
 
-# ==============================================================================
-# 7. GRADES ORDENADAS POR QUANTIDADE DE FV
-# ==============================================================================
-
-def fetch_grades_sorted() -> list:
+def load_pending_grades(year: int) -> list:
     """
-    Retorna lista de dicts [{'system_index': str, 'quantidade': int}, ...]
-    ordenada de maior para menor quantidade de pontos fotovoltaic_rural.
+    Retorna lista de dicts {system_index, quantidade} que ainda não foram
+    submetidas, comparando apenas JSONs locais (sem chamar o GEE).
     """
-    log.info('Calculando quantidade de pontos FV por grade (GEE)…')
-
-    colection_fv = ee.FeatureCollection(ASSET_PHOTOVOLTAIC)
-    grid_shp     = ee.FeatureCollection(ASSET_GRADE)
-
-    grades = grid_shp.filterBounds(colection_fv)
-
-    def add_quantity(feat):
-        quant = colection_fv.filterBounds(feat.geometry()).size()
-        return feat.set('quantidade', quant)
-
-    grades_with_qty = grades.map(add_quantity)
-
-    # Traz apenas system:index e quantidade (máx 5000 features)
-    features = grades_with_qty.select(['quantidade']).getInfo()['features']
-
-    result = [
-        {
-            'system_index': feat['id'],
-            'quantidade':   feat['properties'].get('quantidade', 0),
-        }
-        for feat in features
-    ]
-
-    # Ordena decrescente por quantidade
-    result.sort(key=lambda x: x['quantidade'], reverse=True)
-
-    log.info(f'Total de grades com FV: {len(result)}')
-    return result
+    all_grades   = load_all_grades()
+    already_done = load_submitted_ids(year)
+    pending = [g for g in all_grades if g['system_index'] not in already_done]
+    log.info(f'Grades pendentes: {len(pending)} de {len(all_grades)} total')
+    return pending
 
 
 # ==============================================================================
-# 8. FUNÇÕES DE EXPORTAÇÃO
+# 7. FUNÇÕES DE EXPORTAÇÃO
 # ==============================================================================
 
 def build_nicfi_mosaic(year: int, geometry) -> ee.Image:
@@ -258,13 +250,13 @@ def submit_task(region_id: str, geom, year: int, submitted: int, n_tasks: int):
 
 
 # ==============================================================================
-# 9. PIPELINE PRINCIPAL
+# 8. PIPELINE PRINCIPAL
 # ==============================================================================
 
 def save_log(submitted_entries: list, year: int):
     """Salva JSON com as grades submetidas nesta execução."""
-    today     = datetime.now().strftime('%Y%m%d_%H%M%S')
-    log_path  = _LOG_DIR / f'grades_rural_{year}_{today}.json'
+    today    = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_path = _LOG_DIR / f'grades_rural_{year}_{today}.json'
     log_path.write_text(
         json.dumps(submitted_entries, indent=2, ensure_ascii=False),
         encoding='utf-8',
@@ -278,38 +270,31 @@ def main():
     log.info(f'Limit      : {LIMIT} grades')
     log.info(f'Drive      : {DRIVE_FOLDER}')
     log.info(f'Log dir    : {_LOG_DIR}')
+    log.info(f'Asset grade: {ASSET_GRADE_FV}')
     log.info('=' * 60)
 
-    # Grades já submetidas para este ano
-    already_done = load_submitted_ids(YEAR)
+    # Pendentes = universo (JSON local) - já submetidas (logs locais); sem chamar GEE
+    pending = load_pending_grades(YEAR)
 
-    # Grades ordenadas por quantidade de FV (maior → menor)
-    all_grades = fetch_grades_sorted()
-
-    # Exclui grades já submetidas
-    pending = [g for g in all_grades if g['system_index'] not in already_done]
-    log.info(f'Grades pendentes: {len(pending)} de {len(all_grades)} total')
-
-    # Limita ao batch desta execução
     batch = pending[:LIMIT]
     if not batch:
         log.info('Nenhuma grade nova para submeter. Pipeline concluído.')
         return
 
-    n_tasks = len(batch)
+    n_tasks  = len(batch)
     log.info(f'Submetendo {n_tasks} grade(s) — ano {YEAR}')
     log.info('=' * 60)
 
-    grid_shp = ee.FeatureCollection(ASSET_GRADE)
+    grid_fv = ee.FeatureCollection(ASSET_GRADE_FV)
 
     submitted_entries = []
     submitted_count   = 0
 
     for grade in batch:
-        region_id = grade['system_index']
+        region_id  = grade['system_index']
         quantidade = grade['quantidade']
 
-        feature = grid_shp.filter(ee.Filter.eq('system:index', region_id)).first()
+        feature = grid_fv.filter(ee.Filter.eq('system:index', region_id)).first()
         geom    = feature.geometry()
 
         submitted_count += 1

@@ -1,0 +1,648 @@
+<title>Fotovoltaica · MapBiomas Coleção 11</title>
+<style>
+:root {
+  --ground:   #EAF0F6;
+  --surface:  #FFFFFF;
+  --surf2:    #F2F7FA;
+  --text:     #1B2B3A;
+  --mid:      #4A6070;
+  --muted:    #8AAABF;
+  --accent:   #C85A12;
+  --acl:      #E8936A;
+  --teal:     #1D7A8C;
+  --border:   #CDD9E3;
+  --grid:     #E2ECF4;
+  --warn-bg:  #FDF6F1;
+  --warn-bd:  #DDA070;
+  --warn-tx:  #7A3810;
+  --mono:     'Courier New', Courier, monospace;
+  --serif:    Georgia, 'Times New Roman', serif;
+  --sans:     system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --r:        3px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ─────────────────────────────── */
+.hdr {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 36px 40px 28px;
+}
+.hdr-eye {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.hdr-title {
+  font-family: var(--serif);
+  font-size: clamp(26px, 5vw, 50px);
+  font-weight: normal;
+  letter-spacing: -.03em;
+  line-height: 1.05;
+  margin-bottom: 10px;
+}
+.hdr-title em { color: var(--accent); font-style: normal; }
+.hdr-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .05em;
+}
+
+/* ── Notice ──────────────────────────────── */
+.notice {
+  display: none;
+  margin: 20px 40px 0;
+  padding: 12px 18px;
+  background: var(--warn-bg);
+  border: 1px solid var(--warn-bd);
+  border-left-width: 3px;
+  border-radius: var(--r);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--warn-tx);
+  line-height: 1.7;
+}
+.notice strong {
+  display: block;
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.notice.on { display: block; }
+
+/* ── Stats ───────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.stat {
+  background: var(--surface);
+  padding: 20px 24px;
+}
+.stat-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.stat-val {
+  font-family: var(--serif);
+  font-size: clamp(20px, 3vw, 32px);
+  color: var(--accent);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+.stat-note {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* ── Main ─────────────────────────────────── */
+.main { padding: 32px 40px 40px; }
+
+.ch-hdr {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.ch-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.ch-hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.ch-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px 20px 14px;
+  position: relative;
+  overflow: hidden;
+}
+#chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: crosshair;
+}
+.tip {
+  position: absolute;
+  top: 14px;
+  background: var(--text);
+  color: #D8E8F2;
+  border-radius: 2px;
+  padding: 7px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .1s;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+.tip-yr { color: var(--acl); font-size: 12px; display: block; }
+
+/* ── Biome filter ─────────────────────────── */
+.bio-sec { margin-top: 28px; }
+.bio-lbl {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.bio-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 13px;
+  border: 1px solid var(--border);
+  border-radius: 1px;
+  background: var(--surface);
+  color: var(--mid);
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: border-color .12s, color .12s, background .12s;
+}
+.pill:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill:disabled { opacity: .38; cursor: default; }
+.bio-note {
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* ── Footer ───────────────────────────────── */
+.ftr {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 14px 40px;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: .05em;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 640px) {
+  .hdr, .main, .ftr { padding-left: 20px; padding-right: 20px; }
+  .notice { margin-left: 20px; margin-right: 20px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 380px) {
+  .stats { grid-template-columns: 1fr; }
+  .ch-hint { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pill { transition: none; }
+}
+</style>
+
+<header class="hdr">
+  <div class="hdr-eye">MapBiomas · Coleção 11 · Energias Renováveis</div>
+  <h1 class="hdr-title">Expansão <em>fotovoltaica</em><br>no território brasileiro</h1>
+  <div class="hdr-sub">Área classificada por satélite · 2016–2025 · MapBiomas Col. 11</div>
+</header>
+
+<div class="notice" id="notice">
+  <strong>⚠ coluna bioma vazia no CSV</strong>
+  O GEE exportou sem nomes de bioma — provavelmente o nome da propriedade está errado no script.
+  Verificar a propriedade correta (ex: <code>'Bioma'</code>, <code>'bioma'</code> ou <code>'NM_BIOMA'</code>)
+  e re-exportar para ativar o filtro abaixo. Totais anuais estão corretos.
+</div>
+
+<div class="stats" id="stats"></div>
+
+<main class="main">
+  <div class="ch-hdr">
+    <span class="ch-title" id="ch-title">Área total por ano · todos os biomas</span>
+    <span class="ch-hint">passe o cursor sobre as barras</span>
+  </div>
+  <div class="ch-wrap">
+    <canvas id="chart" width="900" height="380"></canvas>
+    <div class="tip" id="tip"></div>
+  </div>
+
+  <div class="bio-sec">
+    <div class="bio-lbl">Filtrar por bioma</div>
+    <div class="bio-pills" id="pills"></div>
+    <div class="bio-note" id="bio-note"></div>
+  </div>
+</main>
+
+<footer class="ftr">
+  <span>MapBiomas · Sistemas Fotovoltaicos · Col. 11</span>
+  <span id="ftr-r"></span>
+</footer>
+
+<script>
+// ── Carrega CSV do arquivo local ───────────────────────────
+// Caminho relativo: ../dados/solar_panels_area_by_year_biome_col11.csv
+// Requer servidor HTTP local (ex: python -m http.server 8080 em src/)
+const CSV_PATH = '../dados/solar_panels_area_by_year_biome_col11.csv';
+
+// CSV embutido de fallback (dados sem bioma — usado se o fetch falhar)
+const CSV_FALLBACK = `year,NAME,area_m2,area_ha,area_km2
+2016.0,,0.0,0.0,0.0
+2016.0,,5276731.921447754,527.6731921447754,5.2767319214477535
+2016.0,,5494047.915771484,549.4047915771484,5.4940479157714845
+2016.0,,0.0,0.0,0.0
+2016.0,,0.0,0.0,0.0
+2016.0,,0.0,0.0,0.0
+2016.0,,0.0,0.0,0.0
+2016.0,,5254464.870605469,525.4464870605469,5.254464870605469
+2016.0,,5494047.915771484,549.4047915771484,5.4940479157714845
+2016.0,,0.0,0.0,0.0
+2016.0,,0.0,0.0,0.0
+2017.0,,0.0,0.0,0.0
+2017.0,,1.1477813248779297E7,1147.7813248779296,11.477813248779297
+2017.0,,1.0761035577270508E7,1076.1035577270509,10.761035577270508
+2017.0,,1175085.2173461914,117.50852173461914,1.1750852173461914
+2017.0,,0.0,0.0,0.0
+2017.0,,0.0,0.0,0.0
+2017.0,,0.0,0.0,0.0
+2017.0,,1.0192919661987305E7,1019.2919661987305,10.192919661987304
+2017.0,,1.0761035577270508E7,1076.1035577270509,10.761035577270508
+2017.0,,1175085.2173461914,117.50852173461914,1.1750852173461914
+2017.0,,0.0,0.0,0.0
+2017.0,,0.0,0.0,0.0
+2018.0,,6175.042297363281,0.6175042297363281,0.006175042297363281
+2018.0,,2.2697684440673828E7,2269.768444067383,22.69768444067383
+2018.0,,1.9532292685058594E7,1953.2292685058594,19.532292685058593
+2018.0,,4924597.7978515625,492.45977978515623,4.924597797851563
+2018.0,,0.0,0.0,0.0
+2018.0,,0.0,0.0,0.0
+2018.0,,6175.042297363281,0.6175042297363281,0.006175042297363281
+2018.0,,2.2964447971984863E7,2296.4447971984864,22.964447971984864
+2018.0,,1.7798532591552734E7,1779.8532591552735,17.798532591552735
+2018.0,,4924597.7978515625,492.45977978515623,4.924597797851563
+2018.0,,0.0,0.0,0.0
+2018.0,,0.0,0.0,0.0
+2019.0,,162973.86572265625,16.297386572265626,0.16297386572265626
+2019.0,,2.738649333355713E7,2738.6493333557128,27.38649333355713
+2019.0,,3.075164259777832E7,3075.164259777832,30.75164259777832
+2019.0,,6178115.912597656,617.8115912597656,6.178115912597656
+2019.0,,0.0,0.0,0.0
+2019.0,,0.0,0.0,0.0
+2019.0,,162973.86572265625,16.297386572265626,0.16297386572265626
+2019.0,,2.6849448286254883E7,2684.9448286254883,26.849448286254884
+2019.0,,3.0922266351135254E7,3092.2266351135254,30.922266351135253
+2019.0,,6178115.912597656,617.8115912597656,6.178115912597656
+2019.0,,0.0,0.0,0.0
+2019.0,,0.0,0.0,0.0
+2020.0,,184121.9005126953,18.41219005126953,0.1841219005126953
+2020.0,,3.828888337982178E7,3828.8883379821777,38.288883379821776
+2020.0,,3.2877730723754883E7,3287.7730723754885,32.87773072375488
+2020.0,,6326743.994750977,632.6743994750976,6.326743994750976
+2020.0,,0.0,0.0,0.0
+2020.0,,0.0,0.0,0.0
+2020.0,,184121.9005126953,18.41219005126953,0.1841219005126953
+2020.0,,3.3251731683532715E7,3325.1731683532716,33.25173168353272
+2020.0,,3.3063225963989258E7,3306.3225963989257,33.06322596398926
+2020.0,,6326743.994750977,632.6743994750976,6.326743994750976
+2020.0,,0.0,0.0,0.0
+2020.0,,0.0,0.0,0.0
+2021.0,,234404.92559814453,23.44049255981445,0.23440492559814452
+2021.0,,6.354769105871582E7,6354.769105871582,63.54769105871582
+2021.0,,3.895177514300537E7,3895.177514300537,38.95177514300537
+2021.0,,1.058522044921875E7,1058.522044921875,10.58522044921875
+2021.0,,0.0,0.0,0.0
+2021.0,,0.0,0.0,0.0
+2021.0,,234404.92559814453,23.44049255981445,0.23440492559814452
+2021.0,,5.545033670489502E7,5545.033670489502,55.45033670489502
+2021.0,,3.909159217553711E7,3909.1592175537107,39.09159217553711
+2021.0,,1.0583447351928711E7,1058.344735192871,10.583447351928712
+2021.0,,0.0,0.0,0.0
+2021.0,,0.0,0.0,0.0
+2022.0,,240580.40002441406,24.058040002441405,0.24058040002441405
+2022.0,,9.991238924951172E7,9991.238924951173,99.91238924951172
+2022.0,,5.4444676355529785E7,5444.467635552978,54.444676355529786
+2022.0,,1.1901619056274414E7,1190.1619056274415,11.901619056274415
+2022.0,,0.0,0.0,0.0
+2022.0,,0.0,0.0,0.0
+2022.0,,240580.40002441406,24.058040002441405,0.24058040002441405
+2022.0,,1.1151699709405518E8,11151.699709405517,111.51699709405517
+2022.0,,5.492018457543945E7,5492.018457543945,54.92018457543945
+2022.0,,1.1887434284179688E7,1188.7434284179687,11.887434284179687
+2022.0,,0.0,0.0,0.0
+2022.0,,0.0,0.0,0.0
+2023.0,,241462.548828125,24.1462548828125,0.241462548828125
+2023.0,,1.4469926859503174E8,14469.926859503174,144.69926859503173
+2023.0,,8.328858911859131E7,8328.858911859132,83.2885891185913
+2023.0,,1.3069236925109863E7,1306.9236925109863,13.069236925109863
+2023.0,,0.0,0.0,0.0
+2023.0,,0.0,0.0,0.0
+2023.0,,241462.548828125,24.1462548828125,0.241462548828125
+2023.0,,1.6822254354864502E8,16822.2543548645,168.222543548645
+2023.0,,8.484220442980957E7,8484.220442980957,84.84220442980957
+2023.0,,1.6933778145507812E7,1693.3778145507813,16.933778145507812
+2023.0,,0.0,0.0,0.0
+2023.0,,0.0,0.0,0.0
+2024.0,,250266.84533691406,25.026684533691405,0.25026684533691407
+2024.0,,2.0188066159960938E8,20188.066159960938,201.88066159960937
+2024.0,,1.1225546870928955E8,11225.546870928954,112.25546870928954
+2024.0,,1.4116014815185547E7,1411.6014815185547,14.116014815185547
+2024.0,,0.0,0.0,0.0
+2024.0,,0.0,0.0,0.0
+2024.0,,250266.84533691406,25.026684533691405,0.25026684533691407
+2024.0,,2.302952717345581E8,23029.527173455812,230.2952717345581
+2024.0,,1.1517932202618408E8,11517.932202618409,115.17932202618408
+2024.0,,2.0602052676330566E7,2060.205267633057,20.602052676330565
+2024.0,,0.0,0.0,0.0
+2024.0,,0.0,0.0,0.0
+2025.0,,291716.44232177734,29.171644232177734,0.29171644232177735
+2025.0,,2.35033359796875E8,23503.3359796875,235.033359796875
+2025.0,,1.3514840750494385E8,13514.840750494384,135.14840750494386
+2025.0,,1.464584261730957E7,1464.584261730957,14.64584261730957
+2025.0,,0.0,0.0,0.0
+2025.0,,0.0,0.0,0.0
+2025.0,,291716.44232177734,29.171644232177734,0.29171644232177735
+2025.0,,2.6386381743377686E8,26386.381743377686,263.86381743377683
+2025.0,,1.3622401033514404E8,13622.401033514405,136.22401033514404
+2025.0,,2.113188047845459E7,2113.188047845459,21.13188047845459
+2025.0,,0.0,0.0,0.0
+2025.0,,0.0,0.0,0.0`;
+
+// ── Parse & aggregate ─────────────────────────────────────
+// Lê por posição: col0=year, col1=NAME(bioma), col3=area_ha
+function parseCSV(raw) {
+  return raw.trim().split('\n').slice(1).map(line => {
+    const p = line.split(',');
+    return { year: parseInt(p[0]), bioma: (p[1]||'').trim(), area_ha: parseFloat(p[3])||0 };
+  }).filter(r => !isNaN(r.year));
+}
+
+function sumByYear(rows) {
+  const m = {};
+  rows.forEach(r => { m[r.year] = (m[r.year]||0) + r.area_ha; });
+  return Object.keys(m).sort((a,b)=>+a-+b).map(y => ({ year:+y, area_ha:m[y] }));
+}
+
+function sumByBiome(rows) {
+  const biomes = [...new Set(rows.map(r=>r.bioma).filter(Boolean))];
+  const res = {};
+  biomes.forEach(b => { res[b] = sumByYear(rows.filter(r=>r.bioma===b)); });
+  return res;
+}
+
+function fmtHa(v) {
+  if (v>=1e6) return (v/1e6).toFixed(2)+' M';
+  if (v>=1e3) return (v/1e3).toFixed(1)+' k';
+  return v.toFixed(0);
+}
+
+// ── Canvas chart ──────────────────────────────────────────
+const cv  = document.getElementById('chart');
+const ctx = cv.getContext('2d');
+const tip = document.getElementById('tip');
+
+let activeData = [];
+let animPct = 0;
+let animId  = null;
+
+const C = {
+  surface: '#FFFFFF', text: '#1B2B3A', mid: '#4A6070',
+  muted: '#8AAABF', accent: '#C85A12', acl: '#E8936A',
+  border: '#CDD9E3', grid: '#E4EEF6',
+};
+
+function yLabel(v) {
+  if (v>=100000) return (v/1000).toFixed(0)+'k';
+  if (v>=10000)  return (v/1000).toFixed(0)+'k';
+  if (v>=1000)   return (v/1000).toFixed(1)+'k';
+  return v.toFixed(0);
+}
+
+function drawChart(data, pct) {
+  const W=cv.width, H=cv.height;
+  const PL=72, PR=24, PT=22, PB=50;
+  const cW=W-PL-PR, cH=H-PT-PB;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = C.surface;
+  ctx.fillRect(0,0,W,H);
+  if (!data.length) return;
+
+  const maxV = Math.max(...data.map(d=>d.area_ha));
+  const niceM = (Math.ceil(maxV/10000)*10000) || 10000;
+  const TICKS = 5;
+
+  // Grid & Y-axis labels
+  ctx.font = '11px "Courier New"';
+  ctx.textAlign = 'right';
+  for (let i=0; i<=TICKS; i++) {
+    const v = (niceM/TICKS)*i;
+    const y = PT + cH - (v/niceM)*cH;
+    ctx.strokeStyle = C.grid;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2,5]);
+    ctx.beginPath(); ctx.moveTo(PL,y); ctx.lineTo(W-PR,y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.muted;
+    ctx.fillText(yLabel(v), PL-8, y+4);
+  }
+
+  // Y-axis rotated label
+  ctx.save();
+  ctx.translate(13, PT+cH/2);
+  ctx.rotate(-Math.PI/2);
+  ctx.textAlign='center';
+  ctx.font='10px "Courier New"';
+  ctx.fillStyle=C.muted;
+  ctx.fillText('hectares', 0, 0);
+  ctx.restore();
+
+  // Bars
+  const n=data.length, slot=cW/n, bW=slot*0.52, bOff=(slot-bW)/2;
+
+  data.forEach((d,i) => {
+    const x = PL+i*slot+bOff;
+    const bH = (d.area_ha/niceM)*cH*pct;
+    const y  = PT+cH-bH;
+    const r  = Math.min(3, bH/2);
+
+    // subtle base shadow
+    ctx.fillStyle = 'rgba(200,90,18,.06)';
+    ctx.fillRect(x+2, PT+cH-3, bW, 5);
+
+    // gradient fill
+    const grd = ctx.createLinearGradient(x,y,x,PT+cH);
+    grd.addColorStop(0, C.acl);
+    grd.addColorStop(1, C.accent);
+    ctx.fillStyle = grd;
+
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, bW, bH, [r,r,0,0]);
+    } else {
+      ctx.moveTo(x+r,y); ctx.lineTo(x+bW-r,y);
+      ctx.arcTo(x+bW,y,x+bW,y+r,r);
+      ctx.lineTo(x+bW,y+bH); ctx.lineTo(x,y+bH);
+      ctx.arcTo(x,y,x+r,y,r);
+    }
+    ctx.fill();
+
+    // bright top cap (only when fully grown)
+    if (pct>=0.99 && bH>2) {
+      ctx.fillStyle='#F2B580';
+      ctx.fillRect(x, y, bW, 1.5);
+    }
+
+    // X label
+    ctx.fillStyle=C.muted;
+    ctx.textAlign='center';
+    ctx.font='11px "Courier New"';
+    ctx.fillText(String(d.year), x+bW/2, PT+cH+20);
+
+    // value above bar (only final frame, bar tall enough)
+    if (pct>=0.99 && bH>32) {
+      ctx.fillStyle=C.accent;
+      ctx.font='10px "Courier New"';
+      ctx.textAlign='center';
+      ctx.fillText(fmtHa(d.area_ha)+' ha', x+bW/2, y-7);
+    }
+  });
+
+  // Baseline
+  ctx.strokeStyle=C.border; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(PL,PT+cH); ctx.lineTo(W-PR,PT+cH); ctx.stroke();
+}
+
+function animateTo(data) {
+  if (animId) cancelAnimationFrame(animId);
+  animPct=0; activeData=data;
+  const DUR=550, t0=performance.now();
+  function step(now) {
+    const t=Math.min(1,(now-t0)/DUR);
+    animPct=1-Math.pow(1-t,3);
+    drawChart(data,animPct);
+    if (t<1) animId=requestAnimationFrame(step);
+  }
+  animId=requestAnimationFrame(step);
+}
+
+// Hover tooltip
+cv.addEventListener('mousemove', e => {
+  if (animPct<0.99 || !activeData.length) return;
+  const rect=cv.getBoundingClientRect();
+  const scX=cv.width/rect.width;
+  const mx=(e.clientX-rect.left)*scX;
+  const PL=72,PR=24,cW=cv.width-PL-PR,n=activeData.length;
+  const slot=cW/n, bW=slot*0.52, bOff=(slot-bW)/2;
+
+  let hit=null;
+  activeData.forEach((d,i)=>{ const x=PL+i*slot+bOff; if(mx>=x&&mx<=x+bW) hit={d,cx:x+bW/2}; });
+
+  if (hit) {
+    tip.style.opacity='1';
+    tip.style.left=(hit.cx/cv.width*rect.width)+'px';
+    tip.innerHTML=`<span class="tip-yr">${hit.d.year}</span>${fmtHa(hit.d.area_ha)} ha · ${(hit.d.area_ha/100).toFixed(1)} km²`;
+  } else { tip.style.opacity='0'; }
+});
+cv.addEventListener('mouseleave', ()=>{ tip.style.opacity='0'; });
+
+// ── Inicializar página com os dados ───────────────────────
+function initPage(rows) {
+  const yearData  = sumByYear(rows);
+  const biomeMap  = sumByBiome(rows);
+  const bNames    = Object.keys(biomeMap).sort();
+  const hasBiomes = bNames.length > 0;
+
+  const lastY  = yearData[yearData.length-1];
+  const firstY = yearData[0];
+  const growX  = (lastY.area_ha/firstY.area_ha).toFixed(1);
+  const diffs  = yearData.slice(1).map((d,i)=>({year:d.year, delta:d.area_ha-yearData[i].area_ha}));
+  const peakYr = diffs.reduce((a,b)=>b.delta>a.delta?b:a);
+
+  function card(lbl,val,note) {
+    return `<div class="stat">
+      <div class="stat-lbl">${lbl}</div>
+      <div class="stat-val">${val}</div>
+      <div class="stat-note">${note}</div>
+    </div>`;
+  }
+  document.getElementById('stats').innerHTML =
+    card('Área mapeada · '+lastY.year, fmtHa(lastY.area_ha)+' ha', (lastY.area_ha/100).toFixed(1)+' km²') +
+    card('Crescimento total', '×'+growX, firstY.year+' → '+lastY.year) +
+    card('Maior expansão', String(peakYr.year), '+'+fmtHa(peakYr.delta)+' ha') +
+    card('Série histórica', yearData.length+' anos', firstY.year+'–'+lastY.year);
+
+  if (!hasBiomes) document.getElementById('notice').classList.add('on');
+
+  const pillsEl = document.getElementById('pills');
+  const bioNote = document.getElementById('bio-note');
+
+  if (!hasBiomes) {
+    pillsEl.innerHTML='<button class="pill active" disabled>Todos os biomas</button>';
+    bioNote.textContent='> filtro indisponível — re-exportar CSV do GEE com propriedade NAME preenchida';
+  } else {
+    let sel='';
+    function renderPills() {
+      pillsEl.innerHTML=`<button class="pill ${!sel?'active':''}" data-b="">Todos</button>`+
+        bNames.map(b=>`<button class="pill ${sel===b?'active':''}" data-b="${b}">${b}</button>`).join('');
+      pillsEl.querySelectorAll('.pill').forEach(btn=>btn.addEventListener('click',()=>{
+        sel=btn.dataset.b||'';
+        document.getElementById('ch-title').textContent=sel
+          ?`Área por ano · ${sel}`:'Área total por ano · todos os biomas';
+        renderPills();
+        animateTo(sel?biomeMap[sel]:yearData);
+      }));
+    }
+    renderPills();
+  }
+
+  document.getElementById('ftr-r').textContent=`Acumulado ${lastY.year}: ${lastY.area_ha.toFixed(0)} ha`;
+  animateTo(yearData);
+}
+
+// ── Boot: tenta carregar CSV do arquivo local ─────────────
+fetch(CSV_PATH)
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.text(); })
+  .then(csv => initPage(parseCSV(csv)))
+  .catch(() => {
+    // Fallback: usa CSV embutido (sem dados de bioma)
+    initPage(parseCSV(CSV_FALLBACK));
+  });
+
+window.addEventListener('resize', ()=>{ if(animPct>=0.99) drawChart(activeData,1); });
+</script>

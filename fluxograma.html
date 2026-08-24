@@ -45,7 +45,7 @@
     }
 
     .mermaid {
-      min-width: 900px;
+      min-width: 1000px;
     }
 
     .legend {
@@ -70,13 +70,29 @@
       border-radius: 3px;
       flex-shrink: 0;
     }
+
+    .notes {
+      max-width: 900px;
+      margin: 24px auto 0;
+      background: #1a1d27;
+      border: 1px solid #2a2d3e;
+      border-radius: 12px;
+      padding: 20px 24px;
+      font-size: 0.8rem;
+      color: #b6bccb;
+      line-height: 1.6;
+    }
+    .notes h2 { font-size: 0.95rem; color: #fff; margin-bottom: 10px; }
+    .notes ul { padding-left: 1.1em; margin-bottom: 10px; }
+    .notes code { color: #a5d6ff; background: #11141d; padding: 1px 5px; border-radius: 4px; font-size: 0.78rem; }
+    .notes .foot { color: #666; font-size: 0.72rem; margin-top: 14px; }
   </style>
 </head>
 <body>
 
 <header>
   <h1>Mapeamento de Sistemas Fotovoltaicos — MapBiomas</h1>
-  <p>Pipeline completo · Planet NICFI · UNet + ResNet101 · GEE</p>
+  <p>Pipeline completo · Planet NICFI (5 bandas) · Focus U-Net + backbone · GEE → Coleção 11</p>
 </header>
 
 <div class="diagram-container">
@@ -100,79 +116,120 @@
 flowchart TD
 
     %% ── ENTRADA ──────────────────────────────────────────
-    GEE[/"☁ Google Earth Engine\nPlanet NICFI · 8 bandas · 4.77 m/pixel"/]
+    GEE[/"☁ Google Earth Engine\nPlanet NICFI · 4,77 m/px\n+ regiões · rótulos · grade rural (35 patches BR)"/]
 
     %% ── TREINO ───────────────────────────────────────────
     subgraph TREINO["  TREINO  "]
         direction TB
-        T1["📥 Fase 1 — Coleta de Treino\ndownload_dataset_tfrecord_fotovoltaica.py\nPatches 257×257×8 + label → Google Drive\nvia ee.batch.Export"]
-        T2["✂️ Fase 2 — Divisão do Dataset\nsplit_tfrecord_dataset.py\ntrain 80%  ·  val 10%  ·  test 10%"]
-        T3["🏋 Fase 3 — Treinamento\ntrain_fotovoltaica_colab.ipynb\nUNet + ResNet101 · Google Colab GPU A100\nLoss: focal_tversky_boundary · 250 épocas"]
-        T1 --> T2 --> T3
+        T0["🏷️ Rótulos 2024 pré-computados\nexport_labels_2024_asset.py\n→ asset rotulos_fv_2024 (uma vez)"]
+        T1["📥 Fase 1 — Coleta de treino (5 bandas)\ndownload_dataset_tfrecord_fotovoltaica_precomp.py\nblue·green·red·pvi·pvpi + label → Drive · TFRecord"]
+        TQ["🗂️ Fila de tasks GEE\ngerenciar_tasks_tfrecord.py\nmonitora / cancela / gera lista de reenvio"]
+        T2["✂️ Fase 2 — Split do dataset\n(src/old/) split_tfrecord_dataset.py\ntrain 80% · val 10% · test 10%"]
+        T2b["⚖️ Fase 2b — Balanceamento em disco\nbalance_tfrecord_dataset_colab.ipynb\nneg:pos 5,7:1 → 3:1 (quarentena train_sem_alerta/)"]
+        T3["🏋 Fase 3 — Treinamento\ntrain_fotovoltaica_colab_v2.ipynb\nFocus U-Net + backbone · 5 bandas · Colab GPU A100\nfocal_tversky_boundary_loss · 250 épocas"]
+        T0 -.opcional.-> T1
+        T1 --> TQ
+        T1 --> T2 --> T2b --> T3
     end
 
-    MODEL[/"🧠 Modelo Treinado\n.keras  ·  UNet + ResNet101\n~34.7 M parâmetros"/]
+    MODEL[/"🧠 Modelos treinados (.keras)\nL5 = 5 bandas atuais · L9 = 8 bandas legado\nmodels_index.json (registro p/ dashboard)"/]
 
     %% ── INFERÊNCIA ───────────────────────────────────────
     subgraph INFER["  INFERÊNCIA  "]
         direction TB
-        I1["📥 Fase 4 — Coleta de Patches\ndownload_dataset_predict_fotovoltaica.py\nPatches 256×256×8 → disco local\nvia computePixels  ·  sem tasks GEE"]
-
-        subgraph OPC["  Pipeline de Inferência  "]
-            direction LR
-            A["🅐  Opção A\nDireto sobre NPY\n--input-format npy"]
-            B1["🅑  Opção B — Passo 1\nconvert_npy_to_tfrecord\n_fotovoltaica.py\nNPY → TFRecord shards"]
-            B2["🅑  Opção B — Passo 2\nmakePredict com TFRecord\n--input-format tfrecord"]
-            B1 --> B2
-        end
-
-        I1 --> A
-        I1 --> B1
+        I1["🗺️ Export mosaico NICFI → GeoTIFF\nexport_mosaicTIF_GEEtoDrive.py &nbsp;(geral, ~91 regiões)\nexport_mosaicTIF_GEEtoDrive_rural.py &nbsp;(subconjunto rural)"]
+        I2["⬇️ Download TIF → servidor\nread_TIF_from_gdrive.py\nDrive → /srv/almacen/db_images"]
+        I3["🔮 Predição — sliding window sobre TIF\nmakePredict_fromTIF.py\nblending nas bordas → gera predict_index.json"]
+        I1 --> I2 --> I3
     end
 
-    I5["🔮 Fase 5 — Predições\nmakePredict_patchinServer_v2.py\nSaída: patch_pred.npy  ·  (256×256) float32 [0,1]"]
+    subgraph RURAL["  GRADE RURAL  "]
+        direction TB
+        R1["📐 Fase 0 — Monta grade rural\nsetup_grades_rural.py\nintersecta grade 35-patches × fotovoltaic_rural\n→ asset shp_grades_BR_fotovoltaic_rural"]
+        R2["🔁 Reconciliação de progresso\nreconcile_grades_rural.py\ncsv ∩ universo → pendências reais (log_rurais/)"]
+        R1 -.alimenta.-> I1
+        I1 -.registra.-> R2
+    end
 
     %% ── PÓS-PROCESSAMENTO ────────────────────────────────
-    subgraph POS["  PÓS-PROCESSAMENTO  "]
+    subgraph POS["  PUBLICAÇÃO GEE  "]
         direction TB
-        P1["🗺️ Fase 6 — Montagem GeoTIFF\njoin_convert_npytoTIF.py\nMerge patches + blending → GeoTIFF\npor região × ano"]
-        P2["☁️ Fase 7 — Upload GCS\nuploadTIF_from_localFolder_GoogleStorage.py\nGeoTIFF → COG\nDestino: gs://mapbiomas-energia"]
-        P3["📦 Fase 8 — Ingestão GEE\ntransferTIF_fromGCSbucket_toGEEasset.py\nGCS Bucket → GEE Asset"]
-        P1 --> P2 --> P3
+        P1["☁️ Upload GCS (COG)\nuploadTIF_from_localFolder_GoogleStorage.py\ngs://mapbiomas-energia/fotovoltaicas_tif/"]
+        P2["📦 Ingestão GEE\ntransferTIF_fromGCSbucket_toGEEasset.py\n→ projects/geo-data-s/.../usinas_br"]
+        P1 --> P2
     end
 
-    ASSET[/"✅ GEE Asset\nMapa Fotovoltaico Final"/]
+    subgraph COL11["  COLEÇÃO 11 — CURADORIA & PUBLICAÇÃO  "]
+        direction TB
+        C1["🩹 QA por região\nexport_solar_panels_col11_v2.py\nregras: EXCLUDE · MERGE_COL10 · ZERO_BACK"]
+        C2["🌎 Mosaico nacional final\nexport_solar_panels_col11_final.py\n→ asset público solar-panel-&lt;ano&gt;-2\n(COLLECTION-4/RENEWABLE-ENERGY/solar-panels)"]
+        C1 --> C2
+    end
+
+    subgraph ANALISE["  ANÁLISE & DIVULGAÇÃO  "]
+        direction TB
+        A1["📊 Área por ano × bioma\ninGEE/area_fv_por_ano_bioma_col11.js\n→ CSV (Drive)"]
+        A2["📓 Notebooks de gráficos\ngraficos_UFV.ipynb · graficos_eolica.ipynb\ngraficos_UFV_eolica.ipynb"]
+        A3["🌐 Página pública\nsrc/dash/fv_dashboard.html\n(HTML estático, área por ano/bioma)"]
+        A1 --> A2 --> A3
+    end
+
+    %% ── QA / VISUALIZAÇÃO ────────────────────────────────
+    subgraph QA["  VISUALIZAÇÃO & QA  "]
+        direction TB
+        Q1["📊 Dashboard Dash\ndashboard_predict.py\nNICFI × predição, por modelo/região/ano"]
+        Q2["🖼️ Viewer Streamlit\nviewer_patches_npy.py\npatches .npy por região/ano"]
+        Q3["🔍 Auditoria do pipeline\nauditoria_pipeline.py\nNPY · predição · TIF · GCS · GEE"]
+    end
 
     %% ── CONEXÕES PRINCIPAIS ──────────────────────────────
-    GEE -->|"ee.batch.Export → Google Drive"| T1
-    GEE -->|"computePixels → disco local"| I1
+    GEE -->|"Export.table.toDrive → TFRecord"| T1
+    GEE -->|"Export.image.toDrive → GeoTIFF"| I1
     T3  --> MODEL
-    MODEL --> A
-    MODEL --> B2
-    A   --> I5
-    B2  --> I5
-    I5  --> P1
-    P2  --> ASSET
-    P3  --> ASSET
+    MODEL --> I3
+    I3  --> P1
+    I3  -.-> Q1
+    I3  -.-> Q3
+    P2  -.-> C1
+    C2  --> A1
+    P2  -.-> Q3
 
     %% ── ESTILOS ──────────────────────────────────────────
     style GEE   fill:#1b3a5c,stroke:#4a90d9,color:#cce4ff
     style MODEL fill:#2d1b4e,stroke:#9b59b6,color:#dcc6f0
-    style ASSET fill:#1a3d2b,stroke:#27ae60,color:#a8f0c0
-    style I5    fill:#1e2235,stroke:#3a3f5c,color:#e0e0e0
 
-    style TREINO fill:#0d1f35,stroke:#4a90d9,color:#8ab8e8
-    style INFER  fill:#1a2a1a,stroke:#27ae60,color:#7fcf9a
-    style POS    fill:#2a1a10,stroke:#e67e22,color:#f0b07a
-    style OPC    fill:#142014,stroke:#27ae60,color:#7fcf9a
+    style TREINO  fill:#0d1f35,stroke:#4a90d9,color:#8ab8e8
+    style INFER   fill:#1a2a1a,stroke:#27ae60,color:#7fcf9a
+    style RURAL   fill:#241a2e,stroke:#8e5fc4,color:#c9a8ec
+    style POS     fill:#2a1a10,stroke:#e67e22,color:#f0b07a
+    style COL11   fill:#2a1010,stroke:#e05252,color:#f0a8a8
+    style ANALISE fill:#132a24,stroke:#2ecfa0,color:#8ff0d6
+    style QA      fill:#1e1e26,stroke:#64748b,color:#c7cbd6
   </div>
 </div>
 
 <div class="legend">
   <div class="legend-item"><div class="dot" style="background:#4a90d9"></div>Treino (GEE → Modelo)</div>
-  <div class="legend-item"><div class="dot" style="background:#27ae60"></div>Inferência (patches → predições)</div>
-  <div class="legend-item"><div class="dot" style="background:#e67e22"></div>Pós-processamento (NPY → GEE Asset)</div>
-  <div class="legend-item"><div class="dot" style="background:#9b59b6"></div>Modelo treinado</div>
+  <div class="legend-item"><div class="dot" style="background:#27ae60"></div>Inferência (TIF → predições)</div>
+  <div class="legend-item"><div class="dot" style="background:#8e5fc4"></div>Grade rural (subconjunto dedicado)</div>
+  <div class="legend-item"><div class="dot" style="background:#e67e22"></div>Publicação GEE (asset por modelo/região)</div>
+  <div class="legend-item"><div class="dot" style="background:#e05252"></div>Coleção 11 (curadoria + asset público)</div>
+  <div class="legend-item"><div class="dot" style="background:#2ecfa0"></div>Análise & divulgação (gráficos, página pública)</div>
+  <div class="legend-item"><div class="dot" style="background:#64748b"></div>Visualização & QA</div>
+</div>
+
+<div class="notes">
+  <h2>O que mudou desde a versão anterior deste fluxograma</h2>
+  <ul>
+    <li><strong>Bandas de entrada:</strong> a coleta de treino atual (<code>download_dataset_tfrecord_fotovoltaica_precomp.py</code>) exporta <strong>5 bandas</strong> — <code>blue, green, red, pvi, pvpi</code> — em vez das 8 bandas antigas (<code>+ nir, iia, ri, evi</code>). Os modelos são marcados <code>L5</code> (5 bandas, atuais) ou <code>L9</code> (8 bandas, legado) em <code>models_index.json</code>.</li>
+    <li><strong>Rótulos pré-computados:</strong> <code>export_labels_2024_asset.py</code> gera os rótulos de 2024 como asset GEE separado, eliminando o recálculo por task que antes tornava a exportação lenta.</li>
+    <li><strong>Inferência migrou de patch NPY para mosaico TIF:</strong> o caminho principal hoje exporta o mosaico NICFI inteiro por região/ano (<code>export_mosaicTIF_GEEtoDrive.py</code> / variante <code>_rural.py</code>) e roda <code>makePredict_fromTIF.py</code> com janela deslizante — o caminho antigo por patches (<code>download_dataset_predict_fotovoltaica.py</code> → <code>makePredict_patchinServer_v2.py</code>) segue existindo em <code>src/old/</code> como alternativa.</li>
+    <li><strong>Grade rural dedicada:</strong> <code>setup_grades_rural.py</code> e <code>reconcile_grades_rural.py</code> são novos — controlam um subconjunto de células da grade nacional de 35 patches que intersectam o asset <code>fotovoltaic_rural</code>, com log de progresso em <code>src/dados/log_rurais/</code>.</li>
+    <li><strong>Publicação na Coleção 11:</strong> etapa nova e final — <code>export_solar_panels_col11_v2.py</code> aplica regras de QA por região (exclusão, mescla com Coleção 10, corte temporal) e <code>export_solar_panels_col11_final.py</code> monta o mosaico nacional público em <code>.../COLLECTION-4/RENEWABLE-ENERGY/solar-panels</code>.</li>
+    <li><strong>Análise e divulgação:</strong> novo ramo — script GEE de área por ano×bioma, notebooks Plotly (UFV, eólica e combinado) e uma página HTML pública (<code>fv_dashboard.html</code>) com o resumo de área por ano/bioma.</li>
+    <li><strong>Cabeça de segmentação nova:</strong> <code>segmentation_model_factory.py</code> ganhou a opção <code>segformerb5</code> (transformer MiT-B5), ainda sem treinamento registrado — ver <code>arquiteturas_modelos_deep_learning.html</code>.</li>
+  </ul>
+  <div class="foot">Diagrama de visão geral — para parâmetros, scripts completos e status de cada modelo treinado, ver <code>pipeline_fotovoltaicas.html</code>.</div>
 </div>
 
 <script>

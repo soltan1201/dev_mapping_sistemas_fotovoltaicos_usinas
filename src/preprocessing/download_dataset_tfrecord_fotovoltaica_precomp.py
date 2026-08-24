@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Download Dataset TFRecord - Fotovoltaica (Planet NICFI) — versão PRECOMP
-=========================================================================
-Idêntico a download_dataset_tfrecord_fotovoltaica.py, mas para 2024 carrega
-o label FV a partir de assets pré-computados gerados por:
-  → export_labels_2024_asset.py
+Download Dataset TFRecord - Fotovoltaica (Planet NICFI)
+=======================================================
+Exporta patches TFRecord com mosaico NICFI + rótulo FV para treino.
 
-Isso elimina o gargalo de recomputar usinas_br_gc (saída bruta de modelo
-nacional) a cada região/shard, que era a causa das tasks demorarem 12 h+.
+Rótulos: usa ASSET_LABEL para todos os anos (2022, 2023, 2024, 2025).
+  → projects/mapbiomas-workspace/AMOSTRAS/col11/CAATINGA/layers_energia
 
-PRÉ-REQUISITO:
-  Rode export_labels_2024_asset.py e aguarde as tasks concluírem no GEE antes
-  de usar este script.
+Regiões:
+  2022/2023 → ASSET_REGIONS_22_24
+  2024/2025 → ASSET_REGIONS_2024
 
-COMO USAR — duas rodadas separadas:
-  Rodada 1:  YEARS = [2024]       → labels de ASSET_PRECOMP_LABEL_COLLECTION
-  Rodada 2:  YEARS = [2022, 2023] → labels de ASSET_LABEL (version_2_clean)
+COMO USAR:
+  Ajuste YEARS e REGION_INIC/REGION_END conforme necessário, depois rode.
 """
 
 import sys
@@ -44,7 +41,7 @@ except Exception as e:
 # ==============================================================================
 
 # ── Anos de coleta ─────────────────────────────────────────────────────────────
-YEARS = [2024]  # [2022, 2023]
+YEARS = [2022, 2023, 2024, 2025]  # [2022, 2023]
 
 # ── Assets de regiões (seleção automática pelo YEARS) ─────────────────────────
 ASSET_REGIONS_2024  = "projects/mapbiomas-arida/energias/shp_area_fotovoltaic_samples_update_16_05_2026"
@@ -59,14 +56,12 @@ ASSET_FV_FOCUS      = "projects/mapbiomas-arida/shp_area_fotovoltaic_samples"
 ASSET_POINT_SAMPLES = "projects/mapbiomas-arida/energias/pontos_areas_DB_16_05_2026"
 
 # ── ImageCollection de rótulos e mosaico NICFI ────────────────────────────────
-ASSET_LABEL      = 'projects/geo-data-s/assets/fotovoltaica/version_2_clean'
+ASSET_LABEL      = 'projects/mapbiomas-workspace/AMOSTRAS/col11/CAATINGA/layers_energia'
+# ASSET_LABEL    = 'projects/geo-data-s/assets/fotovoltaica/version_2_clean'
 ASSET_NICFI      = 'projects/planet-nicfi/assets/basemaps/americas'
 
-# ── Labels 2024 pré-computados por export_labels_2024_asset.py ────────────────
-ASSET_PRECOMP_LABEL_COLLECTION = "projects/mapbiomas-caatinga-cloud04/assets/rotulos_fv_2024"
-
 # ── Saída no Google Drive ─────────────────────────────────────────────────────
-EXPORT_DRIVE_FOLDER = "DS_FV_NICFI_TFR_V2"
+EXPORT_DRIVE_FOLDER = "DS_FV_NICFI_TFR_V3"
 
 # ── Parâmetros de patch e grade ───────────────────────────────────────────────
 PATCH_SIZE       = 256
@@ -78,8 +73,8 @@ MAX_PATCHES_FILE = 50     # máx patches por shard
 N_EXTRA_PATCHES = 55
 
 # ── Intervalo de regiões (inclusive em ambas as pontas) ───────────────────────
-REGION_INIC = 0
-REGION_END  = 100
+REGION_INIC = 70
+REGION_END  = 80
 
 # ── Pula tasks já COMPLETED no GEE ───────────────────────────────────────────
 SKIP_COMPLETED = True
@@ -98,7 +93,8 @@ ALL_BANDS       = ['blue', 'green', 'red', 'pvi', 'pvpi']
 SELECTORS       = ALL_BANDS + ['label']
 
 # ── Seleção automática do asset de regiões ────────────────────────────────────
-ASSET_REGIONS = ASSET_REGIONS_2024 if YEARS == [2024] else ASSET_REGIONS_22_24
+# 2022/2023 → grade antiga; 2024/2025 → grade atualizada
+ASSET_REGIONS = ASSET_REGIONS_22_24 if set(YEARS).issubset({2022, 2023}) else ASSET_REGIONS_2024
 print(f"\nAnos configurados : {YEARS}")
 print(f"Asset de regiões  : {ASSET_REGIONS}")
 
@@ -176,7 +172,7 @@ def build_nicfi_mosaic(year, geometry):
 
 
 def build_label(year):
-    """Rótulo binário FV para 2022/2023 (version_2_clean mascarado)."""
+    """Rótulo binário FV para qualquer ano (2022–2025) via ASSET_LABEL."""
     base_mask = (ee.Image(0)
                  .paint(ee.FeatureCollection(ASSET_LIMIT_ROTULOS_2024), 1)
                  .byte())
@@ -188,15 +184,6 @@ def build_label(year):
               .unmask(0)
               .rename('label')
               .toByte())
-
-
-def load_label_precomp_2024(feat_id_safe):
-    """
-    Carrega o label 2024 pré-computado pelo export_labels_2024_asset.py.
-    Muito mais rápido que recomputar usinas_br_gc a cada região.
-    """
-    asset_id = f"{ASSET_PRECOMP_LABEL_COLLECTION}/{feat_id_safe}_label_2024_unet_resnet50"
-    return ee.Image(asset_id).rename('label').toByte()
 
 
 def generate_grid_points(geometry, scale_m, stride_pixels):
@@ -231,18 +218,9 @@ def export_shard(patches_array, points, year, tag, shard_idx):
 
 
 def build_patches_array(year, geometry, feat_id_safe):
-    """
-    Stack completo (5 bandas + label) com neighborhoodToArray.
-
-    Para 2024: label carregado do asset pré-computado (rápido).
-    Para 2022/2023: label computado de version_2_clean (já era rápido).
-    """
+    """Stack completo (5 bandas + label) com neighborhoodToArray."""
     mosaic = build_nicfi_mosaic(year, geometry)
-
-    if year == 2024:
-        label = load_label_precomp_2024(feat_id_safe)
-    else:
-        label = build_label(year)
+    label  = build_label(year)
 
     kernel = ee.Kernel.rectangle(PATCH_SIZE // 2, PATCH_SIZE // 2, 'pixels')
 

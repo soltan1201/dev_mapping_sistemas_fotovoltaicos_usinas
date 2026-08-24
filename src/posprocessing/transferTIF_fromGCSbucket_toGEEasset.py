@@ -53,6 +53,31 @@ def init_ee(project: str):
         sys.exit(1)
 
 
+def get_existing_assets(asset_path: str) -> set:
+    """Lista os nomes dos assets já presentes na coleção destino do GEE.
+
+    Retorna o conjunto dos nomes finais (última parte do id). Se a coleção
+    não existir ainda, retorna conjunto vazio (nada foi enviado).
+    """
+    existing: set = set()
+    try:
+        token = None
+        while True:
+            params = {'parent': asset_path}
+            if token:
+                params['pageToken'] = token
+            res = ee.data.listAssets(params)
+            for a in res.get('assets', []):
+                existing.add(a['id'].split('/')[-1])
+            token = res.get('nextPageToken')
+            if not token:
+                break
+    except ee.EEException as exc:
+        print(f'Aviso: coleção {asset_path} não pôde ser listada '
+              f'(assumindo vazia): {exc}')
+    return existing
+
+
 def export_to_asset(image: ee.Image, name: str, asset_path: str,
                     year: int, version: str, model: str, backbone: str, id_region: str, formato: str):
     asset_id = os.path.join(asset_path, name)
@@ -169,25 +194,42 @@ def main():
         }
         print(f'Lacunas carregadas: {len(missing_pairs)} pares (região × ano) a processar')
 
+    # Consulta os assets que REALMENTE já existem na coleção GEE (fonte da verdade)
+    existing_assets = get_existing_assets(args.asset_path)
+    print(f'Assets já existentes na coleção GEE: {len(existing_assets)}')
+
     total = 0
+    skipped_gee = 0
+    skipped_lac = 0
     for cc, gcs_path in enumerate(tif_paths):
-        name_tif  = gcs_path.split('/')[-1]          # pred_00000000000000000033_2022.tif
-        nyear     = int(name_tif.split('_')[-1][:4]) # 2022
-        id_region = str(name_tif.split('_')[1])
-        region    = '_'.join(name_tif.split('_')[1:-1])
+        name_tif  = gcs_path.split('/')[-1]          # 00000000000000000026_2025_img_reduzido.tif
+        # tokens: [<region>, <year>, ...]  (prefixo 'pred' opcional do formato antigo)
+        tokens = name_tif.replace('.tif', '').split('_')
+        if tokens[0] == 'pred':
+            tokens = tokens[1:]
+        id_region = str(tokens[0])                   # 00000000000000000026
+        nyear     = int(tokens[1])                   # 2025
+        region    = id_region
 
         if args.years   and nyear  not in args.years:
             continue
         if args.regions and region not in args.regions:
             continue
 
-        # Se JSON fornecido, pula pares que NÃO estão nas lacunas (já existem no GEE)
-        if missing_pairs is not None and (id_region, nyear) not in missing_pairs:
-            print(f'#{cc:04d}  {name_tif}  [já no GEE — pulado]')
-            continue
-
         base     = name_tif.replace('.tif', '').replace('pred', 'reg')
         namefile = f'{base}_{model}_{backbone}_{args.formato}'
+
+        # Pula apenas se o asset REALMENTE já existe na coleção GEE
+        if namefile in existing_assets:
+            print(f'#{cc:04d}  {name_tif}  [já no GEE — pulado]')
+            skipped_gee += 1
+            continue
+
+        # Filtro opcional por lacunas da auditoria (região × ano)
+        if missing_pairs is not None and (id_region, nyear) not in missing_pairs:
+            print(f'#{cc:04d}  {name_tif}  [fora das lacunas — pulado]')
+            skipped_lac += 1
+            continue
 
         print(f'#{cc:04d}  {name_tif}  →  {namefile}')
         try:
@@ -201,7 +243,9 @@ def main():
             print(f'  ERRO em {name_tif}: {exc}')
 
     print('=' * 60)
-    print(f'Concluído. Tarefas submetidas: {total}')
+    print(f'Concluído. Tarefas submetidas: {total}  '
+          f'| pulados (já no GEE): {skipped_gee}  '
+          f'| pulados (fora das lacunas): {skipped_lac}')
 
 
 if __name__ == '__main__':

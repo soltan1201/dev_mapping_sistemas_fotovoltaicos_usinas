@@ -40,13 +40,14 @@ ASSET_LIMITE_BRASIL = 'users/CartasSol/shapes/Brasil_Manual'
 
 VERSION_IN    = 2          # tiles v2 já possuem todas as correções aplicadas
 VERSION_OUT   = 2
-SCALE_OUT     = 30         # m/pixel — Landsat (saída pública)
+SCALE_OUT     = 10 # 30         # m/pixel — Landsat (saída pública)
 CRS           = 'EPSG:4326'
 YEARS         = list(range(2016, 2026))   # 2016–2025
 SKIP_EXISTING = True
 
 limite_brasil = ee.FeatureCollection(ASSET_LIMITE_BRASIL).geometry()
-
+if SCALE_OUT == 10:
+    ASSET_OUTPUT        = 'projects/mapbiomas-brazil/assets/LAND-COVER-10M/COLLECTION-4/RENEWABLE-ENERGY/solar-panels'
 # ==============================================================================
 # FUNÇÕES
 # ==============================================================================
@@ -83,7 +84,7 @@ def export_year(year, img):
 
     img_final = img.selfMask().set({
         'year':       year,
-        'collection': 11,
+        'collection': 4,
         'theme':      'SOLAR-PANELS',
         'source':     'geodatin',
         'version':    VERSION_OUT,

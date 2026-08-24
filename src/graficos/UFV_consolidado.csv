@@ -1,0 +1,175 @@
+year,version,area_ha,tipo_region,nome_region,sigla_region
+2018,0-4-12-spt-4,0.6175042297363281,bioma,Amazônia,AMZ
+2019,0-4-12-spt-4,16.56183480224609,bioma,Amazônia,AMZ
+2020,0-4-12-spt-4,20.086309320068366,bioma,Amazônia,AMZ
+2021,0-4-12-spt-4,24.76352144775392,bioma,Amazônia,AMZ
+2022,0-4-12-spt-4,25.998180792236337,bioma,Amazônia,AMZ
+2023,0-4-12-spt-4,25.909768872070323,bioma,Amazônia,AMZ
+2024,0-4-12-spt-4,26.878413812255868,bioma,Amazônia,AMZ
+2025,0-4-12-spt-4,30.670709576416048,bioma,Amazônia,AMZ
+2016,0-4-12-spt-4,555.0564627075189,bioma,Caatinga,CAT
+2017,0-4-12-spt-4,1101.190167687988,bioma,Caatinga,CAT
+2018,0-4-12-spt-4,2443.030371826166,bioma,Caatinga,CAT
+2019,0-4-12-spt-4,2842.680302154539,bioma,Caatinga,CAT
+2020,0-4-12-spt-4,3475.2504944213865,bioma,Caatinga,CAT
+2021,0-4-12-spt-4,5783.982309924311,bioma,Caatinga,CAT
+2022,0-4-12-spt-4,11527.958202880767,bioma,Caatinga,CAT
+2023,0-4-12-spt-4,17363.152910497934,bioma,Caatinga,CAT
+2024,0-4-12-spt-4,23714.587498876823,bioma,Caatinga,CAT
+2025,0-4-12-spt-4,27173.956912396112,bioma,Caatinga,CAT
+2016,0-4-12-spt-4,568.2921546508825,bioma,Cerrado,CER
+2017,0-4-12-spt-4,1099.4013739990182,bioma,Cerrado,CER
+2018,0-4-12-spt-4,1824.623287219231,bioma,Cerrado,CER
+2019,0-4-12-spt-4,3170.298790472408,bioma,Cerrado,CER
+2020,0-4-12-spt-4,3398.5077669555617,bioma,Cerrado,CER
+2021,0-4-12-spt-4,4014.05006492922,bioma,Cerrado,CER
+2022,0-4-12-spt-4,5646.825321154793,bioma,Cerrado,CER
+2023,0-4-12-spt-4,8711.24819753419,bioma,Cerrado,CER
+2024,0-4-12-spt-4,11784.969220886183,bioma,Cerrado,CER
+2025,0-4-12-spt-4,13890.645678063906,bioma,Cerrado,CER
+2017,0-4-12-spt-4,127.39780136718753,bioma,Mata Atlântica,MAT
+2018,0-4-12-spt-4,507.7745662048329,bioma,Mata Atlântica,MAT
+2019,0-4-12-spt-4,631.6475432739182,bioma,Mata Atlântica,MAT
+2020,0-4-12-spt-4,643.3383206664954,bioma,Mata Atlântica,MAT
+2021,0-4-12-spt-4,1076.2231973266485,bioma,Mata Atlântica,MAT
+2022,0-4-12-spt-4,1207.2949376342656,bioma,Mata Atlântica,MAT
+2023,0-4-12-spt-4,1728.7493393249367,bioma,Mata Atlântica,MAT
+2024,0-4-12-spt-4,2114.89040021971,bioma,Mata Atlântica,MAT
+2025,0-4-12-spt-4,2163.1847594604355,bioma,Mata Atlântica,MAT
+2016,collection_10_1,0.3175607849121094,bioma,Pampa,PAM
+2017,collection_10_1,1.429022576904297,bioma,Pampa,PAM
+2018,collection_10_1,1.5878020141601563,bioma,Pampa,PAM
+2019,collection_10_1,1.5878020141601563,bioma,Pampa,PAM
+2020,collection_10_1,1.667191638183594,bioma,Pampa,PAM
+2021,collection_10_1,1.9053628051757816,bioma,Pampa,PAM
+2022,collection_10_1,1.9053628051757816,bioma,Pampa,PAM
+2023,collection_10_1,1.9053628051757816,bioma,Pampa,PAM
+2024,collection_10_1,2.4610949523925787,bioma,Pampa,PAM
+2025,collection_10_1,2.4610949523925787,bioma,Pampa,PAM
+2016,0-4-12-spt-4,645.775800531009,estado,Bahia,BA
+2017,0-4-12-spt-4,985.9698948913522,estado,Bahia,BA
+2018,0-4-12-spt-4,1362.3512543090724,estado,Bahia,BA
+2019,0-4-12-spt-4,1725.288013183586,estado,Bahia,BA
+2020,0-4-12-spt-4,2086.7926497863714,estado,Bahia,BA
+2021,0-4-12-spt-4,2661.379487463366,estado,Bahia,BA
+2022,0-4-12-spt-4,4237.30805727533,estado,Bahia,BA
+2023,0-4-12-spt-4,5160.721102569518,estado,Bahia,BA
+2024,0-4-12-spt-4,5616.30571394642,estado,Bahia,BA
+2025,0-4-12-spt-4,6784.646441973767,estado,Bahia,BA
+2016,0-4-12-spt-4,7.223950561523439,estado,Ceará,CE
+2017,0-4-12-spt-4,7.223950561523439,estado,Ceará,CE
+2018,0-4-12-spt-4,506.0843364623989,estado,Ceará,CE
+2019,0-4-12-spt-4,551.7791094604488,estado,Ceará,CE
+2020,0-4-12-spt-4,558.995819085693,estado,Ceará,CE
+2021,0-4-12-spt-4,1364.1666129333476,estado,Ceará,CE
+2022,0-4-12-spt-4,1615.6251626586848,estado,Ceará,CE
+2023,0-4-12-spt-4,2475.897331835928,estado,Ceará,CE
+2024,0-4-12-spt-4,3361.196353228756,estado,Ceará,CE
+2025,0-4-12-spt-4,4315.014734179681,estado,Ceará,CE
+2019,collection_10_1,0.3347456298828125,estado,Espírito Santo,ES
+2020,collection_10_1,0.3347456298828125,estado,Espírito Santo,ES
+2021,collection_10_1,0.5021184448242187,estado,Espírito Santo,ES
+2022,collection_10_1,0.5858049255371094,estado,Espírito Santo,ES
+2023,collection_10_1,0.5858049255371094,estado,Espírito Santo,ES
+2024,collection_10_1,2.259737908935547,estado,Espírito Santo,ES
+2016,0-4-12-spt-4,121.35730640258772,estado,Minas Gerais,MG
+2017,0-4-12-spt-4,424.7099713256827,estado,Minas Gerais,MG
+2018,0-4-12-spt-4,1104.6145459655777,estado,Minas Gerais,MG
+2019,0-4-12-spt-4,1235.213610986329,estado,Minas Gerais,MG
+2020,0-4-12-spt-4,1380.032583776857,estado,Minas Gerais,MG
+2021,0-4-12-spt-4,1823.7874791442891,estado,Minas Gerais,MG
+2022,0-4-12-spt-4,5886.795767254613,estado,Minas Gerais,MG
+2023,0-4-12-spt-4,9207.977260479687,estado,Minas Gerais,MG
+2024,0-4-12-spt-4,14148.449762097129,estado,Minas Gerais,MG
+2025,0-4-12-spt-4,16258.129073681592,estado,Minas Gerais,MG
+2018,0-4-12-spt-4,104.83031432495078,estado,Paraíba,PB
+2019,0-4-12-spt-4,104.6527931579586,estado,Paraíba,PB
+2020,0-4-12-spt-4,261.66154904784906,estado,Paraíba,PB
+2021,0-4-12-spt-4,380.5097255248999,estado,Paraíba,PB
+2022,0-4-12-spt-4,812.0431567749021,estado,Paraíba,PB
+2023,0-4-12-spt-4,1091.4836288269066,estado,Paraíba,PB
+2024,0-4-12-spt-4,1330.800896350101,estado,Paraíba,PB
+2025,0-4-12-spt-4,1353.8807492736848,estado,Paraíba,PB
+2019,collection_10_1,14.342551135253894,estado,Paraná,PR
+2020,collection_10_1,15.166837744140611,estado,Paraná,PR
+2021,collection_10_1,15.578977258300766,estado,Paraná,PR
+2022,collection_10_1,15.74383334960936,estado,Paraná,PR
+2023,collection_10_1,16.073544085693342,estado,Paraná,PR
+2024,collection_10_1,27.58925421142578,estado,Paraná,PR
+2018,0-4-12-spt-4,1.7692038574218756,estado,Pernambuco,PE
+2019,0-4-12-spt-4,44.67229620971688,estado,Pernambuco,PE
+2020,0-4-12-spt-4,44.76119953613291,estado,Pernambuco,PE
+2021,0-4-12-spt-4,539.2276366210967,estado,Pernambuco,PE
+2022,0-4-12-spt-4,747.0017813842785,estado,Pernambuco,PE
+2023,0-4-12-spt-4,2425.8020447204567,estado,Pernambuco,PE
+2024,0-4-12-spt-4,2787.9452511291297,estado,Pernambuco,PE
+2025,0-4-12-spt-4,3098.5271765991,estado,Pernambuco,PE
+2016,0-4-12-spt-4,348.991559863281,estado,Piauí,PI
+2017,0-4-12-spt-4,535.6724341552743,estado,Piauí,PI
+2018,0-4-12-spt-4,862.0370608886717,estado,Piauí,PI
+2019,0-4-12-spt-4,2019.3512302490249,estado,Piauí,PI
+2020,0-4-12-spt-4,2204.3304066467304,estado,Piauí,PI
+2021,0-4-12-spt-4,2659.258064233428,estado,Piauí,PI
+2022,0-4-12-spt-4,2933.454823406991,estado,Piauí,PI
+2023,0-4-12-spt-4,3620.705582086192,estado,Piauí,PI
+2024,0-4-12-spt-4,4626.2135190429735,estado,Piauí,PI
+2025,0-4-12-spt-4,4946.950464593505,estado,Piauí,PI
+2017,0-4-12-spt-4,247.01529075317336,estado,Rio Grande do Norte,RN
+2018,0-4-12-spt-4,313.619920483398,estado,Rio Grande do Norte,RN
+2019,0-4-12-spt-4,319.6750166259764,estado,Rio Grande do Norte,RN
+2020,0-4-12-spt-4,324.74883803710907,estado,Rio Grande do Norte,RN
+2021,0-4-12-spt-4,341.2169456603997,estado,Rio Grande do Norte,RN
+2022,0-4-12-spt-4,913.8037720581052,estado,Rio Grande do Norte,RN
+2023,0-4-12-spt-4,2143.65292545167,estado,Rio Grande do Norte,RN
+2024,0-4-12-spt-4,3675.5729141845695,estado,Rio Grande do Norte,RN
+2025,0-4-12-spt-4,4350.23625353393,estado,Rio Grande do Norte,RN
+2016,collection_10_1,0.3175607849121094,estado,Rio Grande do Sul,RS
+2017,collection_10_1,1.429022576904297,estado,Rio Grande do Sul,RS
+2018,collection_10_1,1.5878020141601563,estado,Rio Grande do Sul,RS
+2019,collection_10_1,2.463642364501953,estado,Rio Grande do Sul,RS
+2020,collection_10_1,4.055846075439454,estado,Rio Grande do Sul,RS
+2021,collection_10_1,4.373635992431642,estado,Rio Grande do Sul,RS
+2022,collection_10_1,4.373635992431642,estado,Rio Grande do Sul,RS
+2023,collection_10_1,4.771754016113282,estado,Rio Grande do Sul,RS
+2024,collection_10_1,5.884854205322266,estado,Rio Grande do Sul,RS
+2018,0-4-12-spt-4,0.6175042297363281,estado,Rondônia,RO
+2019,0-4-12-spt-4,16.56183480224609,estado,Rondônia,RO
+2020,0-4-12-spt-4,20.086309320068366,estado,Rondônia,RO
+2021,0-4-12-spt-4,24.76352144775392,estado,Rondônia,RO
+2022,0-4-12-spt-4,25.998180792236337,estado,Rondônia,RO
+2023,0-4-12-spt-4,25.909768872070323,estado,Rondônia,RO
+2024,0-4-12-spt-4,26.878413812255868,estado,Rondônia,RO
+2025,0-4-12-spt-4,30.670709576416048,estado,Rondônia,RO
+2019,collection_10_1,1.117665380859375,estado,Santa Catarina,SC
+2020,collection_10_1,1.117665380859375,estado,Santa Catarina,SC
+2021,collection_10_1,1.3571636901855466,estado,Santa Catarina,SC
+2022,collection_10_1,1.5966629394531249,estado,Santa Catarina,SC
+2023,collection_10_1,1.7562939208984372,estado,Santa Catarina,SC
+2024,collection_10_1,3.7516761352539056,estado,Santa Catarina,SC
+2017,0-4-12-spt-4,127.39780136718753,estado,São Paulo,SP
+2018,0-4-12-spt-4,507.7745662048329,estado,São Paulo,SP
+2019,0-4-12-spt-4,631.6475432739182,estado,São Paulo,SP
+2020,0-4-12-spt-4,643.3383206664954,estado,São Paulo,SP
+2021,0-4-12-spt-4,1076.2231973266485,estado,São Paulo,SP
+2022,0-4-12-spt-4,1207.2949376342656,estado,São Paulo,SP
+2023,0-4-12-spt-4,1647.8067934081882,estado,São Paulo,SP
+2024,0-4-12-spt-4,2028.6284937621904,estado,São Paulo,SP
+2025,0-4-12-spt-4,2077.4547718444683,estado,São Paulo,SP
+2018,0-4-12-spt-4,12.34702275390625,estado,Tocantins,TO
+2019,0-4-12-spt-4,12.34702275390625,estado,Tocantins,TO
+2020,0-4-12-spt-4,12.43521546020508,estado,Tocantins,TO
+2021,0-4-12-spt-4,28.486423272705103,estado,Tocantins,TO
+2022,0-4-12-spt-4,28.75100322265628,estado,Tocantins,TO
+2023,0-4-12-spt-4,29.103777978515645,estado,Tocantins,TO
+2024,0-4-12-spt-4,39.334216241455145,estado,Tocantins,TO
+2025,0-4-12-spt-4,42.86216517944342,estado,Tocantins,TO
+2016,0-4-12-spt-4,1123.3486173584013,pais,Brasil,BR
+2017,0-4-12-spt-4,2327.989343054194,pais,Brasil,BR
+2018,0-4-12-spt-4,4776.045729479967,pais,Brasil,BR
+2019,0-4-12-spt-4,6661.18847070311,pais,Brasil,BR
+2020,0-4-12-spt-4,7537.182891363512,pais,Brasil,BR
+2021,0-4-12-spt-4,10899.019093627932,pais,Brasil,BR
+2022,0-4-12-spt-4,18408.076642462063,pais,Brasil,BR
+2023,0-4-12-spt-4,27829.06021622913,pais,Brasil,BR
+2024,0-4-12-spt-4,37641.325533794974,pais,Brasil,BR
+2025,0-4-12-spt-4,43258.45805949687,pais,Brasil,BR

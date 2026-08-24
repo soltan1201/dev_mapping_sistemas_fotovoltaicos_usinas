@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquiteturas de Deep Learning — Segmentação Fotovoltaica MapBiomas</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --card2: #20242f;
+    --border: #2d3245;
+    --accent1: #4f8ef7;  /* conv */
+    --accent2: #34d399;  /* saída / pooling final */
+    --accent3: #f59e0b;  /* dropout */
+    --accent4: #a78bfa;  /* batchnorm / normalização */
+    --accent5: #f87171;  /* atenção / loss / alerta */
+    --accent6: #38bdf8;  /* pooling / extração backbone */
+    --accent7: #fb923c;  /* bloco composto / residual / especial */
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --code-bg: #0d1117;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0f1117 0%, #1a2040 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 2rem 2rem;
+    text-align: center;
+  }
+  header .badge {
+    display: inline-block;
+    background: rgba(79,142,247,0.15);
+    border: 1px solid var(--accent1);
+    color: var(--accent1);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #4f8ef7, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+  header p { color: var(--muted); font-size: 1rem; max-width: 760px; margin: 0 auto; }
+
+  /* ── Nav sticky ── */
+  nav.toc {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(15,17,23,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+    padding: .6rem 1rem;
+    display: flex; flex-wrap: nowrap; gap: .4rem .9rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    font-size: .74rem;
+  }
+  @media (min-width: 900px) { nav.toc { justify-content: center; } }
+  nav.toc a { color: var(--muted); text-decoration: none; white-space: nowrap; }
+  nav.toc a:hover { color: var(--accent1); }
+  nav.toc .sep { color: var(--border); }
+
+  /* ── Layout ── */
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--card);
+    border: 1px solid var(--accent5);
+    border-left: 4px solid var(--accent5);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1.6rem;
+    font-size: .88rem;
+    color: var(--text);
+  }
+  .callout strong { color: var(--accent5); }
+  .callout p + p { margin-top: .6rem; }
+  .callout code { background: var(--code-bg); padding: .1rem .35rem; border-radius: 4px; font-size: .82em; }
+
+  /* ── Legend ── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: .5rem 1.1rem;
+    background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+    padding: .8rem 1.1rem; margin-bottom: 2.2rem; font-size: .72rem; color: var(--muted);
+    align-items: center;
+  }
+  .legend b { color: var(--text); font-size: .72rem; margin-right: .3rem; }
+  .swatch { display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:.35rem; vertical-align:-1px; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 2.6rem 0 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1.6rem;
+    scroll-margin-top: 3.2rem;
+  }
+  .card-head { display:flex; align-items:center; gap:.7rem; flex-wrap:wrap; margin-bottom: .9rem; }
+  .card-head h3 { font-size: 1.25rem; color: var(--text); }
+  .tag {
+    font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+    border-radius: 999px; padding: .18rem .6rem; border: 1px solid currentColor;
+  }
+  .tag.head-tag { color: var(--accent1); }
+  .tag.backbone-tag { color: var(--accent6); }
+  .tag.current { color: var(--accent2); }
+  .tag.warn { color: var(--accent5); }
+
+  .card-body { display: grid; grid-template-columns: 210px 1fr; gap: 1.6rem; }
+  @media (max-width: 820px) { .card-body { grid-template-columns: 1fr; } }
+  .main-col { min-width: 0; }
+
+  .facts { font-size: .78rem; color: var(--muted); }
+  .facts dt { text-transform: uppercase; letter-spacing: .05em; font-size: .64rem; color: var(--muted); margin-top: .7rem; }
+  .facts dt:first-child { margin-top: 0; }
+  .facts dd { color: var(--text); font-size: .82rem; margin-top: .1rem; }
+  .facts a { color: var(--accent1); text-decoration: none; }
+  .facts a:hover { text-decoration: underline; }
+
+  .main-col h4 {
+    font-size: .78rem; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); margin: 1.1rem 0 .4rem;
+  }
+  .main-col h4:first-child { margin-top: 0; }
+  .main-col p { font-size: .87rem; color: var(--text); }
+
+  .why-box {
+    background: var(--card2); border-left: 3px solid var(--accent3);
+    border-radius: 6px; padding: .7rem .9rem; font-size: .84rem; margin-top: .3rem;
+  }
+  .project-box {
+    background: var(--card2); border-left: 3px solid var(--accent2);
+    border-radius: 6px; padding: .7rem .9rem; font-size: .82rem; margin-top: .3rem;
+  }
+  .project-box code { background: var(--code-bg); padding: .05rem .3rem; border-radius: 4px; font-size: .8em; color: var(--accent6); }
+  .alias-warn {
+    background: var(--card2); border-left: 3px solid var(--accent5);
+    border-radius: 6px; padding: .7rem .9rem; font-size: .82rem; margin-top: .3rem; color: var(--text);
+  }
+
+  /* ── Diagram — generic flow ── */
+  .diagram { overflow-x: auto; padding: .9rem .2rem 1.2rem; }
+  .flow { display:flex; align-items:center; gap:.1rem; min-width:max-content; }
+  .flow.small { transform: scale(.92); transform-origin: left center; }
+  .blk {
+    position: relative; flex: 0 0 auto; min-width: 74px; padding: .5rem .65rem;
+    border-radius: 7px; text-align:center; font-size:.7rem; line-height:1.3; font-weight:600; color:#0b0d12;
+  }
+  .blk span { display:block; font-weight:400; font-size:.63rem; opacity:.82; margin-top:2px; }
+  .blk.conv   { background: var(--accent1); }
+  .blk.pool   { background: var(--accent6); }
+  .blk.bn     { background: var(--accent4); }
+  .blk.drop   { background: var(--accent3); color:#241a02; }
+  .blk.out    { background: var(--accent2); color:#04241a; }
+  .blk.stage  { background: transparent; border: 2px dashed var(--accent7); color: var(--accent7); min-width: 100px; }
+  .blk.x      { background: transparent; border: 1px dashed var(--muted); color: var(--muted); min-width: 34px; padding:.5rem .4rem; }
+  .blk .rep {
+    position:absolute; top:-9px; right:-6px; background: var(--accent7); color:#1a0f02;
+    font-size:.58rem; font-weight:800; border-radius:999px; padding:1px 6px;
+  }
+  .arr { flex:0 0 auto; color: var(--muted); font-size: 1rem; padding: 0 .15rem; }
+  .merge {
+    flex:0 0 auto; width:26px; height:26px; border-radius:50%; border:2px solid var(--accent7);
+    color: var(--accent7); display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:700;
+  }
+
+  /* ── Inset (anatomia de um bloco) ── */
+  .inset { background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; padding: .8rem .9rem 1rem; margin-top: .6rem; }
+  .inset-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: .5rem; }
+  .skip-svg { display:block; margin: 0 auto -6px; }
+
+  /* ── Branch diagram (ASPP / PPM / Inception) ── */
+  .branches { display:flex; flex-direction:column; gap:.28rem; margin: .3rem 0; }
+  .branch-row { display:flex; align-items:center; gap:.35rem; }
+  .brace { color: var(--muted); font-size:.9rem; }
+
+  /* ── PSPNet bins ── */
+  .binrow { display:flex; align-items:center; gap:.9rem; flex-wrap:wrap; padding:.4rem 0; }
+  .bin { display:flex; flex-direction:column; align-items:center; gap:.3rem; }
+  .bin-grid { display:grid; gap:2px; background: var(--border); padding:2px; border-radius:4px; }
+  .bin-grid div { width:11px; height:11px; background: var(--accent6); border-radius:1px; }
+  .bin-label { font-size:.62rem; color: var(--muted); }
+
+  /* ── U-Net / FPN twin-column diagram ── */
+  .lvl-diagram { display:flex; gap:1.1rem; justify-content:center; flex-wrap:nowrap; padding:1rem .3rem; min-width:max-content; margin:0 auto; }
+  .lvl-col { display:flex; flex-direction:column; align-items:center; flex:0 0 auto; }
+  .lvl-box { width:158px; padding:.5rem .6rem; border-radius:8px; text-align:center; font-size:.68rem; font-weight:600; margin:.16rem 0; color:#0b0d12; }
+  .lvl-box span { display:block; font-weight:400; font-size:.6rem; opacity:.82; margin-top:2px; }
+  .lvl-arrow { font-size:.72rem; color: var(--muted); margin:.05rem 0; text-align:center; }
+  .lvl-mid { display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .lvl-skip { font-size:.62rem; color: var(--accent7); margin:.5rem 0; white-space:nowrap; text-align:center; }
+  .lvl-bottom { width:100%; display:flex; flex-direction:column; align-items:center; margin-top:.4rem; }
+
+  /* ── Footer ── */
+  footer {
+    text-align:center; color: var(--muted); font-size:.78rem;
+    padding: 2rem 1rem 3rem; border-top: 1px solid var(--border); margin-top: 2rem;
+  }
+  footer a { color: var(--accent1); text-decoration:none; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="badge">MapBiomas · Energia · Fotovoltaicas</div>
+  <h1>Arquiteturas de Deep Learning para Segmentação Fotovoltaica</h1>
+  <p>Referência técnica das cabeças de segmentação e dos backbones de classificação usados em
+     <code>segmentation_model_factory.py</code> — origem, ideia central e por que cada arquitetura tem esse nome.</p>
+</header>
+
+<nav class="toc">
+  <a href="#unet">U-Net</a><span class="sep">·</span>
+  <a href="#deeplabv3plus">DeepLabV3+</a><span class="sep">·</span>
+  <a href="#pspnet">PSPNet</a><span class="sep">·</span>
+  <a href="#fpn">FPN</a><span class="sep">·</span>
+  <a href="#segformerb5">SegFormer-B5</a>
+  <span class="sep">|</span>
+  <a href="#inceptionv3">InceptionV3</a><span class="sep">·</span>
+  <a href="#resnet50">ResNet50</a><span class="sep">·</span>
+  <a href="#resnet101">ResNet101</a><span class="sep">·</span>
+  <a href="#resnet152">ResNet152</a><span class="sep">·</span>
+  <a href="#resnext50">ResNeXt50</a><span class="sep">·</span>
+  <a href="#mobilenet">MobileNet</a><span class="sep">·</span>
+  <a href="#xception">Xception</a><span class="sep">·</span>
+  <a href="#efficientnetb0">EfficientNetB0</a><span class="sep">·</span>
+  <a href="#efficientnetb3">EfficientNetB3</a><span class="sep">·</span>
+  <a href="#efficientnetb7">EfficientNetB7</a><span class="sep">·</span>
+  <a href="#inceptionresnetv2">InceptionResNetV2</a>
+</nav>
+
+<div class="container">
+
+  <div class="callout">
+    <p><strong>Cabeça de segmentação × backbone.</strong> Neste projeto, uma <em>cabeça de segmentação</em>
+    (<code>unet</code>, <code>deeplabv3plus</code>, <code>pspnet</code>, <code>fpn</code> ou, mais recentemente,
+    <code>segformerb5</code>) define a topologia que produz o mapa de pixels (painel / não-painel). Nas primeiras
+    quatro, um <em>backbone</em> é opcionalmente plugado como encoder, reaproveitando uma arquitetura de
+    classificação já consolidada na literatura (ResNet, Inception, EfficientNet, etc.) em vez de um encoder
+    construído do zero — <code>segformerb5</code> é a exceção: é um bloco Transformer autocontido, sem encaixe
+    de backbone.</p>
+    <p><strong>Atenção — não há transfer learning de pesos aqui.</strong> O input real deste projeto é
+    <code>(256, 256, 5)</code> — 5 bandas espectrais (blue, green, red, pvi, pvpi), não as 3 bandas RGB do
+    ImageNet. Por isso <code>segmentation_model_factory.py</code> sempre instancia os backbones com
+    <code>weights=None</code> (factory.py:319): a <strong>topologia</strong> de cada arquitetura é reaproveitada,
+    mas os <strong>pesos pré-treinados não</strong> — os pesos são aprendidos do zero para as 5 bandas. As seções
+    abaixo mostram o input-size e nº de classes <em>originais de cada paper</em> (ImageNet, 3 canais), para fins de
+    referência histórica/didática — não é o que roda de fato no pipeline.</p>
+  </div>
+
+  <div class="legend">
+    <b>Legenda dos diagramas:</b>
+    <span><span class="swatch" style="background:var(--accent1)"></span>Conv</span>
+    <span><span class="swatch" style="background:var(--accent6)"></span>Pooling / extração</span>
+    <span><span class="swatch" style="background:var(--accent4)"></span>BatchNorm</span>
+    <span><span class="swatch" style="background:var(--accent3)"></span>Dropout</span>
+    <span><span class="swatch" style="background:var(--accent2)"></span>Saída</span>
+    <span><span class="swatch" style="background:transparent;border:2px dashed var(--accent7)"></span>Bloco composto / residual</span>
+    <span>⊕ soma · ⧉ concatenação</span>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 1 — CABEÇAS DE SEGMENTAÇÃO -->
+  <!-- ================================================================ -->
+  <div class="section-title">1. Cabeças de segmentação</div>
+
+  <!-- ---------------- U-NET ---------------- -->
+  <div class="card" id="unet">
+    <div class="card-head">
+      <h3>U-Net</h3>
+      <span class="tag head-tag">Cabeça de segmentação</span>
+      <span class="tag current">★ usada no treino atual</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original (paper)</dt><dd>572×572×1 (microscopia), convoluções "valid" (sem padding)</dd>
+        <dt>Output original</dt><dd>388×388×2 classes — reimplementações modernas usam padding "same" e mantêm input=output</dd>
+        <dt>Ano / venue</dt><dd>2015 · MICCAI</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1505.04597" target="_blank" rel="noopener">Ronneberger, Fischer &amp; Brox — arXiv:1505.04597</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Encoder-decoder simétrico: um caminho de contração (downsampling, captura contexto) e um caminho de
+        expansão (upsampling, recupera resolução), ligados por <em>skip connections</em> que copiam os mapas de
+        features de alta resolução do encoder direto para o nível equivalente do decoder — combinando semântica
+        profunda com detalhe espacial fino, mesmo com poucas imagens de treino.</p>
+
+        <div class="diagram">
+          <div class="lvl-diagram">
+            <div class="lvl-col">
+              <div class="lvl-box conv">Enc L0 · 64ch</div>
+              <div class="lvl-arrow">↓ maxpool 2×2</div>
+              <div class="lvl-box conv">Enc L1 · 128ch</div>
+              <div class="lvl-arrow">↓ maxpool 2×2</div>
+              <div class="lvl-box conv">Enc L2 · 256ch</div>
+              <div class="lvl-arrow">↓ maxpool 2×2</div>
+              <div class="lvl-box conv">Enc L3 · 512ch</div>
+              <div class="lvl-arrow">↓ maxpool 2×2</div>
+            </div>
+            <div class="lvl-col lvl-mid" style="justify-content:space-between; padding: 6px 0 32px;">
+              <div class="lvl-skip">⇢ concat</div>
+              <div class="lvl-skip">⇢ concat</div>
+              <div class="lvl-skip">⇢ concat</div>
+              <div class="lvl-skip">⇢ concat</div>
+            </div>
+            <div class="lvl-col">
+              <div class="lvl-box out">Dec L0 · 64ch → 1×1 conv</div>
+              <div class="lvl-arrow">↑ up-conv 2×2</div>
+              <div class="lvl-box conv">Dec L1 · 128ch</div>
+              <div class="lvl-arrow">↑ up-conv 2×2</div>
+              <div class="lvl-box conv">Dec L2 · 256ch</div>
+              <div class="lvl-arrow">↑ up-conv 2×2</div>
+              <div class="lvl-box conv">Dec L3 · 512ch</div>
+              <div class="lvl-arrow">↑ up-conv 2×2</div>
+            </div>
+          </div>
+          <div class="lvl-bottom">
+            <div class="lvl-box stage" style="width:220px;">Bottleneck · 1024ch<span>conv3×3+ReLU ×2</span></div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "U-Net":</strong> desenhado com o caminho de contração descendo à
+        esquerda até o bottleneck e o caminho de expansão subindo à direita, ligados por conexões horizontais —
+        o diagrama forma visualmente a letra "U".</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> é a cabeça configurada em
+        <code>train_fotovoltaica_colab_v2.ipynb</code> (<code>SEGMENTATION_HEAD='unet'</code>). O factory
+        implementa 4 variantes em <code>_build_unet</code> (factory.py): vanilla sem backbone, U-Net com um dos
+        11 backbones como encoder, e a variante <strong>Focus U-Net</strong>
+        (<code>USE_ATTENTION=True</code>) que substitui a concatenação simples por um <em>Focus Gate</em>
+        (atenção de canal + espacial + filtro focal γ) nas skip connections — a configuração atualmente usada
+        no notebook de treino, com <code>BACKBONE_NAME='inceptionresnet'</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- DEEPLABV3+ ---------------- -->
+  <div class="card" id="deeplabv3plus">
+    <div class="card-head">
+      <h3>DeepLabV3+</h3>
+      <span class="tag head-tag">Cabeça de segmentação</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original (paper)</dt><dd>imagens naturais RGB, resolução variável (ex.: Cityscapes 2048×1024)</dd>
+        <dt>Output</dt><dd>mapa denso por pixel, mesma resolução do input</dd>
+        <dt>Ano / venue</dt><dd>2018 · ECCV</dd>
+        <dt>Resultado reportado</dt><dd>89.0% mIoU (PASCAL VOC 2012) · 82.1% mIoU (Cityscapes)</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1802.02611" target="_blank" rel="noopener">Chen, Zhu, Papandreou, Schroff &amp; Adam — arXiv:1802.02611</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Combina o <strong>ASPP</strong> (Atrous Spatial Pyramid Pooling) do DeepLabv3 — convoluções atrous/
+        dilatadas em paralelo com taxas diferentes, capturando contexto multi-escala sem perder resolução — com
+        um decoder leve que recupera bordas de objetos fundindo uma feature de baixo nível do encoder.
+        Convoluções separáveis (depthwise) são usadas no ASPP e no decoder por eficiência.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Input</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Backbone atrous<span>stride 16</span></div>
+            <div class="arr">→</div>
+          </div>
+          <div class="branches" style="margin-left:2.4rem;">
+            <div class="branch-row"><span class="brace">┌</span><div class="blk conv">Conv 1×1</div></div>
+            <div class="branch-row"><span class="brace">├</span><div class="blk conv">Atrous 3×3 <span>r=6</span></div></div>
+            <div class="branch-row"><span class="brace">├</span><div class="blk conv">Atrous 3×3 <span>r=12</span></div></div>
+            <div class="branch-row"><span class="brace">├</span><div class="blk conv">Atrous 3×3 <span>r=18</span></div></div>
+            <div class="branch-row"><span class="brace">└</span><div class="blk pool">Global Avg Pool</div></div>
+          </div>
+          <div class="flow" style="margin-left:2.4rem;">
+            <div class="merge">⧉</div>
+            <div class="arr">→</div>
+            <div class="blk conv">Conv 1×1<span>256ch (ASPP out)</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">Upsample ×4</div>
+            <div class="arr">→</div>
+            <div class="merge">⧉</div>
+            <div class="arr">→</div>
+            <div class="blk conv">low-level<span>feature (1×1 conv)</span></div>
+          </div>
+          <div class="flow" style="margin-left:2.4rem;">
+            <div class="blk conv">Conv 3×3 ×2</div>
+            <div class="arr">→</div>
+            <div class="blk pool">Upsample ×4</div>
+            <div class="arr">→</div>
+            <div class="blk out">Mapa de segmentação</div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "DeepLabV3+":</strong> é a 4ª geração da série DeepLab (v1: atrous
+        conv + CRF; v2: ASPP; v3: ASPP melhorado + batch norm) — o "+" indica o módulo decoder adicionado sobre
+        o encoder do DeepLabv3.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> <code>_build_deeplabv3plus</code>
+        (factory.py) aceita <code>use_backbone=True/False</code> — com backbone, qualquer um dos 11 encoders
+        desta página pode alimentar o ASPP no lugar do Xception/ResNet original do paper.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- PSPNET ---------------- -->
+  <div class="card" id="pspnet">
+    <div class="card-head">
+      <h3>PSPNet</h3>
+      <span class="tag head-tag">Cabeça de segmentação</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original (paper)</dt><dd>imagens naturais RGB (ADE20K, Cityscapes, PASCAL VOC)</dd>
+        <dt>Output</dt><dd>mapa denso por pixel, upsampled à resolução do input</dd>
+        <dt>Ano / venue</dt><dd>2017 · CVPR</dd>
+        <dt>Resultado reportado</dt><dd>85.4% mIoU (VOC12) · 80.2% mIoU (Cityscapes) · 1º lugar ILSVRC 2016 scene parsing</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1612.01105" target="_blank" rel="noopener">Zhao, Shi, Qi, Wang &amp; Jia — arXiv:1612.01105</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>O <strong>Pyramid Pooling Module (PPM)</strong> agrega contexto global e sub-regional em múltiplas
+        escalas em paralelo, e funde de volta com as features locais — corrigindo o problema de FCNs simples
+        não enxergarem contexto global (confusão de categoria em cenas complexas).</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Input</div>
+            <div class="arr">→</div>
+            <div class="blk stage">ResNet dilatado<span>mantém 1/8 da resolução</span></div>
+            <div class="arr">→</div>
+          </div>
+          <div class="binrow" style="margin-left:2.4rem;">
+            <div class="bin">
+              <div class="bin-grid" style="grid-template-columns:repeat(1,11px);"><div></div></div>
+              <span class="bin-label">bin 1×1</span>
+            </div>
+            <div class="bin">
+              <div class="bin-grid" style="grid-template-columns:repeat(2,11px);"><div></div><div></div><div></div><div></div></div>
+              <span class="bin-label">bin 2×2</span>
+            </div>
+            <div class="bin">
+              <div class="bin-grid" style="grid-template-columns:repeat(3,11px);">
+                <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+              </div>
+              <span class="bin-label">bin 3×3</span>
+            </div>
+            <div class="bin">
+              <div class="bin-grid" style="grid-template-columns:repeat(6,8px);">
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+                <div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div><div style="width:8px;height:8px;"></div>
+              </div>
+              <span class="bin-label">bin 6×6</span>
+            </div>
+            <span style="color:var(--muted); font-size:.75rem;">→ 1×1 conv cada → upsample → </span>
+            <div class="merge">⧉</div>
+          </div>
+          <div class="flow" style="margin-left:2.4rem;">
+            <div class="blk conv">Conv 3×3 + 1×1</div>
+            <div class="arr">→</div>
+            <div class="blk pool">Upsample</div>
+            <div class="arr">→</div>
+            <div class="blk out">Mapa de segmentação</div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "PSPNet":</strong> Pyramid Scene Parsing Network — nomeado
+        diretamente pelo Pyramid Pooling Module, que "interpreta" (parses) a cena agregando contexto numa
+        pirâmide de escalas espaciais, do global (1×1) ao fino (6×6).</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> <code>_build_pspnet</code> (factory.py)
+        aceita vanilla ou qualquer um dos 11 backbones como extrator de features antes do PPM.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- FPN ---------------- -->
+  <div class="card" id="fpn">
+    <div class="card-head">
+      <h3>FPN <span style="color:var(--muted);font-weight:400;font-size:.9rem;">(Feature Pyramid Network)</span></h3>
+      <span class="tag head-tag">Cabeça de segmentação</span>
+      <span class="tag warn">originalmente detecção de objetos</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original (paper)</dt><dd>imagens naturais (COCO), ~800px no lado menor</dd>
+        <dt>Output original</dt><dd>propostas de região multi-escala + classes (dentro do Faster R-CNN) — não um mapa de segmentação</dd>
+        <dt>Ano / venue</dt><dd>2017 · CVPR</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1612.03144" target="_blank" rel="noopener">Lin, Dollár, Girshick, He, Hariharan &amp; Belongie — arXiv:1612.03144</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Explora a hierarquia piramidal natural de uma ConvNet acrescentando um caminho top-down com conexões
+        laterais que funde features de alta resolução/baixa semântica (bottom-up) com features de baixa
+        resolução/alta semântica (top-down) — produzindo uma pirâmide completa, forte semanticamente em toda
+        escala, com custo extra marginal sobre o backbone.</p>
+
+        <div class="diagram">
+          <div class="lvl-diagram">
+            <div class="lvl-col">
+              <div class="lvl-box conv">C5 · stride 32</div>
+              <div class="lvl-arrow">↓ conv/stride 2</div>
+              <div class="lvl-box conv">C4 · stride 16</div>
+              <div class="lvl-arrow">↓ conv/stride 2</div>
+              <div class="lvl-box conv">C3 · stride 8</div>
+              <div class="lvl-arrow">↓ conv/stride 2</div>
+              <div class="lvl-box conv">C2 · stride 4</div>
+            </div>
+            <div class="lvl-col lvl-mid" style="justify-content:space-around; padding: 6px 0 6px;">
+              <div class="lvl-skip">⇢ lateral 1×1<br>⊕ soma</div>
+              <div class="lvl-skip">⇢ lateral 1×1<br>⊕ soma</div>
+              <div class="lvl-skip">⇢ lateral 1×1<br>⊕ soma</div>
+            </div>
+            <div class="lvl-col">
+              <div class="lvl-box out">P5</div>
+              <div class="lvl-arrow">↑ upsample 2×</div>
+              <div class="lvl-box out">P4</div>
+              <div class="lvl-arrow">↑ upsample 2×</div>
+              <div class="lvl-box out">P3</div>
+              <div class="lvl-arrow">↑ upsample 2×</div>
+              <div class="lvl-box out">P2</div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:-.6rem;">
+          Bottom-up (esquerda, backbone) · Top-down + lateral (direita) → pirâmide P2..P5, cada nível já semanticamente forte.</p>
+
+        <div class="why-box"><strong>Por que "FPN":</strong> o nome descreve literalmente sua saída — uma
+        pirâmide de mapas de features em múltiplas resoluções, todas com sinal semântico forte, análoga às
+        pirâmides de imagem clássicas, mas construída a partir de features aprendidas.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> <code>_build_fpn</code> (factory.py)
+        implementa a cabeça com/sem backbone. Diferente do U-Net, não é a cabeça atualmente selecionada no
+        notebook de treino (que usa <code>unet</code>), mas está disponível como opção de
+        <code>SEGMENTATION_HEAD</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- SEGFORMER-B5 ---------------- -->
+  <div class="card" id="segformerb5">
+    <div class="card-head">
+      <h3>SegFormer-B5 <span style="color:var(--muted);font-weight:400;font-size:.9rem;">(MiT-B5)</span></h3>
+      <span class="tag head-tag">Cabeça de segmentação</span>
+      <span class="tag warn">nova — sem treino registrado ainda</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original (paper)</dt><dd>MiT pré-treinado em ImageNet-1k (224×224); segmentação avaliada em recortes 512×512 a 1024×1024 (Cityscapes / ADE20K / COCO-Stuff)</dd>
+        <dt>Output original</dt><dd>máscara de segmentação multi-classe (19 classes Cityscapes · 150 ADE20K · 171 COCO-Stuff)</dd>
+        <dt>Ano / venue</dt><dd>2021 · NeurIPS</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/2105.15203" target="_blank" rel="noopener">Xie, Wang, Yu, Anandkumar, Alvarez &amp; Luo — arXiv:2105.15203</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Encoder Transformer hierárquico ("Mixed Transformer", MiT) que produz features multi-escala como uma
+        ConvNet (4 estágios, stride 4/8/16/32) mas usando self-attention eficiente (redução de sequência por
+        estágio) em vez de convoluções — e, ao contrário de transformers de segmentação anteriores (ex. SETR),
+        <strong>sem positional encoding</strong>, evitando o problema de interpolar posições ao mudar a resolução
+        de teste. O decoder é deliberadamente leve: um "All-MLP" que projeta cada um dos 4 estágios para o mesmo
+        nº de canais, faz upsample para 1/4 da resolução, concatena e funde com duas camadas MLP — funciona porque
+        o encoder Transformer já dá campo receptivo grande em todo estágio, dispensando um decoder pesado tipo
+        U-Net/PSP.</p>
+
+        <div class="diagram">
+          <div class="lvl-diagram">
+            <div class="lvl-col">
+              <div class="lvl-box conv">Estágio 1 · stride 4<br>overlap patch merge + attn</div>
+              <div class="lvl-arrow">↓</div>
+              <div class="lvl-box conv">Estágio 2 · stride 8</div>
+              <div class="lvl-arrow">↓</div>
+              <div class="lvl-box conv">Estágio 3 · stride 16</div>
+              <div class="lvl-arrow">↓</div>
+              <div class="lvl-box conv">Estágio 4 · stride 32</div>
+            </div>
+            <div class="lvl-col lvl-mid" style="justify-content:space-around; padding: 6px 0 6px;">
+              <div class="lvl-skip">⇢ Linear (canais comuns)<br>↑ upsample 1/4</div>
+              <div class="lvl-skip">⇢ Linear<br>↑ upsample 1/4</div>
+              <div class="lvl-skip">⇢ Linear<br>↑ upsample 1/4</div>
+              <div class="lvl-skip">⇢ Linear<br>↑ upsample 1/4</div>
+            </div>
+            <div class="lvl-col">
+              <div class="lvl-box out">⧉ concat 4 estágios</div>
+              <div class="lvl-arrow">↓ MLP fuse</div>
+              <div class="lvl-box out">MLP → máscara (1/4 da resolução)</div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.78rem;color:var(--muted);text-align:center;margin-top:-.6rem;">
+          4 estágios hierárquicos (esquerda) → cada um projetado e upsampled para 1/4 da resolução → concatenados
+          e fundidos por um decoder "All-MLP" (direita), sem convoluções no decoder.</p>
+
+        <div class="why-box"><strong>Por que "SegFormer":</strong> contração de "Segmentation" + "Transformer" —
+        um design deliberadamente simples e eficiente para segmentação com transformers, em contraste com
+        propostas anteriores (ex. SETR) que dependiam de positional encoding e decoders mais pesados.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> cabeça nova em <code>_SUPPORTED_HEADS</code>
+        (factory.py), implementada em <code>_build_segformerb5</code> como bloco autocontido — ao contrário das
+        outras 4 cabeças, <strong>não aceita um backbone</strong> desta página como encoder (levanta
+        <code>ValueError</code> se <code>backbone_name</code> for passado) e ignora
+        <code>use_attention</code>/<code>focal_gamma</code>. ~82 M parâmetros. Disponível como opção de
+        <code>SEGMENTATION_HEAD='segformerb5'</code>, mas ainda sem nenhuma execução em
+        <code>models_index.json</code> — adicionada ao factory, não validada em treino.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SEÇÃO 2 — BACKBONES -->
+  <!-- ================================================================ -->
+  <div class="section-title">2. Backbones (classificação, encoder de transfer learning)</div>
+
+  <div class="callout" style="margin-bottom:1.2rem;">
+    <p><strong>Status de treinamento por backbone (Focus U-Net, checagem em 2026-07-14).</strong>
+    Com métricas finais registradas (<code>src/dados/history_unet_*.csv</code>, todos na versão de 8 bandas /
+    "L9"): <code>resnet152</code> (melhor: val_dice 0,910), <code>resnext50</code> (0,907), <code>xception</code>
+    (0,901), <code>mobilenet</code> (0,895) convergiram bem; <code>resnet50</code> teve uma execução parcial
+    (0,873, interrompida na época 19) e uma que não convergiu (~0,53); <code>resnet101</code> também não
+    convergiu (~0,50). Com checkpoint <code>.keras</code> salvo na versão de 5 bandas / "L5" mas <strong>sem
+    CSV de histórico</strong> (métricas ainda não recuperáveis): <code>efficientnetb7</code>,
+    <code>inceptionresnetv2</code> (backbone configurado no notebook de treino atual),
+    <code>resnet152</code> e <code>resnext50</code> (novas execuções) e <code>resnet50</code>. Sem nenhum
+    treino registrado até o momento: <code>inceptionv3</code>, <code>efficientnetb0</code>,
+    <code>efficientnetb3</code>.</p>
+  </div>
+
+  <!-- ---------------- INCEPTIONV3 ---------------- -->
+  <div class="card" id="inceptionv3">
+    <div class="card-head">
+      <h3>InceptionV3</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>299×299×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 23,9 M</dd>
+        <dt>Ano / venue</dt><dd>2016 · CVPR</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1512.00567" target="_blank" rel="noopener">Szegedy, Vanhoucke, Ioffe, Shlens &amp; Wojna — arXiv:1512.00567</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Módulos Inception rodam ramos de convolução paralelos (1×1, 3×3, pooling) concatenados — "network in
+        network", mais largo em vez de só mais profundo. Esta versão contribui com <strong>fatoração</strong>:
+        conv 5×5 → duas conv 3×3 empilhadas; conv n×n → par assimétrico 1×n + n×1 (mais barato); mais
+        classificadores auxiliares (como regularizadores) e redução de grid eficiente.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Stem<span>convs 3×3 + pool</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Inception-A<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Inception-B<span class="rep">×4</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Inception-C<span class="rep">×2</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk drop">Dropout</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000<span>softmax</span></div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 módulo Inception (ex.: Inception-A)</div>
+            <div class="branches">
+              <div class="branch-row"><span class="brace">┌</span><div class="blk conv" style="min-width:60px;">1×1</div></div>
+              <div class="branch-row"><span class="brace">├</span><div class="blk conv" style="min-width:60px;">1×1</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div></div>
+              <div class="branch-row"><span class="brace">├</span><div class="blk conv" style="min-width:60px;">1×1</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div></div>
+              <div class="branch-row"><span class="brace">└</span><div class="blk pool" style="min-width:60px;">pool</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">1×1</div></div>
+            </div>
+            <div style="text-align:center;margin-top:.3rem;"><span class="merge" style="display:inline-flex;">⧉</span></div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "Inception":</strong> o nome vem do paper original do GoogLeNet
+        (2014, "Going Deeper with Convolutions"), cujos autores citam em nota de rodapé o meme "we need to go
+        deeper", referência ao filme <em>A Origem</em> (Inception, 2010) — refletindo tanto a profundidade quanto
+        o design multi-ramo "mais largo" da rede.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração
+        (<code>_KERAS_BACKBONE_MAP</code>, factory.py:185): <code>mixed2</code> (low, stride≈4),
+        <code>mixed5</code> (medium, stride≈8), <code>mixed7</code> (high, stride≈16) — sinal de gating do Focus
+        Gate. Sempre <code>weights=None</code> (5 bandas espectrais).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- RESNET50 ---------------- -->
+  <div class="card" id="resnet50">
+    <div class="card-head">
+      <h3>ResNet-50</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 25,6 M (25.557.032)</dd>
+        <dt>Ano / venue</dt><dd>2016 · CVPR</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1512.03385" target="_blank" rel="noopener">He, Zhang, Ren &amp; Sun — arXiv:1512.03385</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Resolve o "problema de degradação": além de certa profundidade, o erro de <em>treino</em> piora ao
+        empilhar mais camadas (não é overfitting). A solução: em vez de aprender diretamente H(x), as camadas
+        aprendem a função residual F(x) = H(x) − x, reformulada como F(x) + x via atalho de identidade — que se
+        torna uma solução trivial de fallback, facilitando muito a otimização de redes muito profundas.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Conv 7×7/2<span>64 filtros</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">MaxPool 3×3/2</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×4</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×6</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco Bottleneck (conexão residual)</div>
+            <div class="flow small">
+              <div class="blk x">x</div>
+              <div class="arr">→</div>
+              <div class="blk conv">1×1<span>reduz</span></div>
+              <div class="arr">→</div>
+              <div class="blk conv">3×3</div>
+              <div class="arr">→</div>
+              <div class="blk conv">1×1<span>expande 4×</span></div>
+              <div class="arr">→</div>
+              <div class="merge">⊕</div>
+              <div class="arr">→</div>
+              <div class="blk out" style="min-width:56px;">ReLU</div>
+            </div>
+            <p style="font-size:.68rem;color:var(--accent7);text-align:center;margin-top:.3rem;">↩ atalho de identidade: x somado diretamente em ⊕ (ou projeção 1×1 quando as dimensões mudam)</p>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "Residual":</strong> vem diretamente da função residual
+        F(x) = H(x) − x que as camadas empilhadas aprendem, em vez do mapeamento direto H(x).</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>conv2_block3_out</code> (low) · <code>conv3_block4_out</code> (medium) ·
+        <code>conv4_block6_out</code> (high). Sempre <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- RESNET101 ---------------- -->
+  <div class="card" id="resnet101">
+    <div class="card-head">
+      <h3>ResNet-101</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 44,5 M (44.549.160)</dd>
+        <dt>Ano / venue</dt><dd>2016 · CVPR (mesmo paper do ResNet-50)</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1512.03385" target="_blank" rel="noopener">He, Zhang, Ren &amp; Sun — arXiv:1512.03385</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Mesma ideia de aprendizado residual do ResNet-50 (ver card acima) — esta variante testa como a
+        abordagem escala com mais profundidade, sem os problemas de otimização que redes simples ("plain")
+        dessa profundidade apresentariam.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Conv 7×7/2</div>
+            <div class="arr">→</div>
+            <div class="blk pool">MaxPool 3×3/2</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×4</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage" style="border-color:var(--accent5);color:var(--accent5);">Bottleneck<span class="rep" style="background:var(--accent5);">×23</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+        </div>
+        <p style="font-size:.8rem;">Diferença estrutural para o ResNet-50: o estágio <code>conv4_x</code> salta
+        de 6 para <strong>23</strong> blocos — o mesmo bloco Bottleneck do ResNet-50 (1×1→3×3→1×1 + atalho), só
+        que repetido muito mais vezes nesse estágio.</p>
+
+        <div class="why-box"><strong>Por que "Residual":</strong> mesma origem do nome que o ResNet-50 — a
+        função residual F(x)=H(x)−x aprendida em cada bloco.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>conv2_block3_out</code> (low) · <code>conv3_block4_out</code> (medium) ·
+        <code>conv4_block23_out</code> (high, já refletindo os 23 blocos do estágio). Sempre
+        <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- RESNET152 ---------------- -->
+  <div class="card" id="resnet152">
+    <div class="card-head">
+      <h3>ResNet-152</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 60,2 M (60.192.808)</dd>
+        <dt>Ano / venue</dt><dd>2016 · CVPR (mesmo paper do ResNet-50)</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1512.03385" target="_blank" rel="noopener">He, Zhang, Ren &amp; Sun — arXiv:1512.03385</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>A variante mais profunda testada no paper original — mesmo princípio residual, com os estágios
+        intermediários bem mais longos, ainda treinável graças aos atalhos de identidade.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Conv 7×7/2</div>
+            <div class="arr">→</div>
+            <div class="blk pool">MaxPool 3×3/2</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage" style="border-color:var(--accent5);color:var(--accent5);">Bottleneck<span class="rep" style="background:var(--accent5);">×8</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage" style="border-color:var(--accent5);color:var(--accent5);">Bottleneck<span class="rep" style="background:var(--accent5);">×36</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bottleneck<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+        </div>
+        <p style="font-size:.8rem;">Contagem de blocos por estágio: [3, 8, 36, 3] — a mais profunda das três
+        variantes ResNet documentadas no paper original.</p>
+
+        <div class="why-box"><strong>Por que "Residual":</strong> mesma origem do nome que ResNet-50/101.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>conv2_block3_out</code> (low) · <code>conv3_block8_out</code> (medium) ·
+        <code>conv4_block36_out</code> (high). Sempre <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- RESNEXT50 ---------------- -->
+  <div class="card" id="resnext50">
+    <div class="card-head">
+      <h3>ResNeXt-50 (32×4d)</h3>
+      <span class="tag backbone-tag">Backbone</span>
+      <span class="tag warn">⚠ alias no código</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros (paper)</dt><dd>≈ 25,0 M (comparável de propósito ao ResNet-50: 25,5M)</dd>
+        <dt>Ano / venue</dt><dd>2017 · CVPR</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1611.05431" target="_blank" rel="noopener">Xie, Girshick, Dollár, Tu &amp; He — arXiv:1611.05431</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Introduz a <strong>cardinalidade</strong> (C) — número de ramos de transformação paralelos — como
+        uma terceira dimensão de design, além de profundidade e largura. Cada bloco divide o input em C=32
+        caminhos de baixa dimensão, transforma cada um com topologia idêntica (split-transform-merge) e agrega o
+        resultado antes de somar o atalho residual — implementado eficientemente como convolução agrupada
+        (grouped convolution). É um híbrido entre os ramos múltiplos do Inception e as conexões residuais do
+        ResNet, mas com ramos idênticos (não customizados à mão como no Inception).</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Conv 7×7/2</div>
+            <div class="arr">→</div>
+            <div class="blk pool">MaxPool 3×3/2</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bloco C=32<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bloco C=32<span class="rep">×4</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bloco C=32<span class="rep">×6</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Bloco C=32<span class="rep">×3</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco (32 caminhos agregados, largura 4 cada)</div>
+            <div class="branches">
+              <div class="branch-row"><span class="brace">┌</span><div class="blk conv" style="min-width:110px;">1×1 → 3×3 → 1×1 <span>(caminho 1)</span></div></div>
+              <div class="branch-row"><span class="brace">├</span><div class="blk conv" style="min-width:110px;">1×1 → 3×3 → 1×1 <span>(caminho 2)</span></div></div>
+              <div class="branch-row"><span class="brace">├</span><div class="blk conv" style="min-width:60px;">⋮</div></div>
+              <div class="branch-row"><span class="brace">└</span><div class="blk conv" style="min-width:110px;">1×1 → 3×3 → 1×1 <span>(caminho 32)</span></div></div>
+            </div>
+            <div style="text-align:center;margin-top:.3rem;"><span class="merge" style="display:inline-flex;">⊕</span></div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "ResNeXt":</strong> o próprio paper afirma que o nome sugere "a
+        próxima dimensão" (<em>next dimension</em>) — a cardinalidade como próximo eixo de design de rede após
+        profundidade e largura, mantendo a herança "Res" (residual) do ResNet. É uma afirmação direta dos
+        autores, não uma interpretação.</div>
+
+        <div class="alias-warn"><strong>Nota importante sobre este projeto:</strong> em
+        <code>segmentation_model_factory.py</code>, a chave <code>'resnext50'</code> mapeia, na prática, para
+        <code>keras.applications.ResNet50</code> (factory.py:189) — o Keras não tem uma implementação nativa de
+        ResNeXt. Ou seja, ao selecionar <code>backbone_name='resnext50'</code> hoje, o modelo construído é
+        estruturalmente idêntico ao ResNet-50 (mesmas camadas de extração
+        <code>conv2_block3_out</code>/<code>conv3_block4_out</code>/<code>conv4_block6_out</code>), sem as
+        convoluções agrupadas / cardinalidade real descritas acima. Este card documenta a arquitetura ResNeXt
+        original da literatura, não o que o código de fato executa sob esse nome.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- MOBILENET ---------------- -->
+  <div class="card" id="mobilenet">
+    <div class="card-head">
+      <h3>MobileNet (v1)</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3 (α=1.0)</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 4,3 M · Top-1 70,4%</dd>
+        <dt>Ano</dt><dd>2017 · Google</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1704.04861" target="_blank" rel="noopener">Howard et al. — arXiv:1704.04861</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Substitui convoluções padrão por <strong>convoluções separáveis em profundidade</strong> (depthwise
+        separable): uma conv depthwise 3×3 (um filtro por canal, só espacial) seguida de uma conv pointwise 1×1
+        (mistura os canais) — corta computação/parâmetros em ~8-9× com acurácia similar. Dois hiperparâmetros
+        globais permitem trocar acurácia por latência: multiplicador de largura α (afina canais) e multiplicador
+        de resolução ρ (reduz o input).</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Conv 3×3/2<span>padrão</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Depthwise-sep.<span class="rep">×13</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco depthwise separable</div>
+            <div class="flow small">
+              <div class="blk conv">Depthwise 3×3<span>1 filtro/canal</span></div>
+              <div class="arr">→</div>
+              <div class="blk bn">BN + ReLU6</div>
+              <div class="arr">→</div>
+              <div class="blk conv">Pointwise 1×1<span>mistura canais</span></div>
+              <div class="arr">→</div>
+              <div class="blk bn">BN + ReLU6</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "MobileNet":</strong> projetada explicitamente para rodar em
+        celulares e dispositivos embarcados — arquitetura pensada primeiro para eficiência/latência, não para
+        maximizar acurácia a qualquer custo.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>conv_pw_3_relu</code> (low) · <code>conv_pw_5_relu</code> (medium) ·
+        <code>conv_pw_11_relu</code> (high). Sempre <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- XCEPTION ---------------- -->
+  <div class="card" id="xception">
+    <div class="card-head">
+      <h3>Xception</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>299×299×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 22,9 M (comparável ao InceptionV3, ~23,9M)</dd>
+        <dt>Ano / venue</dt><dd>2017 · CVPR</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1610.02357" target="_blank" rel="noopener">Chollet — arXiv:1610.02357</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Reinterpreta módulos Inception como um meio-termo entre convolução padrão e a separação total entre
+        correlações espaciais e entre canais. A "Inception extrema" leva isso ao limite: cada módulo Inception é
+        substituído por uma convolução separável em profundidade (depthwise + pointwise 1×1), desacoplando
+        totalmente o aprendizado espacial do aprendizado entre canais; conexões residuais são usadas em toda a
+        rede.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk stage">Entry flow<span>stem + 3 blocos residuais</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Middle flow<span class="rep">×8</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Exit flow<span>downsample + 2 conv sep.</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco do Middle flow (residual)</div>
+            <div class="flow small">
+              <div class="blk x">x</div>
+              <div class="arr">→</div>
+              <div class="blk conv">Sep.conv 3×3<span>×3</span></div>
+              <div class="arr">→</div>
+              <div class="merge">⊕</div>
+            </div>
+            <p style="font-size:.68rem;color:var(--accent7);text-align:center;margin-top:.3rem;">↩ atalho de identidade, igual ao ResNet</p>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "Xception":</strong> "Extreme Inception" — leva a hipótese do
+        Inception (que correlações espaciais e entre canais podem ser desacopladas) à sua conclusão extrema, via
+        convoluções totalmente separáveis.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>block3_sepconv2_act</code> (low) · <code>block9_sepconv2_act</code> (medium) ·
+        <code>block13_sepconv2_act</code> (high). Sempre <code>weights=None</code>. É também o backbone original
+        usado no paper do DeepLabV3+.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- EFFICIENTNETB0 ---------------- -->
+  <div class="card" id="efficientnetb0">
+    <div class="card-head">
+      <h3>EfficientNet-B0</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>224×224×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 5,3 M · Top-1 77,1%</dd>
+        <dt>Ano / venue</dt><dd>2019 · ICML</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1905.11946" target="_blank" rel="noopener">Tan &amp; Le — arXiv:1905.11946</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Em vez de escalar profundidade, largura ou resolução isoladamente (prática arbitrária anterior),
+        usa <strong>escalonamento composto</strong>: um único coeficiente φ escala as três dimensões juntas
+        (profundidade=α^φ, largura=β^φ, resolução=γ^φ). B0 é a rede-base encontrada via busca de arquitetura
+        neural (NAS), construída com blocos <strong>MBConv</strong> (mobile inverted bottleneck, herdado do
+        MobileNetV2/MnasNet) com squeeze-and-excitation. B0 corresponde a φ=0 — a base sobre a qual B1-B7 escalam.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Stem conv</div>
+            <div class="arr">→</div>
+            <div class="blk stage">MBConv<span>7 estágios, k e repetições variam</span></div>
+            <div class="arr">→</div>
+            <div class="blk conv">Head conv 1×1</div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk drop">Dropout</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco MBConv</div>
+            <div class="flow small">
+              <div class="blk x">x</div>
+              <div class="arr">→</div>
+              <div class="blk conv">1×1 expand</div>
+              <div class="arr">→</div>
+              <div class="blk conv">Depthwise<span>3×3 ou 5×5</span></div>
+              <div class="arr">→</div>
+              <div class="blk bn">Squeeze-Excite</div>
+              <div class="arr">→</div>
+              <div class="blk conv">1×1 project</div>
+              <div class="arr">→</div>
+              <div class="merge">⊕</div>
+            </div>
+            <p style="font-size:.68rem;color:var(--accent7);text-align:center;margin-top:.3rem;">↩ atalho residual quando input/output têm mesma forma</p>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "EfficientNet":</strong> o método de escalonamento composto atinge
+        muito mais acurácia por FLOP/parâmetro do que redes escaladas de forma arbitrária — B0-B7 indexam valores
+        crescentes do coeficiente composto φ (rede maior, resolução maior, mais acurácia, mais custo).</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>block3a_expand_activation</code> (low) · <code>block4a_expand_activation</code> (medium) ·
+        <code>block6a_expand_activation</code> (high). Sempre <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- EFFICIENTNETB3 ---------------- -->
+  <div class="card" id="efficientnetb3">
+    <div class="card-head">
+      <h3>EfficientNet-B3</h3>
+      <span class="tag backbone-tag">Backbone</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>300×300×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 12,3 M · Top-1 81,6%</dd>
+        <dt>Ano / venue</dt><dd>2019 · ICML (mesmo paper do B0)</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1905.11946" target="_blank" rel="noopener">Tan &amp; Le — arXiv:1905.11946</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Mesma família e mesmos blocos MBConv do EfficientNet-B0 (ver card acima) — B3 aplica o coeficiente
+        composto φ com valor maior, escalando profundidade, largura <em>e</em> resolução de entrada
+        simultaneamente segundo as fórmulas fixas do paper.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Stem conv</div>
+            <div class="arr">→</div>
+            <div class="blk stage">MBConv<span>7 estágios, mais canais/repetições que B0</span></div>
+            <div class="arr">→</div>
+            <div class="blk conv">Head conv 1×1</div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk drop">Dropout</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:.78rem;margin-top:.4rem;">
+          <tr style="color:var(--muted);text-align:left;"><th style="padding:.3rem 0;">Variante</th><th>Input</th><th>Parâmetros</th><th>Top-1</th></tr>
+          <tr style="border-top:1px solid var(--border);"><td style="padding:.3rem 0;">B0</td><td>224×224</td><td>5,3M</td><td>77,1%</td></tr>
+          <tr style="border-top:1px solid var(--border);color:var(--accent2);"><td style="padding:.3rem 0;">B3</td><td>300×300</td><td>12,3M</td><td>81,6%</td></tr>
+          <tr style="border-top:1px solid var(--border);"><td style="padding:.3rem 0;">B7</td><td>600×600</td><td>66,7M</td><td>84,3%</td></tr>
+        </table>
+
+        <div class="why-box"><strong>Por que "EfficientNet-B3":</strong> mesmo racional do B0 — o "3" indica um
+        ponto intermediário na escala do coeficiente composto φ entre o baseline B0 e o maior B7.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração — idênticas por nome
+        às do B0: <code>block3a_expand_activation</code> (low) · <code>block4a_expand_activation</code>
+        (medium) · <code>block6a_expand_activation</code> (high). Sempre <code>weights=None</code>.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- EFFICIENTNETB7 ---------------- -->
+  <div class="card" id="efficientnetb7">
+    <div class="card-head">
+      <h3>EfficientNet-B7</h3>
+      <span class="tag backbone-tag">Backbone</span>
+      <span class="tag current">★ usado no notebook de predição</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>600×600×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 66,7 M · Top-1 84,3%</dd>
+        <dt>Ano / venue</dt><dd>2019 · ICML (mesmo paper do B0)</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1905.11946" target="_blank" rel="noopener">Tan &amp; Le — arXiv:1905.11946</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>A maior variante da família original (B0-B7): mesmos blocos MBConv + squeeze-excitation, escalados ao
+        máximo pelo coeficiente composto φ — maior profundidade, largura e resolução de entrada, maior custo
+        computacional, maior acurácia no ImageNet original.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Stem conv</div>
+            <div class="arr">→</div>
+            <div class="blk stage">MBConv<span>7 estágios, canais/repetições no máximo</span></div>
+            <div class="arr">→</div>
+            <div class="blk conv">Head conv 1×1</div>
+            <div class="arr">→</div>
+            <div class="blk pool">GAP</div>
+            <div class="arr">→</div>
+            <div class="blk drop">Dropout</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "EfficientNet-B7":</strong> mesmo racional do B0/B3 — "7" é o maior
+        valor de φ testado no paper original, priorizando acurácia máxima sobre eficiência.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração diferem levemente das
+        de B0/B3: <code>block3a_expand_activation</code> (low) · <code>block5a_expand_activation</code>
+        (medium — não <code>block4a</code>) · <code>block7a_expand_activation</code> (high). Sempre
+        <code>weights=None</code>. É o backbone citado no checkpoint usado em
+        <code>notebooks/makePredict_fromTIF_sortedByQuantity_colab.ipynb</code>
+        (<code>best_5L_unet_efficientnetb7_...</code>).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ---------------- INCEPTIONRESNETV2 ---------------- -->
+  <div class="card" id="inceptionresnetv2">
+    <div class="card-head">
+      <h3>Inception-ResNet-v2</h3>
+      <span class="tag backbone-tag">Backbone</span>
+      <span class="tag current">★ usado no treino atual</span>
+    </div>
+    <div class="card-body">
+      <dl class="facts">
+        <dt>Input original</dt><dd>299×299×3</dd>
+        <dt>Classes de saída (original)</dt><dd>1000 (ImageNet)</dd>
+        <dt>Parâmetros</dt><dd>≈ 55,9 M</dd>
+        <dt>Ano</dt><dd>2016/2017 · AAAI</dd>
+        <dt>Referência</dt><dd><a href="https://arxiv.org/abs/1602.07261" target="_blank" rel="noopener">Szegedy, Ioffe, Vanhoucke &amp; Alemi — arXiv:1602.07261</a></dd>
+      </dl>
+      <div class="main-col">
+        <h4>Ideia central</h4>
+        <p>Híbrido que combina módulos Inception (multi-ramo) com conexões residuais/atalho ao redor de cada
+        bloco Inception — acelera bastante a convergência do treino em relação ao Inception puro (Inception-v4),
+        com custo computacional parecido, sem precisar do pooling caro de concatenação que o Inception simples
+        usava nas reduções.</p>
+
+        <div class="diagram">
+          <div class="flow">
+            <div class="blk conv">Stem<span>299→35×35×192</span></div>
+            <div class="arr">→</div>
+            <div class="blk stage">Inception-ResNet-A<span class="rep">×10</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">Reduction-A</div>
+            <div class="arr">→</div>
+            <div class="blk stage" style="border-color:var(--accent5);color:var(--accent5);">Inception-ResNet-B<span class="rep" style="background:var(--accent5);">×20</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">Reduction-B</div>
+            <div class="arr">→</div>
+            <div class="blk stage">Inception-ResNet-C<span class="rep">×10</span></div>
+            <div class="arr">→</div>
+            <div class="blk pool">Avg Pool</div>
+            <div class="arr">→</div>
+            <div class="blk drop">Dropout</div>
+            <div class="arr">→</div>
+            <div class="blk out">FC 1000</div>
+          </div>
+          <div class="inset">
+            <div class="inset-title">Dentro de 1 bloco Inception-ResNet (ex.: tipo A)</div>
+            <div class="branches">
+              <div class="branch-row"><span class="brace">┌</span><div class="blk conv" style="min-width:60px;">1×1</div></div>
+              <div class="branch-row"><span class="brace">├</span><div class="blk conv" style="min-width:60px;">1×1</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div></div>
+              <div class="branch-row"><span class="brace">└</span><div class="blk conv" style="min-width:60px;">1×1</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div><div class="arr">→</div><div class="blk conv" style="min-width:60px;">3×3</div></div>
+            </div>
+            <div class="flow small" style="margin-top:.3rem;">
+              <div class="merge">⧉</div><div class="arr">→</div><div class="blk conv" style="min-width:56px;">1×1</div><div class="arr">→</div><div class="merge">⊕</div>
+            </div>
+            <p style="font-size:.68rem;color:var(--accent7);text-align:center;margin-top:.3rem;">↩ atalho residual, igual ao ResNet</p>
+          </div>
+        </div>
+
+        <div class="why-box"><strong>Por que "Inception-ResNet-v2":</strong> fusão literal de "Inception"
+        (herança multi-ramo/"network in network") com "ResNet" (conexões residuais de He et al.); o "v2"
+        distingue esta versão da Inception-ResNet-v1, introduzida no mesmo paper.</div>
+
+        <div class="project-box"><strong>Uso neste projeto:</strong> camadas de extração:
+        <code>activation_3</code> (low) · <code>block17_10_ac</code> (medium) · <code>block17_20_ac</code>
+        (high). Sempre <code>weights=None</code>. É o backbone configurado no notebook de treino atual
+        (<code>BACKBONE_NAME='inceptionresnet'</code>, resolvido para <code>inceptionresnetv2</code> em
+        <code>_BACKBONE_ALIASES</code>), combinado com a cabeça Focus U-Net.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Página de referência gerada para o pipeline de mapeamento de sistemas fotovoltaicos — MapBiomas Energia.
+  Fatos verificados via arXiv / CVF Open Access; diagramas são esquemas próprios, não reproduções das figuras
+  originais dos papers. Consulte os links de cada card para as figuras originais.
+</footer>
+
+</body>
+</html>

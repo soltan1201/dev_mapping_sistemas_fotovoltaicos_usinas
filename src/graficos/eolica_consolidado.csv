@@ -1,0 +1,156 @@
+year,version,area_ha,tipo_region,nome_region,sigla_region
+2016,0-4-12-spt-4,4.67100509643555,bioma,Mata Atlântica,MAT
+2017,0-4-12-spt-4,43.568322253418,bioma,Mata Atlântica,MAT
+2018,0-4-12-spt-4,87.5408171386719,bioma,Mata Atlântica,MAT
+2019,0-4-12-spt-4,226.438065014648,bioma,Mata Atlântica,MAT
+2020,0-4-12-spt-4,258.019165625,bioma,Mata Atlântica,MAT
+2021,0-4-12-spt-4,278.42177399292,bioma,Mata Atlântica,MAT
+2022,0-4-12-spt-4,303.605822735596,bioma,Mata Atlântica,MAT
+2023,0-4-12-spt-4,323.258896154785,bioma,Mata Atlântica,MAT
+2024,0-4-12-spt-4,336.318827410889,bioma,Mata Atlântica,MAT
+2025,0-4-12-spt-4,357.818983398438,bioma,Mata Atlântica,MAT
+2016,0-4-12-spt-4,3605.41640176391,bioma,Caatinga,CAT
+2017,0-4-12-spt-4,5564.50839999389,bioma,Caatinga,CAT
+2018,0-4-12-spt-4,6830.70456364135,bioma,Caatinga,CAT
+2019,0-4-12-spt-4,11975.821479718,bioma,Caatinga,CAT
+2020,0-4-12-spt-4,14310.2655918823,bioma,Caatinga,CAT
+2021,0-4-12-spt-4,16908.0725190552,bioma,Caatinga,CAT
+2022,0-4-12-spt-4,19540.4006910035,bioma,Caatinga,CAT
+2023,0-4-12-spt-4,21742.037401233,bioma,Caatinga,CAT
+2024,0-4-12-spt-4,23415.6287344666,bioma,Caatinga,CAT
+2025,0-4-12-spt-4,24445.3201017578,bioma,Caatinga,CAT
+2016,0-4-12-spt-4,1078.29389500122,bioma,Cerrado,CER
+2017,0-4-12-spt-4,1302.47279252929,bioma,Cerrado,CER
+2018,0-4-12-spt-4,1339.62140728149,bioma,Cerrado,CER
+2019,0-4-12-spt-4,1507.46081808471,bioma,Cerrado,CER
+2020,0-4-12-spt-4,1616.80414552002,bioma,Cerrado,CER
+2021,0-4-12-spt-4,1668.29592282715,bioma,Cerrado,CER
+2022,0-4-12-spt-4,1905.29391125488,bioma,Cerrado,CER
+2023,0-4-12-spt-4,2005.43920609741,bioma,Cerrado,CER
+2024,0-4-12-spt-4,2121.42187089843,bioma,Cerrado,CER
+2025,0-4-12-spt-4,2180.21478304443,bioma,Cerrado,CER
+2016,0-4-12-spt-4,94.6296344360351,bioma,Pampa,PAM
+2017,0-4-12-spt-4,879.439103326415,bioma,Pampa,PAM
+2018,0-4-12-spt-4,964.552606335449,bioma,Pampa,PAM
+2019,0-4-12-spt-4,1008.96658944702,bioma,Pampa,PAM
+2020,0-4-12-spt-4,1091.36195315552,bioma,Pampa,PAM
+2021,0-4-12-spt-4,1185.00991012573,bioma,Pampa,PAM
+2022,0-4-12-spt-4,1424.59440952149,bioma,Pampa,PAM
+2023,0-4-12-spt-4,1506.37667148438,bioma,Pampa,PAM
+2024,0-4-12-spt-4,1590.64090438233,bioma,Pampa,PAM
+2025,0-4-12-spt-4,1695.64462432862,bioma,Pampa,PAM
+2016,0-4-12-spt-4,1941.072665100098,estado,Bahia,BA
+2017,0-4-12-spt-4,2989.302696844484,estado,Bahia,BA
+2018,0-4-12-spt-4,3571.0021716735846,estado,Bahia,BA
+2019,0-4-12-spt-4,4347.180435913086,estado,Bahia,BA
+2020,0-4-12-spt-4,5005.464227868653,estado,Bahia,BA
+2021,0-4-12-spt-4,5812.691473248293,estado,Bahia,BA
+2022,0-4-12-spt-4,6775.068796215823,estado,Bahia,BA
+2023,0-4-12-spt-4,7635.526292749027,estado,Bahia,BA
+2024,0-4-12-spt-4,8307.960425842288,estado,Bahia,BA
+2025,0-4-12-spt-4,8489.424247534178,estado,Bahia,BA
+2016,0-4-12-spt-4,406.3250393859863,estado,Ceará,CE
+2017,0-4-12-spt-4,872.7722385192877,estado,Ceará,CE
+2018,0-4-12-spt-4,924.0332966796872,estado,Ceará,CE
+2019,0-4-12-spt-4,1849.9950577941904,estado,Ceará,CE
+2020,0-4-12-spt-4,2115.1966167236333,estado,Ceará,CE
+2021,0-4-12-spt-4,2322.3426458068866,estado,Ceará,CE
+2022,0-4-12-spt-4,2434.775011517335,estado,Ceará,CE
+2023,0-4-12-spt-4,2564.687857617186,estado,Ceará,CE
+2024,0-4-12-spt-4,2631.4106786132807,estado,Ceará,CE
+2025,0-4-12-spt-4,2764.644516552735,estado,Ceará,CE
+2017,0-4-12-spt-4,146.36941897583014,estado,Maranhão,MA
+2018,0-4-12-spt-4,147.08380621948248,estado,Maranhão,MA
+2019,0-4-12-spt-4,267.9998995178223,estado,Maranhão,MA
+2020,0-4-12-spt-4,342.83633616943376,estado,Maranhão,MA
+2021,0-4-12-spt-4,375.0751349121098,estado,Maranhão,MA
+2022,0-4-12-spt-4,409.9033275939942,estado,Maranhão,MA
+2023,0-4-12-spt-4,430.8896848388671,estado,Maranhão,MA
+2024,0-4-12-spt-4,436.6051018432617,estado,Maranhão,MA
+2025,0-4-12-spt-4,451.3401589599605,estado,Maranhão,MA
+2016,0-4-12-spt-4,3.017307257080078,estado,Paraíba,PB
+2017,0-4-12-spt-4,93.20705360717773,estado,Paraíba,PB
+2018,0-4-12-spt-4,93.118278137207,estado,Paraíba,PB
+2019,0-4-12-spt-4,183.78577155151376,estado,Paraíba,PB
+2020,0-4-12-spt-4,484.4034777404784,estado,Paraíba,PB
+2021,0-4-12-spt-4,561.5322772338872,estado,Paraíba,PB
+2022,0-4-12-spt-4,678.5953138000492,estado,Paraíba,PB
+2023,0-4-12-spt-4,784.9174000915528,estado,Paraíba,PB
+2024,0-4-12-spt-4,1095.0789987365724,estado,Paraíba,PB
+2025,0-4-12-spt-4,1241.0725024230962,estado,Paraíba,PB
+2016,0-4-12-spt-4,532.2446840026857,estado,Pernambuco,PE
+2017,0-4-12-spt-4,624.4112893249508,estado,Pernambuco,PE
+2018,0-4-12-spt-4,779.4265364379875,estado,Pernambuco,PE
+2019,0-4-12-spt-4,837.34242277832,estado,Pernambuco,PE
+2020,0-4-12-spt-4,867.3036850952146,estado,Pernambuco,PE
+2021,0-4-12-spt-4,930.7345212036128,estado,Pernambuco,PE
+2022,0-4-12-spt-4,1055.30500256958,estado,Pernambuco,PE
+2023,0-4-12-spt-4,1143.513879394531,estado,Pernambuco,PE
+2024,0-4-12-spt-4,1219.9844438781736,estado,Pernambuco,PE
+2025,0-4-12-spt-4,1265.399189404297,estado,Pernambuco,PE
+2016,0-4-12-spt-4,754.8615382873535,estado,Piauí,PI
+2017,0-4-12-spt-4,1009.2625996276852,estado,Piauí,PI
+2018,0-4-12-spt-4,1376.511671136474,estado,Piauí,PI
+2019,0-4-12-spt-4,1709.2756858154296,estado,Piauí,PI
+2020,0-4-12-spt-4,2007.8782602966303,estado,Piauí,PI
+2021,0-4-12-spt-4,2426.38081769409,estado,Piauí,PI
+2022,0-4-12-spt-4,2844.608703009033,estado,Piauí,PI
+2023,0-4-12-spt-4,3232.733588928222,estado,Piauí,PI
+2024,0-4-12-spt-4,3347.831306317138,estado,Piauí,PI
+2025,0-4-12-spt-4,3442.8388723510743,estado,Piauí,PI
+2016,0-4-12-spt-4,1038.4439438781735,estado,Rio Grande do Norte,RN
+2017,0-4-12-spt-4,1118.595260266113,estado,Rio Grande do Norte,RN
+2018,0-4-12-spt-4,1265.6622181030273,estado,Rio Grande do Norte,RN
+2019,0-4-12-spt-4,4402.963194171143,estado,Rio Grande do Norte,RN
+2020,0-4-12-spt-4,5242.569231933594,estado,Rio Grande do Norte,RN
+2021,0-4-12-spt-4,6304.887795635988,estado,Rio Grande do Norte,RN
+2022,0-4-12-spt-4,7425.827338250732,estado,Rio Grande do Norte,RN
+2023,0-4-12-spt-4,8152.368544964599,estado,Rio Grande do Norte,RN
+2024,0-4-12-spt-4,8700.14664179688,estado,Rio Grande do Norte,RN
+2025,0-4-12-spt-4,9194.078382611087,estado,Rio Grande do Norte,RN
+2016,0-4-12-spt-4,99.3783590759277,estado,Rio Grande do Sul,RS
+2017,0-4-12-spt-4,883.8105114501956,estado,Rio Grande do Sul,RS
+2018,0-4-12-spt-4,969.3871556701662,estado,Rio Grande do Sul,RS
+2019,0-4-12-spt-4,1014.3278819641116,estado,Rio Grande do Sul,RS
+2020,0-4-12-spt-4,1098.431633544922,estado,Rio Grande do Sul,RS
+2021,0-4-12-spt-4,1191.3259726074218,estado,Rio Grande do Sul,RS
+2022,0-4-12-spt-4,1430.9077470947268,estado,Rio Grande do Sul,RS
+2023,0-4-12-spt-4,1512.9144341003407,estado,Rio Grande do Sul,RS
+2024,0-4-12-spt-4,1596.9486444274887,estado,Rio Grande do Sul,RS
+2025,0-4-12-spt-4,1702.7360300720195,estado,Rio Grande do Sul,RS
+2018,0-4-12-spt-4,14.325127923583992,estado,Rio de Janeiro,RJ
+2019,0-4-12-spt-4,15.24131737670899,estado,Rio de Janeiro,RJ
+2020,0-4-12-spt-4,15.0747491394043,estado,Rio de Janeiro,RJ
+2021,0-4-12-spt-4,15.0747491394043,estado,Rio de Janeiro,RJ
+2022,0-4-12-spt-4,15.158033258056644,estado,Rio de Janeiro,RJ
+2023,0-4-12-spt-4,15.158033258056644,estado,Rio de Janeiro,RJ
+2024,0-4-12-spt-4,15.158033258056644,estado,Rio de Janeiro,RJ
+2025,0-4-12-spt-4,15.158033258056644,estado,Rio de Janeiro,RJ
+2017,0-4-12-spt-4,10.257721582031246,estado,Santa Catarina,SC
+2018,0-4-12-spt-4,32.312160876464844,estado,Santa Catarina,SC
+2019,0-4-12-spt-4,36.11050480957031,estado,Santa Catarina,SC
+2020,0-4-12-spt-4,37.45067182617188,estado,Santa Catarina,SC
+2021,0-4-12-spt-4,37.52950330810548,estado,Santa Catarina,SC
+2022,0-4-12-spt-4,37.52950330810547,estado,Santa Catarina,SC
+2023,0-4-12-spt-4,37.52556810302735,estado,Santa Catarina,SC
+2024,0-4-12-spt-4,37.52556810302735,estado,Santa Catarina,SC
+2025,0-4-12-spt-4,44.587406640625005,estado,Santa Catarina,SC
+2017,0-4-12-spt-4,28.28819863281238,estado,Sergipe,SE
+2018,0-4-12-spt-4,34.43768761596667,estado,Sergipe,SE
+2019,0-4-12-spt-4,36.28255393676746,estado,Sergipe,SE
+2020,0-4-12-spt-4,36.80965638427724,estado,Sergipe,SE
+2021,0-4-12-spt-4,38.21524707641591,estado,Sergipe,SE
+2022,0-4-12-spt-4,38.30310298461903,estado,Sergipe,SE
+2023,0-4-12-spt-4,39.00590132446278,estado,Sergipe,SE
+2024,0-4-12-spt-4,40.32366795043936,estado,Sergipe,SE
+2025,0-4-12-spt-4,42.69564958496088,estado,Sergipe,SE
+2016,0-4-12-spt-4,4783.0109362976,pais,Brasil,BR
+2017,0-4-12-spt-4,7789.98861810302,pais,Brasil,BR
+2018,0-4-12-spt-4,9222.41939439697,pais,Brasil,BR
+2019,0-4-12-spt-4,14718.6869522644,pais,Brasil,BR
+2020,0-4-12-spt-4,17276.4508561829,pais,Brasil,BR
+2021,0-4-12-spt-4,20039.800126001,pais,Brasil,BR
+2022,0-4-12-spt-4,23173.8948345154,pais,Brasil,BR
+2023,0-4-12-spt-4,25577.1121749695,pais,Brasil,BR
+2024,0-4-12-spt-4,27464.0103371582,pais,Brasil,BR
+2025,0-4-12-spt-4,28678.9984925293,pais,Brasil,BR
