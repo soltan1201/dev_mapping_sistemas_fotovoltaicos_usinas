@@ -1,0 +1,31 @@
+energia,energia_classe,cobertura_2013_classe,cobertura_2013_nome,area_ha,pct_da_energia
+Fotovoltaica,75,4,Formação Savânica,15091.13,53.94
+Fotovoltaica,75,15,Pastagem,10152.43,36.29
+Fotovoltaica,75,41,Outra Lavoura Temporária,1222.93,4.37
+Fotovoltaica,75,21,Mosaico de Usos,745.01,2.66
+Fotovoltaica,75,3,Formação Florestal,281.72,1.01
+Fotovoltaica,75,77,classe 77,266.76,0.95
+Fotovoltaica,75,48,Outra Lavoura Perene,152.35,0.54
+Fotovoltaica,75,25,Outra Área não Vegetada,26.27,0.09
+Fotovoltaica,75,9,Silvicultura,24.43,0.09
+Fotovoltaica,75,24,Área Urbanizada,3.83,0.01
+Fotovoltaica,75,12,Formação Campestre,3.72,0.01
+Fotovoltaica,75,33,Rio/Lago/Oceano,3.18,0.01
+Fotovoltaica,75,29,Afloramento Rochoso,1.33,0.0
+Fotovoltaica,75,30,Mineração,0.98,0.0
+Eolica,91,4,Formação Savânica,15436.64,63.15
+Eolica,91,15,Pastagem,3266.88,13.36
+Eolica,91,41,Outra Lavoura Temporária,1813.21,7.42
+Eolica,91,23,Praia/Duna/Areal,1718.68,7.03
+Eolica,91,21,Mosaico de Usos,683.87,2.8
+Eolica,91,3,Formação Florestal,675.11,2.76
+Eolica,91,48,Outra Lavoura Perene,322.06,1.32
+Eolica,91,25,Outra Área não Vegetada,194.36,0.8
+Eolica,91,29,Afloramento Rochoso,125.43,0.51
+Eolica,91,50,Restinga Herbácea,95.22,0.39
+Eolica,91,24,Área Urbanizada,63.62,0.26
+Eolica,91,33,Rio/Lago/Oceano,32.4,0.13
+Eolica,91,31,Aquicultura,7.85,0.03
+Eolica,91,32,Apicum,4.37,0.02
+Eolica,91,12,Formação Campestre,2.48,0.01
+Eolica,91,5,Mangue,1.43,0.01
