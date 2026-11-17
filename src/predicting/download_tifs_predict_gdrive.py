@@ -10,6 +10,7 @@ A pasta precisa estar compartilhada com a conta de serviço usada.
 Por padrão os arquivos NÃO são movidos para a lixeira do Drive (use --trash).
 
 Uso:
+    python download_tifs_predict_gdrive.py          # usa conta 17 (engine17, default)
     python predicting/download_tifs_predict_gdrive.py 4
     python predicting/download_tifs_predict_gdrive.py 17 --loop
     python predicting/download_tifs_predict_gdrive.py 4 --drive-path DS_FV_TIFs_scaled/PREDICT_V2 \
@@ -31,8 +32,13 @@ from googleapiclient.http import MediaIoBaseDownload
 LOCAL_BASE_DIR = str(Path.home() / 'almacen/db_images/tif_planet_2025')
 DRIVE_PATH     = 'DS_FV_TIFs_scaled/PREDICT_V2'   # relativo a MyDrive
 
-_KEY_4  = Path.home() / '.config/gcloud/keys/mapbiomas-caatinga-cloud04-78950c04489a.json'
-_KEY_17 = Path.home() / '.config/gcloud/keys/ee-solkancengine17-ef2f5f6fe840.json'
+# Pastas onde procurar as chaves (a primeira que contiver o arquivo vence)
+KEY_DIRS = [
+    Path.home() / 'Dados/.mykeys',            # servidor
+    Path.home() / '.config/gcloud/keys',      # máquina local
+]
+_KEY_4  = 'mapbiomas-caatinga-cloud04-78950c04489a.json'
+_KEY_17 = 'ee-solkancengine17-ef2f5f6fe840.json'
 
 SCOPES      = ['https://www.googleapis.com/auth/drive']
 FOLDER_MIME = 'application/vnd.google-apps.folder'
@@ -44,14 +50,16 @@ CHUNK_SIZE  = 50 * 1024 * 1024   # 50 MB por chunk
 # ---------------------------------------------------------------------------
 parser = argparse.ArgumentParser(
     description=f'Baixa TIFs do Google Drive ({DRIVE_PATH}) para disco local')
-parser.add_argument('key_conta', type=str,
-                    help='Conta de serviço a usar (ex: 4 → cloud04, qualquer outro → engine17)')
+parser.add_argument('key_conta', type=str, nargs='?', default='17',
+                    help='Conta de serviço a usar (4 → cloud04, qualquer outro → engine17; default: 17)')
 parser.add_argument('--drive-path', type=str, default=DRIVE_PATH,
                     help=f'Caminho da pasta no Drive, relativo a MyDrive (default: {DRIVE_PATH})')
 parser.add_argument('--dir-save-img', type=str, default=LOCAL_BASE_DIR,
                     help=f'Pasta local de destino (default: {LOCAL_BASE_DIR})')
 parser.add_argument('--trash', action='store_true',
                     help='Move o arquivo para a lixeira do Drive após download verificado')
+parser.add_argument('--key-file', type=str, default=None,
+                    help='Caminho explícito da chave JSON (ignora key_conta)')
 parser.add_argument('--loop', action='store_true',
                     help='Fica em loop verificando a cada 1 hora (default: roda uma vez e sai)')
 args = parser.parse_args()
@@ -66,7 +74,19 @@ for prefix in ('/content/drive/MyDrive/', 'MyDrive/'):
         drive_path = drive_path[len(prefix):]
 DRIVE_PARTS = [p for p in drive_path.strip('/').split('/') if p]
 
-SERVICE_ACCOUNT_FILE = str(_KEY_4 if unicaConta == '4' else _KEY_17)
+def _find_key(name: str) -> str:
+    for d in KEY_DIRS:
+        p = d / name
+        if p.exists():
+            return str(p)
+    print(f'❌ Chave {name} não encontrada em: ' + ', '.join(str(d) for d in KEY_DIRS))
+    sys.exit(1)
+
+if args.key_file:
+    SERVICE_ACCOUNT_FILE = os.path.expanduser(args.key_file)
+else:
+    SERVICE_ACCOUNT_FILE = _find_key(_KEY_4 if unicaConta == '4' else _KEY_17)
+print(f'🔑 Chave: {SERVICE_ACCOUNT_FILE}')
 
 # ---------------------------------------------------------------------------
 # Autenticação
