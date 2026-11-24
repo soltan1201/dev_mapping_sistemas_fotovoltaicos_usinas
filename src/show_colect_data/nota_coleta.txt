@@ -1,0 +1,8 @@
+scritps de coleta com as geometrias 
+https://code.earthengine.google.com/d168ac97ef834fc3f0b900bec55de663
+
+
+Poligonos 
+class 0 dentro de fv_false;
+class 1 dentro de fv_confirm.
+class 2 dentro de fv_omissao.
