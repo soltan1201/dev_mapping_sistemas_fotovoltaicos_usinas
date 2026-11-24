@@ -170,7 +170,7 @@ print(f'\nResumo: {vars(_args)} | ano={YEAR} | versão={VERSAO_REVISAO} '
 if not ask_sim_nao('Confirmar e continuar?', True):
     sys.exit(0)
 
-projAccount = get_current_account()   # conta (credencial) = solkan1201
+# projAccount = get_current_account()   # conta (credencial) = solkan1201
 projAccount = 'mapbiomas-brazil'      # projeto de cota/cobrança (solkan1201 tem permissão)
 print(f'Projeto selecionado >>> {projAccount} <<<')
 if LOCAL:
