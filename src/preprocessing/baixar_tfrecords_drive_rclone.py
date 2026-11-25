@@ -106,7 +106,16 @@ def main():
     print('Parâmetros de entrada (Enter = padrão)')
     print('=' * 60)
 
-    remote    = ask('Remote rclone da conta dona da pasta', REMOTE).rstrip(':')
+    if not remotes:
+        sys.exit('❌ Nenhum remote rclone configurado. Crie com: rclone config '
+                 '(ver docstring do script).')
+    print('O remote é o NOME dado no "rclone config", não o e-mail da conta:')
+    for k, r in enumerate(remotes, 1):
+        print(f'  {k}) {r}')
+    padrao_remote = REMOTE if REMOTE in remotes else remotes[0]
+    remote = ask('Remote rclone da conta dona da pasta (nome ou número)', padrao_remote).rstrip(':')
+    if remote.isdigit() and 1 <= int(remote) <= len(remotes):
+        remote = remotes[int(remote) - 1]
     pasta     = ask('Pasta no Drive (relativa ao Meu Drive)', PASTA)
     shared    = ask_sim_nao("Pasta está em 'Compartilhados comigo'?", False)
     destino   = Path(ask('Pasta de destino no servidor', DESTINO)).expanduser()
@@ -114,7 +123,7 @@ def main():
     dry_run   = ask_sim_nao('Dry-run (só listar o que seria copiado)?', False)
 
     if remote not in remotes:
-        sys.exit(f"❌ Remote '{remote}:' não existe. Crie com: rclone config "
+        sys.exit(f"❌ Remote '{remote}:' não existe. Use um dos nomes listados ou crie com: rclone config "
                  '(ver docstring do script).')
 
     opt_shared = ['--drive-shared-with-me'] if shared else []

@@ -15,6 +15,11 @@ Uso:
     python predicting/download_tifs_predict_gdrive.py 17 --loop
     python predicting/download_tifs_predict_gdrive.py 4 --drive-path DS_FV_TIFs_scaled/PREDICT_V2 \
         --dir-save-img ~/almacen/db_images/tif_planet_2025
+
+    # TFRecords (mantém train/ val/ test/):
+    python predicting/download_tifs_predict_gdrive.py 17 \
+        --drive-path /content/drive/MyDrive/DS_FV_tfs_scaled_v3 \
+        --dir-save-img ~/almacen/db_images/DS_FV_tfs_scaled_v3 --ext .tfrecord.gz
 """
 import os
 import io
@@ -60,11 +65,14 @@ parser.add_argument('--trash', action='store_true',
                     help='Move o arquivo para a lixeira do Drive após download verificado')
 parser.add_argument('--key-file', type=str, default=None,
                     help='Caminho explícito da chave JSON (ignora key_conta)')
+parser.add_argument('--ext', type=str, nargs='+', default=['.tif', '.tiff'],
+                    help='Extensões a baixar (default: .tif .tiff). Ex.: --ext .tfrecord.gz')
 parser.add_argument('--loop', action='store_true',
                     help='Fica em loop verificando a cada 1 hora (default: roda uma vez e sai)')
 args = parser.parse_args()
 
 unicaConta     = str(args.key_conta)
+TIF_EXTS       = tuple(e.lower() for e in args.ext)
 LOCAL_BASE_DIR = os.path.expanduser(args.dir_save_img)
 
 # aceita também o caminho estilo Colab: /content/drive/MyDrive/...
@@ -197,7 +205,7 @@ def download_folder(parts: list[str], dest_base: str):
         return
 
     files = list(iter_tifs(folder_id))
-    print(f'📄 {len(files)} TIFs encontrados no Drive.')
+    print(f'📄 {len(files)} arquivos {TIF_EXTS} encontrados no Drive.')
 
     baixados = pulados = erros = 0
     for i, (file, rel) in enumerate(files, 1):
