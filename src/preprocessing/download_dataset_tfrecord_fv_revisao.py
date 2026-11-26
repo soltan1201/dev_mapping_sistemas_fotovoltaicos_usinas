@@ -478,7 +478,8 @@ def download_local(stack, coords, tipo, out_dir):
                 print(f'\r    shard {i + 1}/{n_shards}: {n}/{len(chunk)} patches '
                       f'({time.time() - t0:.0f}s)', end='', flush=True)
         print()
-        patches = [p for p in patches if p is not None]
+        validos = [(c, p) for c, p in zip(chunk, patches) if p is not None]
+        patches = [p for _, p in validos]
         if not patches:
             print(f'    ⚠️  shard {i + 1} sem patches válidos, não gravado.')
             continue
@@ -486,6 +487,13 @@ def download_local(stack, coords, tipo, out_dir):
         with tf.io.TFRecordWriter(str(tmp), options=opts) as w:
             for p in patches:
                 w.write(to_example(tf, p))
+        # sidecar: lon/lat de cada registro, na mesma ordem (usado pelo
+        # remontar_dataset_tfrecord.py para separar train/val/test por bloco)
+        sidecar = path.with_name(path.name.replace('.tfrecord.gz', '.pontos.csv'))
+        with open(sidecar, 'w', newline='', encoding='utf-8') as fh:
+            w = csv.writer(fh)
+            w.writerow(['lon', 'lat'])
+            w.writerows(c for c, _ in validos)
         tmp.rename(path)
         n_fv = sum(int(p['label'].sum() > 0) for p in patches)
         print(f'    salvo → {path.name}  ({len(patches)} patches, {n_fv} com FV)')
