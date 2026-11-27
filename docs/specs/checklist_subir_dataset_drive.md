@@ -1,6 +1,7 @@
 # Checklist: montar a base v4 e subir para o Drive para treinar
 
-Script de upload: `src/preprocessing/subir_dataset_drive_rclone.py`
+Script de upload: `src/preprocessing/subir_dataset_drive.py` (Drive API + token do
+gcloud, sem rclone)
 
 ## A. Base pronta no servidor (I7)
 
@@ -15,28 +16,29 @@ Script de upload: `src/preprocessing/subir_dataset_drive_rclone.py`
 - [ ] (opcional) `src/dash/dashboard_tfrecord.py --root ~/almacen/db_images/DS_FV_tfs_v4`:
       conferir os patches com e sem FV por split e ver algumas imagens.
 
-## B. Conta e remote do Drive
+## B. Conta do Drive (gcloud)
 
 - [ ] A conta de destino é a do Colab (solkan.cengine17).
-- [ ] O remote rclone usa login de **usuário**, não service account:
+- [ ] Login no gcloud com acesso ao Drive (o `--force` é obrigatório se a conta
+      já estava logada sem esse acesso):
       ```bash
-      rclone config update ee-solkaneengine17 service_account_file ""
-      rclone config reconnect ee-solkaneengine17:
-      # browser → n → rodar "rclone authorize drive ..." num PC com navegador,
-      # logar em solkan.cengine17 e colar o token
+      gcloud auth login solkan.cengine17@gmail.com --enable-gdrive-access --no-launch-browser --force
+      # abrir a URL num navegador, logar nessa conta, aceitar o Drive, colar o código
+      gcloud auth list      # a conta aparece na lista
       ```
-- [ ] `rclone lsd ee-solkaneengine17: | head` lista as pastas do Meu Drive.
-- [ ] Espaço livre no Drive maior que `du -sh ~/almacen/db_images/DS_FV_tfs_v4`
-      (o script confere). Se faltar, apague a v3 do Drive, que já está dentro
-      da v4.
+- [ ] Espaço livre no Drive maior que o dataset (cerca de 20,3 GB). A conta
+      grátis tem 15 GB no total. O script mostra o espaço livre; se faltar,
+      apague a v3 do Drive (`DS_FV_tfs_scaled_v3`) e esvazie a lixeira, ou use
+      uma conta com mais armazenamento.
 
 ## C. Upload
 
-- [ ] `python src/preprocessing/subir_dataset_drive_rclone.py`, primeiro com
-      **Dry-run = s**.
+- [ ] `python src/preprocessing/subir_dataset_drive.py`, primeiro com
+      **Dry-run = s**: confere a conta conectada, o espaço e o tamanho local.
 - [ ] Rodar de novo com **Dry-run = n**. Se cair, rodar de novo: ele só sobe o
       que falta.
-- [ ] O fim mostra `0 differences found` e a tabela local × drive toda com ✅.
+- [ ] O fim mostra a tabela local × drive toda com ✅ e "Upload completo e
+      conferido".
 
 ## D. Treino no Colab (`train_fotovoltaica_colab_v2.ipynb`)
 
